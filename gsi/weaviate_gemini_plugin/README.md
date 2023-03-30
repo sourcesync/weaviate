@@ -7,7 +7,7 @@ The Gemini Plugin provides an alternative to Weaviate's native HNSW ANN implemen
 
 # Architecture
 
-All of the code for the Gemini supprt lives in two primary places:
+All of the code for the Gemini support in Weaviate lives in two primary places:
 * In the core Weaviate code-base including:
   * A "gemini" entity which sits alongside the native HNSW entity, living under "entities/vectorIndex"
   * A "gemini" index stub which sits alongside the native HNSW index code, living under "adapters/repos/db/index"
