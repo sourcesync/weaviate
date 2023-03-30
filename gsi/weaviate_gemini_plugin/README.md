@@ -10,7 +10,7 @@ The Gemini Plugin provides an alternative to Weaviate's native HNSW ANN implemen
 All of the code for the Gemini supprt lives in two primary places:
 * In the core Weaviate code-base including:
   * A "gemini" entity which sits alongside the native HNSW entity, living under "entities/vectorIndex"
-  * A "gemini" index stub which sits alongside the native HNSW index code under "adapters/repos/db/index"
+  * A "gemini" index stub which sits alongside the native HNSW index code, living under "adapters/repos/db/index"
 * This Golang "module" directory includes:
   * An FVS REST API wrapper written in pure Golang (fvs.go).
   * Golang code which implements the index "interface" that sits right behind the "gemini" index stub described above (index.go).
