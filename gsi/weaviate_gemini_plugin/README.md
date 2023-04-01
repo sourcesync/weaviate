@@ -26,4 +26,4 @@ All of the code for the Gemini support in Weaviate lives in two primary places:
 
 * in your cloned copy this repository, cd into [gsi/tests](../tests)
 * run the script [./test_code_coverage.sh](../tests/test_code_coverage.sh)
-* you should so code coverage statistics for the test program and it's use of the gemini_plugin
+* you should see code coverage statistics for the test program and the dependent gemini_plugin code
