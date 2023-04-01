@@ -16,4 +16,14 @@ All of the code for the Gemini support in Weaviate lives in two primary places:
   * It includes code which implements the Weaviate index "interface" called from the Geminiindex stub described above [\(index.go\)](./index.go).
   * Please note that this module may end up in its own separate repository in the future.
 
+# Testing
 
+## Prerequisites
+
+* You need to install golang >= 1.20.1 on your system
+
+## Code Coverage
+
+* cd into [gsi/tests](../tests)
+* run the script [./test_code_coverage.sh](../tests/test_code_coverage.sh)
+* you should so code coverage statistics for the test program and it's use of the gemini_plugin
