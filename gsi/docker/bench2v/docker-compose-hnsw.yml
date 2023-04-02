@@ -13,7 +13,7 @@ services:
     - 8081:8081
     volumes:
       - /var/lib/weaviate:/var/lib/weaviate
-    restart: on-failure:0
+    restart: "no"
     environment:
       QUERY_DEFAULTS_LIMIT: 25
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
@@ -27,7 +27,8 @@ services:
     ports:
      - "8080:8080"
     volumes:
-     - /Users/gwilliams/Projects/GSI/Weaviate/data/:/datasets
+     - /mnt/nas1/fvs_benchmark_datasets:/datasets
+    restart: "no"
     environment:
       ENABLE_CUDA: 0
-      NUMPY_FILE: "/datasets/deep-1M.npy"
+      NUMPY_FILE: "/datasets/deep-10K.npy"
