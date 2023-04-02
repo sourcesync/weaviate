@@ -31,4 +31,4 @@ services:
     restart: "no"
     environment:
       ENABLE_CUDA: 0
-      NUMPY_FILE: "/datasets/deep-10K.npy"
+      NUMPY_FILE: "/datasets/deep-1M.npy"

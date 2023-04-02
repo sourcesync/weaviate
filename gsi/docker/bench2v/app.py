@@ -3,9 +3,9 @@ from logging import getLogger
 from fastapi import FastAPI, Response, status
 from vectorizer import Vectorizer, VectorInput
 from meta import Meta
-#GW
 import dset
-#GW
+
+VERBOSE = False
 
 app = FastAPI()
 vec : Vectorizer
@@ -35,14 +35,13 @@ async def read_item(item: VectorInput, response: Response):
     try:
         #GW vector = await vec.vectorize(item.text, item.config)
         items = item.text.split()
-        print(item, item.text, items )
+        if VERBOSE: print(item, item.text, items )
         if len(items)==1:
             idx = int(items[0].strip())
         else: 
             idx = int( items[-1].strip())
-        print("idx=",idx)
+        if VERBOSE: print("idx=",idx)
         vector = dset.get(idx)
-        #GW 
         return {"text": item.text, "vector": vector.tolist(), "dim": len(vector)}
     except Exception as e:
         logger.exception(
