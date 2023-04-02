@@ -174,7 +174,7 @@ print("Verified.")
 
 # export the STATS csv
 df = pd.DataFrame(STATS)
-fname = ("results/%s__%d__%f.csv" % ( BENCH_CLASS_NAME, count, time.time() )
+fname = "results/%s__%d__%f.csv" % ( BENCH_CLASS_NAME, count, time.time() )
 df.to_csv(fname)
 print("Wrote", fname)
 
