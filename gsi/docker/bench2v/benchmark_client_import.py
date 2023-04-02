@@ -23,7 +23,7 @@ import pandas as pd
 #
 
 # Weaviate connection string
-WEAVIATE_CONN   = "http://localhost:8081"
+WEAVIATE_CONN   = "http://localhost:8091"
 
 # Weaviate import batch size
 BATCH_SIZE      = 1
