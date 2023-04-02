@@ -12,7 +12,7 @@ app = FastAPI()
 vec : Vectorizer
 meta_config : Meta
 logger = getLogger('uvicorn')
-logger.propagate = True if Verbose else False
+logger.propagate = True if VERBOSE else False
 
 @app.on_event("startup")
 def startup_event():
