@@ -5,12 +5,14 @@ from vectorizer import Vectorizer, VectorInput
 from meta import Meta
 import dset
 
-VERBOSE = False
+
+VERBOSE = os.getenv("VERBOSE")
 
 app = FastAPI()
 vec : Vectorizer
 meta_config : Meta
 logger = getLogger('uvicorn')
+logger.propagate = True if Verbose else False
 
 @app.on_event("startup")
 def startup_event():
@@ -33,7 +35,6 @@ def meta():
 @app.post("/vectors/")
 async def read_item(item: VectorInput, response: Response):
     try:
-        #GW vector = await vec.vectorize(item.text, item.config)
         items = item.text.split()
         if VERBOSE: print(item, item.text, items )
         if len(items)==1:
