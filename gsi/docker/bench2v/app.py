@@ -6,7 +6,7 @@ from meta import Meta
 import dset
 
 
-VERBOSE = os.getenv("VERBOSE")
+VERBOSE = int( os.getenv("VERBOSE") )
 
 app = FastAPI()
 vec : Vectorizer
