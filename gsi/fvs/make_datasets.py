@@ -48,6 +48,11 @@ DEEP1M =  "deep-1M.npy"
 DEEP1M_GT_10 = "deep-1M-gt-10.npy"
 DEEP1M_GT_10_DISTS = "deep-1M-gt-10-dists.npy"
 
+# Deep10K filenames
+DEEP10K =  "deep-10K.npy"
+DEEP10K_GT_10 = "deep-10K-gt-10.npy"
+DEEP10K_GT_10_DISTS = "deep-10K-gt-10-dists.npy"
+
 
 # 
 # Configure modules
@@ -534,6 +539,32 @@ elif VERIFY:
     print("Found %s.  Verifying it..." % fname)
     arr = numpy.load(fname)
     if arr.shape[0]!=10:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# Create/verify deep-10K
+fname = os.path.join( FVS_DATA_DIR, DEEP10K )
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    print("Creating", fname, "...")
+
+    print("Downloading Competition Deep1B base, query, and gt...")
+    ds = datasets.DATASETS["deep-10K"]()
+    ds.prepare(False)
+
+    for dt in ds.get_dataset_iterator(bs=1000):
+        newsize = append_floatarray(fname, dt)
+        print("deep-10K, appended batch, newsize=", newsize)
+        if newsize[0]==10000:
+            break
+
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it (this may take a sec.)" % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=10000:
         raise Exception("Bad size for %s" % fname, arr.shape)
     print("Verified.")
 
