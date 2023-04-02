@@ -148,9 +148,14 @@ while True: # lets loop until we exceed the MAX configured above
                 "index": str(i)
             }
 
-            if BENCHMARK_DETAILED: STATS.append( {"event": "adding %d" % (i+1), "ts": time.time()} )
+            if BENCHMARK_DETAILED: STATS.append( {"event": "adding %d/%d" % ((i+1), TOTAL_ADDS), "ts": time.time()} )
+            elif i % 1000 ==0: STATS.append( {"event": "adding %d/%d" % ((i+1), TOTAL_ADDS), "ts": time.time()} )
+
             resp = client.batch.add_data_object(properties, BENCH_CLASS_NAME)
-            if BENCHMARK_DETAILED: STATS.append( {"event": "added %d" % (i+1), "ts": time.time()} )
+
+            if BENCHMARK_DETAILED: STATS.append( {"event": "added %d/%d" % ((i+1),TOTAL_ADDS), "ts": time.time()} )
+            elif i % 1000 ==0: STATS.append( {"event": "adding %d/%d" % ((i+1), TOTAL_ADDS), "ts": time.time()} )
+
             if 'error' in resp:
                 print("Got error adding object->", resp)
                 raise Exception("Add failed at %d" % idx)
