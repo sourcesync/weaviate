@@ -32,7 +32,10 @@ BATCH_SIZE      = 1
 BENCH_CLASS_NAME= "BenchmarkDeep1B"
 
 # Set to True to print more messages
-VERBOSE         = True
+VERBOSE         = False
+
+# Timing each import call
+BENCHMARK_DETAILED  = False
 
 #
 # Globals
@@ -145,9 +148,9 @@ while True: # lets loop until we exceed the MAX configured above
                 "index": str(i)
             }
 
-            STATS.append( {"event": "adding %d" % (i+1), "ts": time.time()} )
+            if BENCHMARK_DETAILED: STATS.append( {"event": "adding %d" % (i+1), "ts": time.time()} )
             resp = client.batch.add_data_object(properties, BENCH_CLASS_NAME)
-            STATS.append( {"event": "added %d" % (i+1), "ts": time.time()} )
+            if BENCHMARK_DETAILED: STATS.append( {"event": "added %d" % (i+1), "ts": time.time()} )
             if 'error' in resp:
                 print("Got error adding object->", resp)
                 raise Exception("Add failed at %d" % idx)
