@@ -32,4 +32,4 @@ services:
     environment:
       VERBOSE: 0
       ENABLE_CUDA: 0
-      NUMPY_FILE: "/datasets/deep-1M.npy"
+      NUMPY_FILE: "/datasets/deep-2M.npy"
