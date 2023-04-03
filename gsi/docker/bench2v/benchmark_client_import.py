@@ -48,13 +48,16 @@ TOTAL_ADDS      = -1
 STATS           = []
 
 #
-# Start schema checks and import
+# Parse cmd line arguments
 #
 
-# Parse command line
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", type=int, required=True)
 args = parser.parse_args()
+
+#
+# Start schema checks and import
+#
 
 # Set number items to import
 TOTAL_ADDS = args.n
