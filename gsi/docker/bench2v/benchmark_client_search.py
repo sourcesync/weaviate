@@ -17,7 +17,9 @@ import time
 import weaviate
 import requests
 import argparse
-import numpy as np
+import numpy 
+import pandas
+import platform
 
 #
 # Configuration
@@ -33,11 +35,17 @@ BATCH_SIZE          = 1
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
 
 # File system location of all the benchmark datasets
-#BENCH_DATASET_DIR   = "/mnt/nas1/fvs_benchmark_datasets/"
+#BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
 BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
 
 # Set to True to print more messages for debugging purposes
-VERBOSE         = True
+VERBOSE             = False
+
+# The index we are benchmarking against ( can get overridden by args )
+VECTOR_INDEX        = "hnsw"
+
+# Hostname used for output
+HOSTNAME            = platform.node()
 
 #
 # Globals
@@ -55,6 +63,7 @@ STATS           = []
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
+parser.add_argument("-q", type=int, required=True)
 args = parser.parse_args()
 
 # Set the search dabasize size
@@ -69,8 +78,8 @@ else:
 
 gt_file = None
 if TOTAL_ADDS == 1000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-1000.npy" )
-gt_dset = np.load(gt_file, mmap_mode='r')    
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" % args.q )
+gt_dset = numpy.load(gt_file, mmap_mode='r')    
 print("Got ground truth file:", gt_dset.shape)
 
 #
@@ -98,8 +107,8 @@ for cls in schema["classes"]:
     if cls["class"] == BENCH_CLASS_NAME: cls_schema = cls
 if cls_schema==None:
     raise Exception("Could not retrieve schema for class='%s'" % BENCH_CLASS_NAME)
-if cls_schema['vectorIndexType'] != "hnsw":
-    raise Exception("The schema for class='%s' is not an hnsw index." % BENCH_CLASS_NAME)
+if cls_schema['vectorIndexType'] != VECTOR_INDEX:
+    raise Exception("The schema for class='%s' is not an %s index." % BENCH_CLASS_NAME, VECTOR_INDEX)
 print("Verified.")
 
 # Get object count
@@ -124,16 +133,75 @@ print("Verifed.")
 # Perform searches
 #
 
-nearText = {"concepts": [ "q-9" ]}
-result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
-print("Response=", result)
-print("GT=", gt_dset[9][0:10])
+def parse_result(result):
+    '''Parse a search response extracting the info we need for benchmarking.'''
 
-#additional_props = {
-#  "classification" : ["searchTime"]
-#}
-#result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(additional_props).with_near_text(nearText).with_limit(10).do()
-#print(result)
+    if 'error' in result:
+        print(result)
+        raise Exception("Got error response from search query")
+
+    items = result['data']['Get']['BenchmarkDeep1B']
+    timing = int(items[0]['_additional']['lastUpdateTimeUnix'])
+    inds = [ int(item['index']) for item in items ]
+
+    return timing, inds
+
+def compute_recall(a, b):
+    '''Computes the recall metric on query results.'''
+
+    nq, rank = a.shape
+    intersect = [ numpy.intersect1d(a[i, :rank], b[i, :rank]).size for i in range(nq) ]
+    ninter = sum( intersect )
+    return ninter / a.size, intersect
+
+def do_benchmark_query(idx):
+    '''This performs a query from the query set and processes the results.'''
+   
+    # prepare and perform the weaviate query 
+    nearText = {"concepts": [ "q-%d" % idx ]}
+    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
+    if 'error' in result:
+        raise Exception
+
+    # get the data from the results we want
+    timing, inds = parse_result(result)
+    if VERBOSE:
+        print("Test query: timing-", timing, "inds=", inds )
+        print("GT=", gt_dset[idx][0:10])
+
+    # compute recall
+    a =  numpy.array([inds])
+    b =  numpy.array( [ list(gt_dset[idx][0:10]) ] ) 
+    recall = compute_recall( a, b ) 
+    if VERBOSE: print("Recall=", recall)
+
+    return timing, recall[0]
+
+
+# do one test first
+print("Testing one query...")
+timing, recall = do_benchmark_query(1)
+print("Verfied.")
+
+# now do the entire query set
+print("Running %d queries..." % args.q)
+for idx in range(args.q):
+
+    timing, recall = do_benchmark_query(idx)
+
+    # accumulate results
+    STATS.append( { "qidx": idx, "recall": recall, "searchTime": timing, "host": HOSTNAME, \
+                    "gt_file": gt_file, "dset_size": TOTAL_ADDS, "argsn": args.n , "vectorindex": VECTOR_INDEX } )
+
+print("Done.")
+
+# export results to csv
+df = pandas.DataFrame( STATS )
+print(df)
+
+fname = os.path.join("results", "%s__%s__%d_of_Deep1B__q_%d.csv"  % (HOSTNAME, VECTOR_INDEX, TOTAL_ADDS, args.q ) )
+df.to_csv(fname)
+print("Saved", fname)
 
 sys.exit(0)
 
