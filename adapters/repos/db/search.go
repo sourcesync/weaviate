@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+    //GW "runtime"
 
 	"github.com/pkg/errors"
 	"github.com/weaviate/weaviate/adapters/repos/db/refcache"
@@ -107,6 +108,7 @@ func (db *DB) VectorClassSearch(ctx context.Context,
 		return nil, fmt.Errorf("tried to browse non-existing index for %s", params.ClassName)
 	}
 
+    //GW runtime.Breakpoint()
 	targetDist := extractDistanceFromParams(params)
 	res, dists, searchTook, err := idx.objectVectorSearch(ctx, params.SearchVector, targetDist,
 		totalLimit, params.Filters, params.Sort, params.AdditionalProperties)

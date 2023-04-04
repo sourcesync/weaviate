@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/binary"
 	"time"
+    //GW "runtime"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
@@ -220,6 +221,8 @@ func (s *Shard) objectVectorSearch(ctx context.Context,
 		allowList = list
 	}
 
+    //GW runtime.Breakpoint()
+
 	beforeIndexSearch := time.Now()
 
 	if limit < 0 {
@@ -236,6 +239,8 @@ func (s *Shard) objectVectorSearch(ctx context.Context,
 	}
 
 	indexSearchTook := int64( time.Since(beforeIndexSearch) )
+    //GW runtime.Breakpoint()
+
 	invertedTook := time.Since(beforeAll)
 	beforeVector := time.Now()
 

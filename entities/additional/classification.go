@@ -51,4 +51,6 @@ type Properties struct {
 	// make any comparisons, and erroneously returns
 	// empty, or with fewer results than expected.
 	ReferenceQuery bool `json:"-"`
+
+    SearchTime bool `json:"searchTime"`
 }

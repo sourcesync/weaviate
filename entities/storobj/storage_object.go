@@ -354,7 +354,7 @@ func (ko *Object) SearchResult(additional additional.Properties) *search.Result 
 
 func (ko *Object) SearchResultWithDist(addl additional.Properties, searchTook int64, dist float32) search.Result {
 	res := ko.SearchResult(addl)
-	res.SearchTook = searchTook
+	res.SearchTime = searchTook
 	res.Dist = dist
 	res.Certainty = float32(additional.DistToCertainty(float64(dist)))
 	return *res
