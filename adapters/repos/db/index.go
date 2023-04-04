@@ -909,7 +909,7 @@ func (i *Index) sort(objects []*storobj.Object, scores []float32,
 func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 	dist float32, limit int, filters *filters.LocalFilter,
 	sort []filters.Sort, additional additional.Properties,
-) ([]*storobj.Object, []float32, error) {
+) ([]*storobj.Object, []float32, int64, error) {
 
 
 	shardNames := i.getSchema.ShardingState(i.Config.ClassName.String()).
@@ -929,6 +929,7 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 
 	out := make([]*storobj.Object, 0, shardCap)
 	dists := make([]float32, 0, shardCap)
+	searchTook := int64(0)
 	for _, shardName := range shardNames {
 		shardName := shardName
 		errgrp.Go(func() error {
@@ -939,10 +940,11 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 			var res []*storobj.Object
 			var resDists []float32
 			var err error
+			var resSearchTook int64
 
 			if local {
 				shard := i.Shards[shardName]
-				res, resDists, err = shard.objectVectorSearch(
+				res, resDists, resSearchTook, err = shard.objectVectorSearch(
 					ctx, searchVector, dist, limit, filters, sort, additional)
 				if err != nil {
 					return errors.Wrapf(err, "shard %s", shard.ID())
@@ -958,6 +960,7 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 			m.Lock()
 			out = append(out, res...)
 			dists = append(dists, resDists...)
+			searchTook = resSearchTook
 			m.Unlock()
 
 			return nil
@@ -965,15 +968,17 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 	}
 
 	if err := errgrp.Wait(); err != nil {
-		return nil, nil, err
+		return nil, nil, searchTook, err
 	}
 
 	if len(shardNames) == 1 {
-		return out, dists, nil
+		return out, dists, searchTook, nil
 	}
 
 	if len(shardNames) > 1 && len(sort) > 0 {
-		return i.sort(out, dists, sort, limit)
+		out, dists, err := i.sort(out, dists, sort, limit)
+		return out, dists, searchTook, err
+		//GW return i.sort(out, dists, sort, limit)
 	}
 
 	out, dists = newDistancesSorter().sort(out, dists)
@@ -982,7 +987,7 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 		dists = dists[:limit]
 	}
 
-	return out, dists, nil
+	return out, dists, searchTook, nil
 }
 
 func (i *Index) IncomingSearch(ctx context.Context, shardName string,
@@ -1005,7 +1010,7 @@ func (i *Index) IncomingSearch(ctx context.Context, shardName string,
 		return res, scores, nil
 	}
 
-	res, resDists, err := shard.objectVectorSearch(
+	res, resDists, _, err := shard.objectVectorSearch(
 		ctx, searchVector, distance, limit, filters, sort, additional)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "shard %s", shard.ID())

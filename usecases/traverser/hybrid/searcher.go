@@ -171,7 +171,7 @@ func (s *Searcher) sparseSearch() ([]*Result, error) {
 
 	out := make([]*Result, len(res))
 	for i, obj := range res {
-		sr := obj.SearchResultWithDist(additional.Properties{}, dists[i])
+		sr := obj.SearchResultWithDist(additional.Properties{}, 0, dists[i])
 		sr.SecondarySortValue = sr.Score
 		sr.ExplainScore = "(bm25)" + sr.ExplainScore
 		out[i] = &Result{obj.DocID(), &sr}
@@ -192,7 +192,7 @@ func (s *Searcher) denseSearch(ctx context.Context) ([]*Result, error) {
 
 	out := make([]*Result, len(res))
 	for i, obj := range res {
-		sr := obj.SearchResultWithDist(additional.Properties{}, dists[i])
+		sr := obj.SearchResultWithDist(additional.Properties{}, 0, dists[i])
 		sr.SecondarySortValue = 1 - sr.Dist
 		sr.ExplainScore = fmt.Sprintf(
 			"(vector) %v %v ", truncateVectorString(10, vector),
@@ -232,7 +232,7 @@ func (s *Searcher) sparseSubSearch(
 
 	out := make([]*Result, len(res))
 	for i, obj := range res {
-		sr := obj.SearchResultWithDist(additional.Properties{}, dists[i])
+		sr := obj.SearchResultWithDist(additional.Properties{}, 0, dists[i])
 		sr.ExplainScore = "(bm25)" + sr.ExplainScore
 		out[i] = &Result{obj.DocID(), &sr}
 	}
@@ -260,7 +260,7 @@ func (s *Searcher) nearTextSubSearch(ctx context.Context,
 
 	out := make([]*Result, len(res))
 	for i, obj := range res {
-		sr := obj.SearchResultWithDist(additional.Properties{}, dists[i])
+		sr := obj.SearchResultWithDist(additional.Properties{}, 0, dists[i])
 		sr.ExplainScore = fmt.Sprintf("(vector) %v %v ",
 			truncateVectorString(10, vector), res[i].ExplainScore())
 		out[i] = &Result{obj.DocID(), &sr}
@@ -281,7 +281,7 @@ func (s *Searcher) nearVectorSubSearch(
 
 	out := make([]*Result, len(res))
 	for i, obj := range res {
-		sr := obj.SearchResultWithDist(additional.Properties{}, dists[i])
+		sr := obj.SearchResultWithDist(additional.Properties{}, 0, dists[i])
 		sr.ExplainScore = fmt.Sprintf("(vector) %v %v ",
 			truncateVectorString(10, sp.Vector), res[i].ExplainScore())
 		out[i] = &Result{obj.DocID(), &sr}

@@ -197,7 +197,7 @@ func (i *Gemini) Add(id uint64, vector []float32) error {
 
     if i.last_fvs_status != "" {
         // TODO: This means that an async index build is in progress.
-        // TODO: In the future We should consider cacheiing the adds for a deferred
+        // TODO: In the future we should consider cache-ing these adds for a deferred
         // TODO: index build which starts after the current one is complete.
         // TODO: For now, we return an error with a suitable error string.
     
