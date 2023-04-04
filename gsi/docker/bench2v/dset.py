@@ -48,11 +48,12 @@ def query(idx):
     if idx>=sz[0]:
         raise Exception("Index at %d is out of range" % idx )
 
+    gt = None
     if type(gt_dset) != type(None):
-        gt = gt_dset[idx]
-        print("Ground truth=", gt)
+        gt = gt_dset[idx][0:10]
+        #print("Ground truth=", gt)
 
-    return query_dset[idx]
+    return (query_dset[idx], gt)
 
 
 if __name__ == "__main__":

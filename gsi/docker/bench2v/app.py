@@ -44,11 +44,12 @@ async def read_item(item: VectorInput, response: Response):
 
         if searchtxt.startswith("q-"):
             idx = int( searchtxt.split("-")[1] )
-            vector = dset.query(idx)
+            vector, gt = dset.query(idx)
             if VERBOSE: print("query idx=",idx)
         else: 
             idx = int(searchtxt)
             vector = dset.get(idx)
+            gt = None
             if VERBOSE: print("database idx=",idx)
 
         return {"text": item.text, "vector": vector.tolist(), "dim": len(vector)}

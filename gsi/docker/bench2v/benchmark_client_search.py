@@ -9,6 +9,7 @@
 #  CONTACT: hello@weaviate.io
 #
 
+import os
 import json
 import sys
 import traceback
@@ -16,6 +17,7 @@ import time
 import weaviate
 import requests
 import argparse
+import numpy as np
 
 #
 # Configuration
@@ -31,7 +33,8 @@ BATCH_SIZE          = 1
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
 
 # File system location of all the benchmark datasets
-BENCH_DATASET_DIR   = "/mnt/nas1/fvs_benchmark_datasets/"
+#BENCH_DATASET_DIR   = "/mnt/nas1/fvs_benchmark_datasets/"
+BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
 
 # Set to True to print more messages for debugging purposes
 VERBOSE         = True
@@ -51,11 +54,24 @@ STATS           = []
 #
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", type=int, required=True)
+parser.add_argument("-n", required=True)
 args = parser.parse_args()
 
 # Set the search dabasize size
-TOTAL_ADDS = args.n
+if args.n == "1M":
+    TOTAL_ADDS = 1000000
+else:
+    TOTAL_ADDS = int(args.n)
+
+#
+# Load the GT file
+#
+
+gt_file = None
+if TOTAL_ADDS == 1000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-1000.npy" )
+gt_dset = np.load(gt_file, mmap_mode='r')    
+print("Got ground truth file:", gt_dset.shape)
 
 #
 # Schemaa checks
@@ -109,7 +125,15 @@ print("Verifed.")
 #
 
 nearText = {"concepts": [ "q-9" ]}
-result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_near_text(nearText).with_limit(10).do()
-print(result)
+result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
+print("Response=", result)
+print("GT=", gt_dset[9][0:10])
+
+#additional_props = {
+#  "classification" : ["searchTime"]
+#}
+#result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(additional_props).with_near_text(nearText).with_limit(10).do()
+#print(result)
+
 sys.exit(0)
 
