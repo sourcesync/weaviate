@@ -67,7 +67,9 @@ parser.add_argument("-q", type=int, required=True)
 args = parser.parse_args()
 
 # Set the search dabasize size
-if args.n == "1M":
+if args.n == "10K":
+    TOTAL_ADDS = 10000
+elif args.n == "1M":
     TOTAL_ADDS = 1000000
 elif args.n == "5M":
     TOTAL_ADDS = 5000000
