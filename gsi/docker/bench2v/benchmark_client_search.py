@@ -158,7 +158,7 @@ def parse_result(result):
     if 'errors' in result:
         print(result)
         raise Exception("Got error response from search query")
-    elif result['data']['Get']['errors']:
+    elif 'errors' in result['data']['Get']:
         print(result)
         raise Exception("Got error response from search query")
 
