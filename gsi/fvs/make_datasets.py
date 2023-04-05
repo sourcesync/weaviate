@@ -51,7 +51,6 @@ DEEP1M_GT_10_DISTS = "deep-1M-gt-10-dists.npy"
 # Deep10K filenames
 DEEP10K =  "deep-10K.npy"
 DEEP10K_GT_10 = "deep-10K-gt-10.npy"
-DEEP10K_GT_10_DISTS = "deep-10K-gt-10-dists.npy"
 
 
 # 
@@ -565,6 +564,30 @@ elif VERIFY:
     print("Found %s.  Verifying it (this may take a sec.)" % fname)
     arr = numpy.load(fname)
     if arr.shape[0]!=10000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP10K of DEEP1B, gt set - 10
+fname = os.path.join( FVS_DATA_DIR, DEEP10K_GT_10)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-10K"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:10,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=10:
         raise Exception("Bad size for %s" % fname, arr.shape)
     print("Verified.")
 
