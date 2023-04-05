@@ -35,14 +35,11 @@ BATCH_SIZE          = 1
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
 
 # File system location of all the benchmark datasets
-#BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
-BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
+BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
+#BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
 
 # Set to True to print more messages for debugging purposes
 VERBOSE             = False
-
-# The index we are benchmarking against ( can get overridden by args )
-VECTOR_INDEX        = "hnsw"
 
 # Hostname used for output
 HOSTNAME            = platform.node()
@@ -50,6 +47,9 @@ HOSTNAME            = platform.node()
 #
 # Globals
 #
+
+# The index we are benchmarking against ( gets set by args )
+VECTOR_INDEX        = -1
 
 # The total number of imports - will be retrieved via args
 TOTAL_ADDS      = -1
@@ -64,6 +64,7 @@ STATS           = []
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
 parser.add_argument("-q", type=int, required=True)
+parser.add_argument("--gemini", action="store_true")
 args = parser.parse_args()
 
 # Set the search dabasize size
@@ -75,6 +76,14 @@ elif args.n == "5M":
     TOTAL_ADDS = 5000000
 else:
     TOTAL_ADDS = int(args.n)
+
+# get the index
+if args.gemini:
+    VECTOR_INDEX = "gemini"
+else:
+    VECTOR_INDEX = "hnsw"
+print("Got requested vector index=", VECTOR_INDEX)
+
 
 #
 # Load the GT file
@@ -118,7 +127,7 @@ for cls in schema["classes"]:
 if cls_schema==None:
     raise Exception("Could not retrieve schema for class='%s'" % BENCH_CLASS_NAME)
 if cls_schema['vectorIndexType'] != VECTOR_INDEX:
-    raise Exception("The schema for class='%s' is not an %s index." % BENCH_CLASS_NAME, VECTOR_INDEX)
+    raise Exception("The schema for class='%s' is not an %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX))
 print("Verified.")
 
 # Get object count
@@ -146,7 +155,10 @@ print("Verifed.")
 def parse_result(result):
     '''Parse a search response extracting the info we need for benchmarking.'''
 
-    if 'error' in result:
+    if 'errors' in result:
+        print(result)
+        raise Exception("Got error response from search query")
+    elif result['data']['Get']['errors']:
         print(result)
         raise Exception("Got error response from search query")
 
@@ -170,8 +182,6 @@ def do_benchmark_query(idx):
     # prepare and perform the weaviate query 
     nearText = {"concepts": [ "q-%d" % idx ]}
     result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
-    if 'error' in result:
-        raise Exception
 
     # get the data from the results we want
     timing, inds = parse_result(result)
