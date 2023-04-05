@@ -192,12 +192,11 @@ STATS.append( {"event": "done all %d" % count, "ts": time.time()} )
 print("Done adding %d total strings to Weaviate.  Verifying count at Weaviate..." % count)
 
 resp = client.query.aggregate(BENCH_CLASS_NAME).with_meta_count().do()
-print(resp)
+print("meta count query=", resp)
 count = 0
 try:
     count = resp['data']['Aggregate'][BENCH_CLASS_NAME][0]['meta']['count']
 except:
-    print("resp=",resp)
     traceback.print_exc()
     raise Exception("Could not get count for '%s'" % BENCH_CLASS_NAME)
 STATS.append( {"event": "import verified %d" % count, "ts": time.time()} )
@@ -205,19 +204,73 @@ if count != TOTAL_ADDS:
     raise Exception("Unexpected object count (%d) for '%s'" % ( count, BENCH_CLASS_NAME ))
 print("Verified.")
 
-# do one query to kick off training
-try:
-    nearText = {"concepts": [ "q-%d" % idx ]}
-    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
-    print("query result=", result)
-except:
-    print("Error during the finalization query.")
-    traceback.print_exc()
-
+#
 # export the STATS csv
+#
 df = pd.DataFrame(STATS)
 fname = "results/%s__%d__%f.csv" % ( BENCH_CLASS_NAME, count, time.time() )
 df.to_csv(fname)
-print("Wrote", fname)
+print("Wrote results", fname)
+
+# 
+# Loop until training finishes
+#
+def parse_result(result):
+    '''Parse a query result into something actionable.'''
+
+    async_try_again = False
+    errors = []
+    data = None
+
+    # First loop through errors if any.  
+    # We look for "gemini async build" messages 
+    # and don't interpret them as errors.
+    if "errors" in result.keys():
+        errs = result["errors"]
+        for err in errs:
+            if "message" in err.keys():
+                mesg = err["message"]
+                if mesg.find("vector search: Async index build is in progress.")>=0:
+                    async_try_again = True
+                elif mesg.find("vector search: Async index build completed.")>=0:
+                    async_try_again = True
+                else:
+                    errors.append(err)
+
+    elif "data" in result.keys():
+        data = result["data"]
+
+    return async_try_again, errors, data
+
+# loop here
+consec_errs = 0
+while True:
+
+    print("Sending a similarity search request now...")
+    nearText = {"concepts": [ "q-%d" % idx ]}
+    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
+
+    # Interpret the results
+    async_try_again, errors, data = parse_result(result)
+    if async_try_again:
+        print("Gemini is asynchronously building an index, and has asked us to try the search again a little later...")
+        time.sleep(2)
+        continue
+    elif errors:
+        print("We got search errors->", errors)
+        consec_errs += 1
+        if consec_errs > 5:
+            print("Too many errors.  Let's stop here.")
+            break
+    elif data:
+        print("Successful search, data->", data)
+        consec_errs = 0
+        break
+    else:
+        print("Unknown result! Let's stop here.")
+        break
+
+print("Done.")
+
 
 sys.exit(0)
