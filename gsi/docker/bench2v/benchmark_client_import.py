@@ -59,12 +59,17 @@ STATS               = []
 #
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", type=int, required=True)
+parser.add_argument("-n", required=True)
 parser.add_argument("--gemini", action="store_true")
 args = parser.parse_args()
 
 # Set number items to import
-TOTAL_ADDS = args.n
+if args.n == "10K":
+    TOTAL_ADDS = 10000
+elif args.n == "1M":
+    TOTAL_ADDS = 1000000
+else:
+    TOTAL_ADDS = int(args.n)
 
 # Set vector index
 if args.gemini:
