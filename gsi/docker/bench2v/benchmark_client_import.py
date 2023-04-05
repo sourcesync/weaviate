@@ -252,7 +252,7 @@ consec_errs = 0
 while True:
 
     print("Sending a similarity search request now...")
-    nearText = {"concepts": [ "q-%d" % idx ]}
+    nearText = {"concepts": [ "q-%d" % 0 ]}
     result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
 
     # Interpret the results
