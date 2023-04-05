@@ -35,8 +35,8 @@ BATCH_SIZE          = 1
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
 
 # File system location of all the benchmark datasets
-#BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
-BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
+BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
+#BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
 
 # Set to True to print more messages for debugging purposes
 VERBOSE             = False
@@ -80,7 +80,11 @@ else:
 
 gt_file = None
 if TOTAL_ADDS == 1000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" % args.q )
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 5000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
+    
+print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
 print("Got ground truth file:", gt_dset.shape)
 
