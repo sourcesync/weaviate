@@ -40,12 +40,15 @@ BENCHMARK_DETAILED  = False
 # Vector index to use, gets overriden via args
 VECTOR_INDEX        = False
 
-# The total number of imports - will be retrieved via args
-TOTAL_ADDS          = -1 
+# The csv output dir to use
+RESULTS_DIR         = "results"
 
 #
 # Globals
 #
+
+# The total number of imports - will be retrieved via args
+TOTAL_ADDS          = -1 
 
 # Store timings for later export to CSV
 STATS               = []
@@ -67,6 +70,10 @@ if args.gemini:
     VECTOR_INDEX = "gemini"
 else:
     VECTOR_INDEX = "hnsw"
+
+# Some local checks
+if not os.path.exists(RESULTS_DIR):
+    raise Exception("The output dir %s does not exist." % RESULTS_DIR)
 
 #
 # Start schema checks and import
