@@ -205,6 +205,15 @@ if count != TOTAL_ADDS:
     raise Exception("Unexpected object count (%d) for '%s'" % ( count, BENCH_CLASS_NAME ))
 print("Verified.")
 
+# do one query to kick off training
+try:
+    nearText = {"concepts": [ "q-%d" % idx ]}
+    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
+    print("query result=", result)
+except:
+    print("Error during the finalization query.")
+    traceback.print_exc()
+
 # export the STATS csv
 df = pd.DataFrame(STATS)
 fname = "results/%s__%d__%f.csv" % ( BENCH_CLASS_NAME, count, time.time() )
