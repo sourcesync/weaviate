@@ -184,6 +184,7 @@ STATS.append( {"event": "done all %d" % count, "ts": time.time()} )
 print("Done adding %d total strings to Weaviate.  Verifying count at Weaviate..." % count)
 
 resp = client.query.aggregate(BENCH_CLASS_NAME).with_meta_count().do()
+print(resp)
 count = 0
 try:
     count = resp['data']['Aggregate'][BENCH_CLASS_NAME][0]['meta']['count']
