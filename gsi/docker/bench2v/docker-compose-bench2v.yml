@@ -5,8 +5,8 @@ services:
     ports:
      - "8080:8080"
     volumes:
-     - /mnt/nas1/fvs_benchmark_datasets:/datasets
-#     - /Users/gwilliams/Projects/GSI/Weaviate/data:/datasets
+#     - /mnt/nas1/fvs_benchmark_datasets:/datasets
+     - /Users/gwilliams/Projects/GSI/Weaviate/data:/datasets
     restart: "no"
     environment:
       VERBOSE: 1

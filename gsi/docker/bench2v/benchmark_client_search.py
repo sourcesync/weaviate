@@ -69,6 +69,8 @@ args = parser.parse_args()
 # Set the search dabasize size
 if args.n == "1M":
     TOTAL_ADDS = 1000000
+elif args.n == "5M":
+    TOTAL_ADDS = 5000000
 else:
     TOTAL_ADDS = int(args.n)
 
@@ -78,7 +80,11 @@ else:
 
 gt_file = None
 if TOTAL_ADDS == 1000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" % args.q )
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 5000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
+    
+print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
 print("Got ground truth file:", gt_dset.shape)
 

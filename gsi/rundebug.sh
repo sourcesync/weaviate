@@ -42,6 +42,10 @@ GOPATH="$HOME/go"
 GOROOT=/usr/local/go
 export PATH=$GOPATH:$GOROOT/bin:$PATH
 
+#MAC export GOPATH=$HOME/go
+#MAC export GOROOT=/usr/local/opt/go/libexec
+#MAC export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+
 # You can choose to start 'fresh' or not
 rm -fr /var/lib/weaviate/*
 

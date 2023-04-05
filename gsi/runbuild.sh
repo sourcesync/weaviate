@@ -10,4 +10,9 @@ GOPATH="$HOME/go"
 GOROOT=/usr/local/bin
 export PATH=$GOPATH:$GOROOT/bin:$PATH 
 
+#MAC export GOPATH=$HOME/go
+#MAC export GOROOT=/usr/local/opt/go/libexec
+#MAC export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+
+
 cd .. && go build -o ./weaviate-server -modfile=gsi/go.mod ./cmd/weaviate-server/main.go
