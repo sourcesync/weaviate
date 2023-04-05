@@ -9,6 +9,7 @@
 #  CONTACT: hello@weaviate.io
 #
 
+import os
 import json
 import sys
 import traceback
