@@ -23,29 +23,32 @@ import pandas as pd
 #
 
 # Weaviate connection string
-WEAVIATE_CONN   = "http://localhost:8091"
+WEAVIATE_CONN       = "http://localhost:8091"
 
 # Weaviate import batch size
-BATCH_SIZE      = 1
+BATCH_SIZE          = 1
 
 # Name of the custom class for this test program
-BENCH_CLASS_NAME= "BenchmarkDeep1B"
+BENCH_CLASS_NAME    = "BenchmarkDeep1B"
 
 # Set to True to print more messages
-VERBOSE         = False
+VERBOSE             = False
 
 # Timing each import call
 BENCHMARK_DETAILED  = False
+
+# Vector index to use, gets overriden via args
+VECTOR_INDEX        = False
+
+# The total number of imports - will be retrieved via args
+TOTAL_ADDS          = -1 
 
 #
 # Globals
 #
 
-# The total number of imports - will be retrieved via args
-TOTAL_ADDS      = -1 
-
 # Store timings for later export to CSV
-STATS           = []
+STATS               = []
 
 #
 # Parse cmd line arguments
@@ -53,14 +56,21 @@ STATS           = []
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", type=int, required=True)
+parser.add_argument("--gemini", action="store_true")
 args = parser.parse_args()
+
+# Set number items to import
+TOTAL_ADDS = args.n
+
+# Set vector index
+if args.gemini:
+    VECTOR_INDEX = "gemini"
+else:
+    VECTOR_INDEX = "hnsw"
 
 #
 # Start schema checks and import
 #
-
-# Set number items to import
-TOTAL_ADDS = args.n
 
 print("Connecting to Weaviate...")
 client = weaviate.Client(WEAVIATE_CONN)
@@ -82,8 +92,8 @@ if BENCH_CLASS_NAME in [ cls["class"] for cls in schema["classes"] ]:
         if cls["class"] == BENCH_CLASS_NAME: cls_schema = cls
     if cls_schema==None:
         raise Exception("Could not retrieve schema for class='%s'" % BENCH_CLASS_NAME)
-    if cls_schema['vectorIndexType'] != "hnsw":
-        raise Exception("The schema for class='%s' is not an hnsw index." % BENCH_CLASS_NAME)
+    if cls_schema['vectorIndexType'] != VECTOR_INDEX:
+        raise Exception("The schema for class='%s' is not an %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX ))
 
     # Get object count
     resp = client.query.aggregate(BENCH_CLASS_NAME).with_meta_count().do()
@@ -112,15 +122,15 @@ else:
                 "name": "index",
             }
         ],
-        "vectorIndexType": "hnsw"
+        "vectorIndexType": VECTOR_INDEX
     }
 
     # Update the schema with this class
-    print("Creating '%s' with hnsw index..." % BENCH_CLASS_NAME)
+    print("Creating '%s' with %s index..." % (BENCH_CLASS_NAME, VECTOR_INDEX))
     client.schema.create_class(class_obj)
 
     # Retrieve updated schema and check it...
-    print("Done.  Verifying schema and hnsw index...")
+    print("Done.  Verifying schema and %s index..." % VECTOR_INDEX )
     schema = client.schema.get()
     if BENCH_CLASS_NAME not in [ cls["class"] for cls in schema["classes"] ]:
         raise Exception("Could not verify class='%s' was created." % BENCH_CLASS_NAME)
@@ -129,8 +139,8 @@ else:
         if cls["class"] == BENCH_CLASS_NAME: cls_schema = cls
     if cls_schema==None:
         raise Exception("Could not retrieve schema for class='%s'" % BENCH_CLASS_NAME)
-    if cls_schema['vectorIndexType'] != "hnsw":
-        raise Exception("The schema for class='%s' is not a hnsw index." % BENCH_CLASS_NAME)
+    if cls_schema['vectorIndexType'] != VECTOR_INDEX:
+        raise Exception("The schema for class='%s' is not a %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX))
     print("Verified.")
 STATS.append( {"event": "end_schema_check", "ts": time.time()} )
 
