@@ -35,8 +35,8 @@ BATCH_SIZE          = 1
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
 
 # File system location of all the benchmark datasets
-BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
-#BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
+#BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
+BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
 
 # Set to True to print more messages for debugging purposes
 VERBOSE             = False

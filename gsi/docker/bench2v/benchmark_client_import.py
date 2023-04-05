@@ -188,6 +188,7 @@ count = 0
 try:
     count = resp['data']['Aggregate'][BENCH_CLASS_NAME][0]['meta']['count']
 except:
+    print("resp=",resp)
     traceback.print_exc()
     raise Exception("Could not get count for '%s'" % BENCH_CLASS_NAME)
 STATS.append( {"event": "import verified %d" % count, "ts": time.time()} )
