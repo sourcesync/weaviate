@@ -61,7 +61,10 @@ func Import_dataset( host string, port uint, allocation_token string, path strin
     if verbose {                
         fmt.Println("Fvs: Import_dataset: url=", url)
     }                           
-                                
+    
+    // TODO: put this message behind an verbose check
+    fmt.Println("FVS: Training bitsze=%d", bits)
+                            
     // create the post json payload
     values := map[string]interface{}{ "dsFilePath":     path,
                                     "searchType":       DefaultSearchType,
