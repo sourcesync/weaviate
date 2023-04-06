@@ -157,8 +157,10 @@ else:
             }
         ],
         "vectorIndexType": VECTOR_INDEX,
-        "vectorIndexConfig": GEMINI_PARAMETERS
     }
+        
+    if VECTOR_INDEX == "hnsw":
+        class_obj["vectorIndexConfig"] =  GEMINI_PARAMETERS
 
     # Update the schema with this class
     print("Creating '%s' with %s index..." % (BENCH_CLASS_NAME, VECTOR_INDEX))
