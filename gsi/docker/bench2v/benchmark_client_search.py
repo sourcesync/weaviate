@@ -44,6 +44,9 @@ VERBOSE             = False
 # Hostname used for output
 HOSTNAME            = platform.node()
 
+# The "K" in KNN
+K_NEIGHBORS         = 100
+
 #
 # Globals
 #
@@ -171,6 +174,7 @@ def parse_result(result):
 def compute_recall(a, b):
     '''Computes the recall metric on query results.'''
 
+    print(a, b)
     nq, rank = a.shape
     intersect = [ numpy.intersect1d(a[i, :rank], b[i, :rank]).size for i in range(nq) ]
     ninter = sum( intersect )
@@ -181,17 +185,17 @@ def do_benchmark_query(idx):
    
     # prepare and perform the weaviate query 
     nearText = {"concepts": [ "q-%d" % idx ]}
-    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
+    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
 
     # get the data from the results we want
     timing, inds = parse_result(result)
     if VERBOSE:
         print("Test query: timing-", timing, "inds=", inds )
-        print("GT=", gt_dset[idx][0:10])
+        print("GT=", gt_dset[idx][0:K_NEIGHBORS])
 
     # compute recall
     a =  numpy.array([inds])
-    b =  numpy.array( [ list(gt_dset[idx][0:10]) ] ) 
+    b =  numpy.array( [ list(gt_dset[idx][0:K_NEIGHBORS]) ] ) 
     recall = compute_recall( a, b ) 
     if VERBOSE: print("Recall=", recall)
 
@@ -219,7 +223,7 @@ print("Done.")
 df = pandas.DataFrame( STATS )
 print(df)
 
-fname = os.path.join("results", "%s__%s__%d_of_Deep1B__q_%d.csv"  % (HOSTNAME, VECTOR_INDEX, TOTAL_ADDS, args.q ) )
+fname = os.path.join("results", "%s__%s__%d_of_Deep1B__q_%d__k_%d.csv"  % (HOSTNAME, VECTOR_INDEX, TOTAL_ADDS, args.q, K_NEIGHBORS ) )
 df.to_csv(fname)
 print("Saved", fname)
 
