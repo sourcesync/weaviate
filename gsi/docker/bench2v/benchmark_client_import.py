@@ -237,7 +237,7 @@ print("Verified.")
 # export the STATS csv
 #
 df = pd.DataFrame(STATS)
-fname = "results/Import_%s__sz_%d__bt_%d%f.csv" % ( BENCH_CLASS_NAME, count, GEMINI_TRAINING_BITS, time.time() )
+fname = "results/Import_%s__sz_%d__bt_%d_%f.csv" % ( BENCH_CLASS_NAME, count, GEMINI_TRAINING_BITS, time.time() )
 df.to_csv(fname)
 print("Wrote results", fname)
 
@@ -312,7 +312,7 @@ STATS.append( {"event": "end train", "ts": time.time()} )
 # export the STATS csv
 #
 df = pd.DataFrame(STATS)
-fname = "results/Training_%s__sz_%d__bt_%d%f.csv" % ( BENCH_CLASS_NAME, count, GEMINI_TRAINING_BITS, time.time() )
+fname = "results/Training_%s__sz_%d__bt_%d_%f.csv" % ( BENCH_CLASS_NAME, count, GEMINI_TRAINING_BITS, time.time() )
 df.to_csv(fname)
 print("Wrote results", fname)
 
