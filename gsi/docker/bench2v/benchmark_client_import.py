@@ -237,7 +237,7 @@ print("Verified.")
 # export the STATS csv
 #
 df = pd.DataFrame(STATS)
-fname = "results/%s__%d__%f.csv" % ( BENCH_CLASS_NAME, count, time.time() )
+fname = "results/Import_%s__sz_%d__bt_%d%f.csv" % ( BENCH_CLASS_NAME, count, GEMINI_TRAINING_BITS, time.time() )
 df.to_csv(fname)
 print("Wrote results", fname)
 
@@ -271,33 +271,51 @@ def parse_result(result):
 
     return async_try_again, errors, data
 
+STATS = []
+STATS.append( {"event": "start train", "ts": time.time()} )
+
 # loop here
 consec_errs = 0
 while True:
 
     print("Sending a similarity search request now...")
+    STATS.append( {"event": "before query", "ts": time.time()} )
     nearText = {"concepts": [ "q-%d" % 0 ]}
     result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(10).do()
 
     # Interpret the results
     async_try_again, errors, data = parse_result(result)
     if async_try_again:
+        STATS.append( {"event": "async try again", "ts": time.time()} )
         print("Gemini is asynchronously building an index, and has asked us to try the search again a little later...")
         time.sleep(2)
         continue
     elif errors:
+        STATS.append( {"event": "query errors", "ts": time.time()} )
         print("We got search errors->", errors)
         consec_errs += 1
         if consec_errs > 5:
             print("Too many errors.  Let's stop here.")
             break
     elif data:
+        STATS.append( {"event": "query sucess", "ts": time.time()} )
         print("Successful search, data->", data)
         consec_errs = 0
         break
     else:
         print("Unknown result! Let's stop here.")
         break
+
+STATS.append( {"event": "end train", "ts": time.time()} )
+
+#
+# export the STATS csv
+#
+df = pd.DataFrame(STATS)
+fname = "results/Training_%s__sz_%d__bt_%d%f.csv" % ( BENCH_CLASS_NAME, count, GEMINI_TRAINING_BITS, time.time() )
+df.to_csv(fname)
+print("Wrote results", fname)
+
 
 print("Done.")
 
