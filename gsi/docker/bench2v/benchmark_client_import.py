@@ -159,7 +159,7 @@ else:
         "vectorIndexType": VECTOR_INDEX,
     }
         
-    if VECTOR_INDEX == "hnsw":
+    if VECTOR_INDEX == "gemini":
         class_obj["vectorIndexConfig"] =  GEMINI_PARAMETERS
 
     # Update the schema with this class
