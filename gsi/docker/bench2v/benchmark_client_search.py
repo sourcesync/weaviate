@@ -44,8 +44,8 @@ VERBOSE             = False
 # Hostname used for output
 HOSTNAME            = platform.node()
 
-# The "K" in KNN
-K_NEIGHBORS         = 100
+# The "K" in KNN gets set at args
+K_NEIGHBORS         = -1
 
 #
 # Globals
@@ -55,10 +55,13 @@ K_NEIGHBORS         = 100
 VECTOR_INDEX        = -1
 
 # The total number of imports - will be retrieved via args
-TOTAL_ADDS      = -1
+TOTAL_ADDS          = -1
 
 # Store timings for later export to CSV
-STATS           = []
+STATS               = []
+
+# Retrieved from gemini schema
+GEMINI_TRAINING_BITS= -1
 
 #
 # Parse cmdline arguments
@@ -67,6 +70,7 @@ STATS           = []
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
 parser.add_argument("-q", type=int, required=True)
+parser.add_argument("-k", type=int, required=True)
 parser.add_argument("--gemini", action="store_true")
 args = parser.parse_args()
 
@@ -87,6 +91,8 @@ else:
     VECTOR_INDEX = "hnsw"
 print("Got requested vector index=", VECTOR_INDEX)
 
+# get k
+K_NEIGHBORS = args.k
 
 #
 # Load the GT file
@@ -131,6 +137,9 @@ if cls_schema==None:
     raise Exception("Could not retrieve schema for class='%s'" % BENCH_CLASS_NAME)
 if cls_schema['vectorIndexType'] != VECTOR_INDEX:
     raise Exception("The schema for class='%s' is not an %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX))
+if cls_schema['vectorIndexType'] == "gemini":
+    GEMINI_TRAINING_BITS = cls_schema["vectorIndexConfig"]["nBits"]
+
 print("Verified.")
 
 # Get object count
@@ -174,7 +183,7 @@ def parse_result(result):
 def compute_recall(a, b):
     '''Computes the recall metric on query results.'''
 
-    print(a, b)
+    #print(a, b)
     nq, rank = a.shape
     intersect = [ numpy.intersect1d(a[i, :rank], b[i, :rank]).size for i in range(nq) ]
     ninter = sum( intersect )
@@ -223,7 +232,8 @@ print("Done.")
 df = pandas.DataFrame( STATS )
 print(df)
 
-fname = os.path.join("results", "%s__%s__%d_of_Deep1B__q_%d__k_%d__%f.csv"  % (HOSTNAME, VECTOR_INDEX, TOTAL_ADDS, args.q, K_NEIGHBORS, time.time() ) )
+vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
+fname = "results/Search__%s__sz_%d_of_Deep1B__q_%d__k_%d__%s__%f.csv" % ( BENCH_CLASS_NAME, count, args.q, K_NEIGHBORS, vectorstr, time.time() )
 df.to_csv(fname)
 print("Saved", fname)
 
