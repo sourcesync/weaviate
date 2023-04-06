@@ -79,8 +79,12 @@ if args.n == "10K":
     TOTAL_ADDS = 10000
 elif args.n == "1M":
     TOTAL_ADDS = 1000000
+elif args.n == "2M":
+    TOTAL_ADDS = 2000000
 elif args.n == "5M":
     TOTAL_ADDS = 5000000
+elif args.n == "10M":
+    TOTAL_ADDS = 10000000
 else:
     TOTAL_ADDS = int(args.n)
 
@@ -103,8 +107,12 @@ if TOTAL_ADDS == 10000:
     gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10K-gt-%d.npy" %  args.q )
 elif TOTAL_ADDS == 1000000:
     gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 2000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-2M-gt-%d.npy" %  args.q )
 elif TOTAL_ADDS == 5000000:
     gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 10000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10M-gt-%d.npy" %  args.q )
     
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
@@ -221,6 +229,7 @@ print("Running %d queries..." % args.q)
 for idx in range(args.q):
 
     timing, recall = do_benchmark_query(idx)
+    print("Ran %d:" % (idx+1), timing, recall)
 
     # accumulate results
     STATS.append( { "qidx": idx, "recall": recall, "searchTime": timing, "host": HOSTNAME, \

@@ -76,6 +76,8 @@ if args.n == "10K":
     TOTAL_ADDS = 10000
 elif args.n == "1M":
     TOTAL_ADDS = 1000000
+elif args.n == "20M":
+    TOTAL_ADDS = 20000000
 else:
     TOTAL_ADDS = int(args.n)
 
@@ -155,8 +157,10 @@ else:
             }
         ],
         "vectorIndexType": VECTOR_INDEX,
-        "vectorIndexConfig": GEMINI_PARAMETERS
     }
+        
+    if VECTOR_INDEX == "gemini":
+        class_obj["vectorIndexConfig"] =  GEMINI_PARAMETERS
 
     # Update the schema with this class
     print("Creating '%s' with %s index..." % (BENCH_CLASS_NAME, VECTOR_INDEX))
