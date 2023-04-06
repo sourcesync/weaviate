@@ -1,0 +1,11 @@
+,qidx,recall,searchTime,host,gt_file,dset_size,argsn,vectorindex
+0,0,1.0,7801540,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+1,1,1.0,7216925,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+2,2,1.0,7928465,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+3,3,1.0,6538501,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+4,4,1.0,8139498,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+5,5,1.0,7614370,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+6,6,1.0,7762594,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+7,7,1.0,6613047,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+8,8,1.0,8082921,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
+9,9,1.0,6638670,sv7-apu12,/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy,10000,10K,gemini
