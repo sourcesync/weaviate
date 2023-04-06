@@ -74,7 +74,7 @@ type Gemini struct{
 
 }
 
-func New( centroidsHammingK int, centroidsRerank int, hammingK int, nbits int, searchtype string ) (*Gemini, error) {
+func New( centroidsHammingK int, centroidsRerank int, hammingK int, nbits uint, searchtype string ) (*Gemini, error) {
 
 
     // TODO: Currently we aren't allowing any default overrides for most user config parameters
@@ -191,7 +191,7 @@ func New( centroidsHammingK int, centroidsRerank int, hammingK int, nbits int, s
     idx.last_fvs_status = ""
     idx.fvs_server  = fvs_server
     idx.min_records_check   = min_records_check
-
+    idx.nbits       = nbits
     if idx.verbose {
         fmt.Println("Gemini index constructor db_path=", idx.db_path)
     }
