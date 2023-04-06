@@ -44,6 +44,13 @@ VECTOR_INDEX        = False
 # The csv output dir to use
 RESULTS_DIR         = "results"
 
+# Gemini index config ( nBits gets set via args )
+GEMINI_PARAMETERS   = {'skip': False, 'distance': 'flat', 'centroidsHammingK': 5000, 'centroidsRerank': 4000, 'hammingK': 3200, 'nBits': -1 }
+
+# Gemini training bits ( gets set via args )
+GEMINI_TRAINING_BITS= -1
+ 
+
 #
 # Globals
 #
@@ -61,6 +68,7 @@ STATS               = []
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
 parser.add_argument("--gemini", action="store_true")
+parser.add_argument("--bitsize", type=int, default=-1)
 args = parser.parse_args()
 
 # Set number items to import
@@ -74,8 +82,15 @@ else:
 # Set vector index
 if args.gemini:
     VECTOR_INDEX = "gemini"
+    if args.bitsize < 0:
+        raise Exception("valid --bitsize argument is required for gemini")
+    GEMINI_TRAINING_BITS = args.bitsize
+    GEMINI_PARAMETERS['nBits'] = GEMINI_TRAINING_BITS
+    print("Gemini index paramters=", GEMINI_PARAMETERS)
+
 else:
     VECTOR_INDEX = "hnsw"
+
 
 # Some local checks
 if not os.path.exists(RESULTS_DIR):
@@ -107,6 +122,10 @@ if BENCH_CLASS_NAME in [ cls["class"] for cls in schema["classes"] ]:
         raise Exception("Could not retrieve schema for class='%s'" % BENCH_CLASS_NAME)
     if cls_schema['vectorIndexType'] != VECTOR_INDEX:
         raise Exception("The schema for class='%s' is not an %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX ))
+    if VECTOR_INDEX=="gemini":
+        print("Gemini paramter check: got", cls_schema['vectorIndexConfig'], "expected", GEMINI_PARAMETERS)
+        if cls_schema['vectorIndexConfig'] != GEMINI_PARAMETERS:
+            raise Exception("gemini parameter check failed")
 
     # Get object count
     resp = client.query.aggregate(BENCH_CLASS_NAME).with_meta_count().do()
@@ -135,7 +154,8 @@ else:
                 "name": "index",
             }
         ],
-        "vectorIndexType": VECTOR_INDEX
+        "vectorIndexType": VECTOR_INDEX,
+        "vectorIndexConfig": GEMINI_PARAMETERS
     }
 
     # Update the schema with this class
@@ -154,6 +174,10 @@ else:
         raise Exception("Could not retrieve schema for class='%s'" % BENCH_CLASS_NAME)
     if cls_schema['vectorIndexType'] != VECTOR_INDEX:
         raise Exception("The schema for class='%s' is not a %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX))
+    if VECTOR_INDEX=="gemini":
+        print("Gemini paramter check: got", cls_schema['vectorIndexConfig'], "expected", GEMINI_PARAMETERS)
+        if cls_schema['vectorIndexConfig'] != GEMINI_PARAMETERS:
+            raise Exception("gemini parameter check failed")
     print("Verified.")
 STATS.append( {"event": "end_schema_check", "ts": time.time()} )
 

@@ -69,12 +69,15 @@ type Gemini struct{
     // determines if we do a min records count
     min_records_check   bool
 
+    // the training bit size
+    nbits       uint 
+
 }
 
 func New( centroidsHammingK int, centroidsRerank int, hammingK int, nbits int, searchtype string ) (*Gemini, error) {
 
 
-    // TODO: Currently we aren't allowing any default overrides
+    // TODO: Currently we aren't allowing any default overrides for most user config parameters
     if searchtype != string(DefaultSearchType) {
         return nil, fmt.Errorf("Currently you cannot override the Gemini's default search type.")
     }
@@ -96,6 +99,18 @@ func New( centroidsHammingK int, centroidsRerank int, hammingK int, nbits int, s
     if gemini_debug_flag == "true" {
         gemini_verbose = true
     }
+    
+    // Check valid training bits size
+    if (nbits==768) || (nbits==512) || (nbits==256) || (nbits==128) || (nbits==64) {
+        if gemini_verbose {
+            fmt.Println("Got valid training bit size=", nbits)
+        }
+    } else {
+        if gemini_verbose {
+            fmt.Println("ERROR: Unsupported training bitsize=%d", nbits)
+        }
+        return nil, fmt.Errorf("Unsupported training bit size=%d", nbits)
+    } 
 
     //
     // a valid gemini_allocation_id setting is required from the environment
@@ -308,7 +323,7 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
                     return nil, nil, fmt.Errorf("FVS requires a mininum of %d vectors in the dataset." , DefaultCentroidsRerank)
                 }
 
-                dataset_id, err := Import_dataset( i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, 768, i.verbose );
+                dataset_id, err := Import_dataset( i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, i.nbits, i.verbose );
                 if err!=nil {
                     return nil, nil, errors.Wrap(err, "Gemini dataset import failed.")
 
