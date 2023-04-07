@@ -61,6 +61,9 @@ TOTAL_ADDS          = -1
 # Store timings for later export to CSV
 STATS               = []
 
+# CSV export filename, gets set after arg parse
+EXPORT_FNAME        = None
+
 #
 # Parse cmd line arguments
 #
@@ -69,6 +72,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
 parser.add_argument("--gemini", action="store_true")
 parser.add_argument("--bitsize", type=int, default=-1)
+parser.add_argument("--dontexport", action="store_true",  default=False)
 args = parser.parse_args()
 
 # Set number items to import
@@ -98,9 +102,21 @@ else:
     VECTOR_INDEX = "hnsw"
 
 
-# Some local checks
+# Check results dir
 if not os.path.exists(RESULTS_DIR):
     raise Exception("The output dir %s does not exist." % RESULTS_DIR)
+
+# Get CSV export if any
+if not args.dontexport:
+    vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
+    EXPORT_FNAME = "results/Import__%s__sz_%d__%s__%f.csv" % ( BENCH_CLASS_NAME, count, vectorstr, time.time() )
+    if os.path.exists(EXPORT_FNAME):
+        raise Exception("File exists %s" % EXPORT_FNAME)
+    print("export fname=", EXPORT_FNAME)
+
+else:
+    print("WARNING: not exporting csv results")
+    time.sleep(1)
 
 #
 # Start schema checks and import
@@ -244,11 +260,10 @@ print("Verified.")
 #
 # export the STATS csv
 #
-df = pd.DataFrame(STATS)
-vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
-fname = "results/Import__%s__sz_%d__%s__%f.csv" % ( BENCH_CLASS_NAME, count, vectorstr, time.time() )
-df.to_csv(fname)
-print("Wrote results", fname)
+if not args.dontexport:
+    df = pd.DataFrame(STATS)
+    df.to_csv(EXPORT_FNAME)
+    print("Wrote results", EXPORT_FNAME)
 
 # 
 # Loop until training finishes

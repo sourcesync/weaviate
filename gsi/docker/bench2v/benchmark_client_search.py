@@ -47,6 +47,9 @@ HOSTNAME            = platform.node()
 # The "K" in KNN gets set at args
 K_NEIGHBORS         = -1
 
+# dir for export
+RESULTS_DIR         = "results"
+
 #
 # Globals
 #
@@ -63,6 +66,9 @@ STATS               = []
 # Retrieved from gemini schema
 GEMINI_TRAINING_BITS= -1
 
+# csv export file, gets set later
+EXPORT_FNAME        = None
+
 #
 # Parse cmdline arguments
 #
@@ -72,6 +78,7 @@ parser.add_argument("-n", required=True)
 parser.add_argument("-q", type=int, required=True)
 parser.add_argument("-k", type=int, required=True)
 parser.add_argument("--gemini", action="store_true")
+parser.add_argument("--dontexport",  default=False, action="store_true")
 args = parser.parse_args()
 
 # Set the search dabasize size
@@ -97,6 +104,21 @@ print("Got requested vector index=", VECTOR_INDEX)
 
 # get k
 K_NEIGHBORS = args.k
+
+# Check results dir
+if not os.path.exists(RESULTS_DIR):
+    raise Exception("The output dir %s does not exist." % RESULTS_DIR)
+
+# Get CSV export if any
+if not args.dontexport:
+    vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
+    EXPORT_FNAME = "results/Search__%s__sz_%d_of_Deep1B__q_%d__k_%d__%s__%f.csv" % ( BENCH_CLASS_NAME, count, args.q, K_NEIGHBORS, vectorstr, time.time() )
+    if os.path.exists(EXPORT_FNAME):
+        raise Exception("File exists %s" % EXPORT_FNAME)
+    print("export fname=", EXPORT_FNAME)
+else:
+    print("WARNING: not exporting csv results")
+    time.sleep(1)
 
 #
 # Load the GT file
@@ -238,13 +260,11 @@ for idx in range(args.q):
 print("Done.")
 
 # export results to csv
-df = pandas.DataFrame( STATS )
-print(df)
-
-vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
-fname = "results/Search__%s__sz_%d_of_Deep1B__q_%d__k_%d__%s__%f.csv" % ( BENCH_CLASS_NAME, count, args.q, K_NEIGHBORS, vectorstr, time.time() )
-df.to_csv(fname)
-print("Saved", fname)
+if not args.dontexport:
+    df = pandas.DataFrame( STATS )
+    print(df)
+    df.to_csv(EXPORT_FNAME)
+    print("Saved", EXPORT_FNAME)
 
 sys.exit(0)
 
