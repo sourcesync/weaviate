@@ -18,6 +18,7 @@ import weaviate
 import requests
 import argparse
 import pandas as pd
+import platform
 
 #
 # Configuration
@@ -109,7 +110,7 @@ if not os.path.exists(RESULTS_DIR):
 # Get CSV export if any
 if not args.dontexport:
     vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
-    EXPORT_FNAME = "results/Import__%s__sz_%d__%s__%f.csv" % ( BENCH_CLASS_NAME, count, vectorstr, time.time() )
+    EXPORT_FNAME = "%s/Import-%s__%s__sz_%d__%s__%f.csv" % ( RESULTS_DIR, platform.node(), BENCH_CLASS_NAME, TOTAL_ADDS, vectorstr, time.time() )
     if os.path.exists(EXPORT_FNAME):
         raise Exception("File exists %s" % EXPORT_FNAME)
     print("export fname=", EXPORT_FNAME)
@@ -335,11 +336,10 @@ STATS.append( {"event": "end train", "ts": time.time()} )
 #
 # export the STATS csv
 #
-df = pd.DataFrame(STATS)
-vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
-fname = "results/Training_%s__sz_%d_of_Deep1B___%s__%f.csv" % ( BENCH_CLASS_NAME, count, vectorstr, time.time() )
-df.to_csv(fname)
-print("Wrote results", fname)
+if not args.dontexport:
+    df = pd.DataFrame(STATS)
+    df.to_csv(EXPORT_FNAME)
+    print("Wrote results", EXPORT_FNAME)
 
 
 print("Done.")
