@@ -38,6 +38,6 @@ services:
     environment:
       VERBOSE: 0
       ENABLE_CUDA: 0
-      DATABASE_FILE: "/datasets/deep-10K.npy"
+      DATABASE_FILE: "/datasets/deep-5M.npy"
       QUERY_FILE: "/datasets/deep-queries-1000.npy"
-      GROUND_TRUTH_FILE: "/datasets/deep-10K-gt-1000.npy"
+      GROUND_TRUTH_FILE: "/datasets/deep-5M-gt-1000.npy"
