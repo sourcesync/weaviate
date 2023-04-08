@@ -193,7 +193,7 @@ if not args.dontexport:
     print("export fname=", EXPORT_FNAME)
 
 #
-# Perform searches
+# Perform the benchmark searches
 #
 
 def parse_result(result):
