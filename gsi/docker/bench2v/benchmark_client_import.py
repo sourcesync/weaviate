@@ -50,7 +50,9 @@ GEMINI_PARAMETERS   = {'skip': False, 'distance': 'flat', 'centroidsHammingK': 5
 
 # Gemini training bits ( gets set via args )
 GEMINI_TRAINING_BITS= -1
- 
+
+# Generally, we don't want to ever allow vector cache-ing in benchmarking
+ALLOW_CACHEING      = False
 
 #
 # Globals
@@ -137,6 +139,8 @@ STATS.append( {"event": "start_schema_check", "ts": time.time()} )
 if BENCH_CLASS_NAME in [ cls["class"] for cls in schema["classes"] ]:
     print("Warning: Found class='%s'.  Verifying..." % BENCH_CLASS_NAME)
 
+    raise Exception("Currently we don't recover from an existing benchmark run.  Please remove /var/lib/weaviate and run again.")
+
     # Get class schema and validate
     cls_schema = None
     for cls in schema["classes"]:
@@ -182,6 +186,8 @@ else:
         
     if VECTOR_INDEX == "gemini":
         class_obj["vectorIndexConfig"] =  GEMINI_PARAMETERS
+    elif VECTOR_INDEX == "hnsw" and not ALLOW_CACHEING:
+        class_obj["vectorIndexConfig"]["vectorCacheMaxObjects"] = 0
 
     # Update the schema with this class
     print("Creating '%s' with %s index..." % (BENCH_CLASS_NAME, VECTOR_INDEX))
@@ -200,10 +206,20 @@ else:
     if cls_schema['vectorIndexType'] != VECTOR_INDEX:
         raise Exception("The schema for class='%s' is not a %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX))
     if VECTOR_INDEX=="gemini":
-        print("Gemini paramter check: got", cls_schema['vectorIndexConfig'], "expected", GEMINI_PARAMETERS)
+        print("Gemini parameter check: got", cls_schema['vectorIndexConfig'], "expected", GEMINI_PARAMETERS)
         if cls_schema['vectorIndexConfig'] != GEMINI_PARAMETERS:
             raise Exception("gemini parameter check failed")
-    print("Verified.")
+        print("Gemini config ok.")
+        sleep(5)
+    elif VECTOR_INDEX=="hnsw" and not ALLOW_CACHEING:
+        print("Hnsw parameter check: got", cls_schema['vectorIndexConfig'])
+        if cls_schema['vectorIndexConfig']["vectorIndexConfig"]!= 0:
+            raise Exception("Invalid hnsw index config")
+        print("Hnsw config ok.")
+        sleep(5)
+
+    print("Schema verified.")
+
 STATS.append( {"event": "end_schema_check", "ts": time.time()} )
 
 # Prepare a batch process for importing data to Weaviate.
