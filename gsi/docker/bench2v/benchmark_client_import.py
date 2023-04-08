@@ -187,7 +187,7 @@ else:
     if VECTOR_INDEX == "gemini":
         class_obj["vectorIndexConfig"] =  GEMINI_PARAMETERS
     elif VECTOR_INDEX == "hnsw" and not ALLOW_CACHEING:
-        class_obj["vectorIndexConfig"]["vectorCacheMaxObjects"] = 0
+        class_obj["vectorIndexConfig"] = {"vectorCacheMaxObjects":0}
 
     # Update the schema with this class
     print("Creating '%s' with %s index..." % (BENCH_CLASS_NAME, VECTOR_INDEX))
