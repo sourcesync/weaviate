@@ -210,13 +210,13 @@ else:
         if cls_schema['vectorIndexConfig'] != GEMINI_PARAMETERS:
             raise Exception("gemini parameter check failed")
         print("Gemini config ok.")
-        sleep(5)
+        time.sleep(5)
     elif VECTOR_INDEX=="hnsw" and not ALLOW_CACHEING:
         print("Hnsw parameter check: got", cls_schema['vectorIndexConfig'])
         if cls_schema['vectorIndexConfig']["vectorCacheMaxObjects"]!= 0:
             raise Exception("Invalid hnsw index config")
         print("Hnsw config ok.")
-        sleep(5)
+        time.sleep(5)
 
     print("Schema verified.")
 
