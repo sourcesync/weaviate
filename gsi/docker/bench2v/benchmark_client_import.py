@@ -87,6 +87,8 @@ elif args.n == "2M":
     TOTAL_ADDS =2000000
 elif args.n == "5M":
     TOTAL_ADDS =5000000
+elif args.n == "10M":
+    TOTAL_ADDS =10000000
 elif args.n == "20M":
     TOTAL_ADDS = 20000000
 else:
