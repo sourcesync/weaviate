@@ -111,7 +111,7 @@ if not os.path.exists(RESULTS_DIR):
 
 # Get CSV export if any
 if not args.dontexport:
-    vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
+    vectorstr = "%s__%s" % (VECTOR_INDEX, ("allowcacheing_%s__" % str(ALLOW_CACHEING)) if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
     EXPORT_FNAME = "%s/Import-%s__%s__sz_%d__%s__%f.csv" % ( RESULTS_DIR, platform.node(), BENCH_CLASS_NAME, TOTAL_ADDS, vectorstr, time.time() )
     if os.path.exists(EXPORT_FNAME):
         raise Exception("File exists %s" % EXPORT_FNAME)
