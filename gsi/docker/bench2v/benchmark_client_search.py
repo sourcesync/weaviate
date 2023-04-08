@@ -192,6 +192,7 @@ if not args.dontexport:
         raise Exception("File exists %s" % EXPORT_FNAME)
     print("export fname=", EXPORT_FNAME)
 
+
 #
 # Perform the benchmark searches
 #
