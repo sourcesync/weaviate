@@ -35,8 +35,8 @@ BATCH_SIZE          = 1
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
 
 # File system location of all the benchmark datasets
-#BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
-BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
+BENCH_DATASET_DIR  = "/mnt/nas1/fvs_benchmark_datasets/"
+#BENCH_DATASET_DIR   = "/Users/gwilliams/Projects/GSI/Weaviate/data"
 
 # Set to True to print more messages for debugging purposes
 VERBOSE             = False
@@ -109,18 +109,6 @@ K_NEIGHBORS = args.k
 if not os.path.exists(RESULTS_DIR):
     raise Exception("The output dir %s does not exist." % RESULTS_DIR)
 
-# Get CSV export if any
-if not args.dontexport:
-    vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
-    EXPORT_FNAME = "%s/Search-%s__%s__sz_%d_of_Deep1B__q_%d__k_%d__%s__%f.csv" % \
-        ( RESULTS_DIR, HOSTNAME, BENCH_CLASS_NAME,  TOTAL_ADDS, args.q, K_NEIGHBORS, vectorstr, time.time() )
-    if os.path.exists(EXPORT_FNAME):
-        raise Exception("File exists %s" % EXPORT_FNAME)
-    print("export fname=", EXPORT_FNAME)
-else:
-    print("WARNING: not exporting csv results")
-    time.sleep(1)
-
 #
 # Load the GT file
 #
@@ -190,6 +178,19 @@ print("Got database size=%d, verifying..." % count)
 if count !=  TOTAL_ADDS:
     raise Exception("Expected database size of %d but got %d" % ( TOTAL_ADDS, count ))
 print("Verifed.")
+
+# Check results dir
+if not os.path.exists(RESULTS_DIR):
+    raise Exception("The output dir %s does not exist." % RESULTS_DIR)
+
+# Get CSV export if any
+if not args.dontexport:
+    vectorstr = "%s__%s" % (VECTOR_INDEX, "" if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
+    EXPORT_FNAME = "%s/Search-%s__%s__sz_%d_of_Deep1B__q_%d__k_%d__%s__%f.csv" % \
+        ( RESULTS_DIR, HOSTNAME, BENCH_CLASS_NAME,  TOTAL_ADDS, args.q, K_NEIGHBORS, vectorstr, time.time() )
+    if os.path.exists(EXPORT_FNAME):
+        raise Exception("File exists %s" % EXPORT_FNAME)
+    print("export fname=", EXPORT_FNAME)
 
 #
 # Perform searches
