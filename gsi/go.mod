@@ -24,12 +24,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.1
 	github.com/rs/cors v1.5.0
-    github.com/weaviate/contextionary v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/square/go-jose v2.3.0+incompatible
 	github.com/stretchr/testify v1.8.0
 	github.com/testcontainers/testcontainers-go v0.13.0
+	github.com/weaviate/contextionary v1.2.0
 	github.com/willf/bloom v2.0.3+incompatible
 	go.etcd.io/bbolt v1.3.5
 	golang.org/x/net v0.7.0
@@ -66,7 +66,7 @@ require (
 	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/containerd v1.5.18 // indirect
 	github.com/docker/distribution v2.8.0+incompatible // indirect
-	github.com/docker/docker v20.10.11+incompatible // indirect
+	github.com/docker/docker v20.10.24+incompatible // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
