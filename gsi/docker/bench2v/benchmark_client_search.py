@@ -95,6 +95,8 @@ elif args.n == "5M":
     TOTAL_ADDS = 5000000
 elif args.n == "10M":
     TOTAL_ADDS = 10000000
+elif args.n == "20M":
+    TOTAL_ADDS = 20000000
 else:
     TOTAL_ADDS = int(args.n)
 
@@ -127,6 +129,8 @@ elif TOTAL_ADDS == 5000000:
     gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
 elif TOTAL_ADDS == 10000000:
     gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 20000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-20M-gt-%d.npy" %  args.q )
     
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
