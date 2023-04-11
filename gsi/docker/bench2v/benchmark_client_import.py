@@ -28,7 +28,7 @@ import platform
 WEAVIATE_CONN       = "http://localhost:8091"
 
 # Weaviate import batch size
-BATCH_SIZE          = 500
+BATCH_SIZE          = 100
 
 # Name of the custom class for this test program
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
