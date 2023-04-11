@@ -28,7 +28,7 @@ import platform
 WEAVIATE_CONN       = "http://localhost:8091"
 
 # Weaviate import batch size
-BATCH_SIZE          = 1
+BATCH_SIZE          = 500
 
 # Name of the custom class for this test program
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
@@ -232,7 +232,7 @@ print("Uploading benchmark indices to Weaviate (max of around %d strings)" % TOT
 count = 0
 while True: # lets loop until we exceed the MAX configured above
     with client.batch as batch:
-        batch.batch_size=1
+        batch.batch_size=BATCH_SIZE
         # Batch import all Questions
         for i, d in enumerate(range(TOTAL_ADDS)):
             if VERBOSE: print(f"importing index: {i}")
