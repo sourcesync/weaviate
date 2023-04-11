@@ -5,6 +5,8 @@ import (
     "fmt"
     "time"
     "math/rand"
+    "log"
+    "os"
 
     geminiplugin "github.com/gsi/weaviate/gemini_plugin"
 )
@@ -22,6 +24,10 @@ func main() {
     // Create a temp file that will automatically delete itself when this app is done
     ranstr := randomString(10)
     ranfilepath := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+    _, ferr := os.Stat(ranfilepath)
+    if ferr == nil {
+        log.Fatal("ERROR: File exists.")
+    } 
     fmt.Println("Got temp file path->", ranfilepath)
 
     //
