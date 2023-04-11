@@ -314,7 +314,7 @@ def parse_result(result):
 
     return async_try_again, errors, data
 
-STATS = []
+#STATS = []
 STATS.append( {"event": "start train", "ts": time.time()} )
 
 # loop here
