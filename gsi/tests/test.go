@@ -41,7 +41,6 @@ func main() {
     // Build a numpy file with the array
     //
     fmt.Println("Testing Numpy_append_float32_array")
-    //row_count, dim, aerr := geminiplugin.Numpy_append_float32_array( file.Name(), arr, 96, 1)
     row_count, dim, aerr := geminiplugin.Numpy_append_float32_array( ranfilepath, arr, 96, 1)
     if aerr != nil {
         fmt.Println("Error creating numpy file with float32 array.", aerr)
