@@ -5,7 +5,7 @@ services:
     - --host
     - 0.0.0.0
     - --port
-    - '8091'
+    - '801'
     - --scheme
     - http
     image: gsi/weaviate
@@ -13,7 +13,7 @@ services:
     - 8091:8091
     volumes:
       - /var/lib/weaviate:/var/lib/weaviate
-    restart: "no"
+    restart: on-failure:0
     environment:
       QUERY_DEFAULTS_LIMIT: 25
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
@@ -27,12 +27,7 @@ services:
     ports:
      - "8080:8080"
     volumes:
-#     - /mnt/nas1/fvs_benchmark_datasets:/datasets
-     - /Users/gwilliams/Projects/GSI/Weaviate/data:/datasets
-    restart: "no"
+     - /Users/gwilliams/Projects/GSI/Weaviate/data/:/datasets
     environment:
-      VERBOSE: 0
       ENABLE_CUDA: 0
-      DATABASE_FILE: "/datasets/deep-10K.npy"
-      QUERY_FILE: "/datasets/deep-queries-1000.npy"
-      GROUND_TRUTH_FILE: "/datasets/deep-10K-gt-1000.npy"
+      NUMPY_FILE: "/datasets/deep-1M.npy"
