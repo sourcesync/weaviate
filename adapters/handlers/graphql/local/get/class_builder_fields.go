@@ -598,7 +598,6 @@ func extractProperties(className string, selections *ast.SelectionSet,
 						continue
 					} else if additionalCheck.isAdditional(s.Name.Value) {
 						additionalProperty := s.Name.Value
-						additionalProps.SearchTime = true
 
 						if additionalProperty == "classification" {
 							additionalProps.Classification = true
@@ -636,10 +635,6 @@ func extractProperties(className string, selections *ast.SelectionSet,
 						}
 						if additionalProperty == "lastUpdateTimeUnix" {
 							additionalProps.LastUpdateTimeUnix = true
-							continue
-						}
-						if additionalProperty == "searchTime" {
-							additionalProps.SearchTime = true
 							continue
 						}
 						if modulesProvider != nil {

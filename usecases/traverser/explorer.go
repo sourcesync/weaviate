@@ -196,8 +196,6 @@ func (e *Explorer) getClassVectorSearch(ctx context.Context,
 		params.AdditionalProperties.Vector = true
 	}
 
-	params.AdditionalProperties.SearchTime = true
-
 	res, err := e.search.VectorClassSearch(ctx, params)
 	if err != nil {
 		return nil, errors.Errorf("explorer: get class: vector search: %v", err)
@@ -405,11 +403,8 @@ func (e *Explorer) searchResultsToGetResponse(ctx context.Context,
 		}
 
 		if params.AdditionalProperties.LastUpdateTimeUnix {
-			// TODO: This used to be "=res.Updated"
-			additionalProperties["lastUpdateTimeUnix"] = res.SearchTime
-		}
-		if params.AdditionalProperties.SearchTime {
-			additionalProperties["searchTime"] = res.SearchTime
+			// TODO: This used to be "=res.Updated" but now is "res.SearchTime"
+			additionalProperties["lastUpdateTimeUnix"] = res.Updated
 		}
 
 		if len(additionalProperties) > 0 {
