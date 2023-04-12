@@ -150,6 +150,9 @@ class ApiClient(object):
             post_params=post_params, body=body,
             _preload_content=_preload_content,
             _request_timeout=_request_timeout)
+#        print("RESPONSE:")
+#        print("\t",response_data)
+#        print()
 
         self.last_response = response_data
 
@@ -334,6 +337,16 @@ class ApiClient(object):
                 post_params=None, body=None, _preload_content=True,
                 _request_timeout=None):
         """Makes the HTTP request using RESTClient."""
+        #GWa
+        print()
+        print("MAKING HTTP CALL:")
+        print("\tmethod:\t\t",method)
+        print("\turl:\t\t\t",url)
+        print("\theaders:\t\t",headers)
+        print("\tquery_params:\t",query_params)
+        print("\tbody:\t\t\t",body)
+        print()
+
         if method == "GET":
             return self.rest_client.GET(url,
                                         query_params=query_params,
