@@ -9,8 +9,6 @@ VERBOSE = int( os.getenv("VERBOSE") )
 if VERBOSE: print("Got verbose env=", VERBOSE)
 
 app = FastAPI()
-vec : Vectorizer
-meta_config : Meta
 logger = getLogger('uvicorn')
 logger.propagate = True if VERBOSE else False
 
