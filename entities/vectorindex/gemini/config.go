@@ -12,55 +12,54 @@
 package gemini
 
 import (
-    "encoding/json"
-    "github.com/pkg/errors"
-    "github.com/weaviate/weaviate/entities/schema"
+	"encoding/json"
+
+	"github.com/pkg/errors"
+	"github.com/weaviate/weaviate/entities/schema"
 )
 
 // A minimal number of gemini index config parameters are available here in UserConfig.
 const (
-    DefaultSkip                 = false
-    DefaultSearchType           = "flat"
-    DefaultCentroidsHammingK    = 5000
-    DefaultCentroidsRerank      = 4000
-    DefaultHammingK             = 3200
-    DefaultNBits                = 64
+	DefaultSkip              = false
+	DefaultSearchType        = "flat"
+	DefaultCentroidsHammingK = 5000
+	DefaultCentroidsRerank   = 4000
+	DefaultHammingK          = 3200
+	DefaultNBits             = 768
 )
 
 type UserConfig struct {
-    Skip                    bool   `json:"skip"`
-    SearchType              string `json:"distance"`
-    CentroidsHammingK       int    `json:"centroidsHammingK"`
-    CentroidsRerank         int    `json:"centroidsRerank"`
-    HammingK                int    `json:"hammingK"`
-    NBits                   int    `json:"nBits"`
+	Skip              bool   `json:"skip"`
+	SearchType        string `json:"distance"`
+	CentroidsHammingK int    `json:"centroidsHammingK"`
+	CentroidsRerank   int    `json:"centroidsRerank"`
+	HammingK          int    `json:"hammingK"`
+	NBits             int    `json:"nBits"`
 }
 
 func (u UserConfig) IndexType() string {
-    return "gemini"
+	return "gemini"
 }
 
 func (c *UserConfig) SetDefaults() {
-    c.Skip              = DefaultSkip
-    c.SearchType        = DefaultSearchType
-    c.CentroidsHammingK = DefaultCentroidsHammingK
-    c.CentroidsRerank   = DefaultCentroidsRerank
-    c.HammingK          = DefaultHammingK
-    c.NBits             = DefaultNBits
+	c.Skip = DefaultSkip
+	c.SearchType = DefaultSearchType
+	c.CentroidsHammingK = DefaultCentroidsHammingK
+	c.CentroidsRerank = DefaultCentroidsRerank
+	c.HammingK = DefaultHammingK
+	c.NBits = DefaultNBits
 }
 
-    
 func ParseUserConfig(input interface{}) (schema.VectorIndexConfig, error) {
-    uc := UserConfig{}
-    uc.SetDefaults()
-    // TODO: Currently we are only allow the setting of nbits
-    dct := input.(map[string]interface {})
-    dval := dct["nBits"]
-    val, err := dval.(json.Number).Int64()
-    if err !=nil {
-        return nil, errors.Wrapf( err, "Could not parse user config.")
-    }
-    uc.NBits = int(val)
-    return uc, nil
+	uc := UserConfig{}
+	uc.SetDefaults()
+	// TODO: Currently we are only allow the setting of nbits
+	dct := input.(map[string]interface{})
+	dval := dct["nBits"]
+	val, err := dval.(json.Number).Int64()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Could not parse user config.")
+	}
+	uc.NBits = int(val)
+	return uc, nil
 }
- 
