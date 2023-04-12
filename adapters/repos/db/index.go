@@ -18,8 +18,6 @@ import (
 	"sync"
 	"time"
 
-	//"runtime"
-
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -1022,7 +1020,6 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 		return nil, nil, searchTook, err
 	}
 
-	//GW runtime.Breakpoint()
 	if len(shardNames) == 1 {
 		return out, dists, searchTook, nil
 	}
@@ -1030,7 +1027,6 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 	if len(shardNames) > 1 && len(sort) > 0 {
 		out, dists, err := i.sort(out, dists, sort, limit)
 		return out, dists, searchTook, err
-		//GW return i.sort(out, dists, sort, limit)
 	}
 
 	out, dists = newDistancesSorter().sort(out, dists)
@@ -1039,7 +1035,6 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 		dists = dists[:limit]
 	}
 
-	//GW runtime.Breakpoint()
 	return out, dists, searchTook, nil
 }
 

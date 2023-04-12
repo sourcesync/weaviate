@@ -440,7 +440,6 @@ func (r *resolver) makeResolveGetClass(className string) graphql.FieldResolveFn 
 		setLimitBasedOnVectorSearchParams(&params)
 
 		return func() (interface{}, error) {
-			//GW runtime.Breakpoint()
 			return resolver.GetClass(p.Context, principalFromContext(p.Context), params)
 		}, nil
 	}
@@ -582,8 +581,6 @@ func extractProperties(className string, selections *ast.SelectionSet,
 	var additionalProps additional.Properties
 	additionalCheck := &additionalCheck{modulesProvider}
 
-	//GW runtime.Breakpoint()
-
 	for _, selection := range selections.Selections {
 		field := selection.(*ast.Field)
 		name := field.Name.Value
@@ -601,9 +598,8 @@ func extractProperties(className string, selections *ast.SelectionSet,
 						continue
 					} else if additionalCheck.isAdditional(s.Name.Value) {
 						additionalProperty := s.Name.Value
-						//GW
 						additionalProps.SearchTime = true
-						//GW
+
 						if additionalProperty == "classification" {
 							additionalProps.Classification = true
 							continue
@@ -642,13 +638,10 @@ func extractProperties(className string, selections *ast.SelectionSet,
 							additionalProps.LastUpdateTimeUnix = true
 							continue
 						}
-						//GW
 						if additionalProperty == "searchTime" {
-							//GW runtime.Breakpoint()
 							additionalProps.SearchTime = true
 							continue
 						}
-						//GW
 						if modulesProvider != nil {
 							if additionalCheck.isModuleAdditional(additionalProperty) {
 								additionalProps.ModuleParams = getModuleParams(additionalProps.ModuleParams)

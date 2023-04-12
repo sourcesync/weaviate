@@ -412,7 +412,6 @@ func SearchResultsWithDists(in []*Object, addl additional.Properties,
 	out := make(search.Results, len(in))
 
 	for i, elem := range in {
-		//GW out[i] = elem.SearchResultWithDist(addl, dists[i])
 		out[i] = elem.SearchResultWithDist(addl, searchTook, dists[i])
 	}
 

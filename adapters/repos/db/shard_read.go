@@ -17,8 +17,6 @@ import (
 	"encoding/binary"
 	"time"
 
-	//GW "runtime"
-
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -275,7 +273,6 @@ func (s *Shard) objectVectorSearch(ctx context.Context,
 
 	indexSearchTook := int64(time.Since(beforeIndexSearch))
 
-	//GW runtime.Breakpoint()
 	beforeVector := time.Now()
 
 	if len(ids) == 0 {
