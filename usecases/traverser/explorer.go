@@ -13,7 +13,7 @@ package traverser
 
 import (
 	"context"
-    //"runtime"
+	//"runtime"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/pkg/errors"
@@ -197,8 +197,8 @@ func (e *Explorer) getClassVectorSearch(ctx context.Context,
 		params.AdditionalProperties.Vector = true
 	}
 
-    //runtime.Breakpoint()
-    params.AdditionalProperties.SearchTime = true
+	//runtime.Breakpoint()
+	params.AdditionalProperties.SearchTime = true
 
 	res, err := e.search.VectorClassSearch(ctx, params)
 	if err != nil {
@@ -410,13 +410,13 @@ func (e *Explorer) searchResultsToGetResponse(ctx context.Context,
 			//GW additionalProperties["lastUpdateTimeUnix"] = res.Updated
 			additionalProperties["lastUpdateTimeUnix"] = res.SearchTime
 		}
-	
-        //GW
-        //runtime.Breakpoint()	
-        if params.AdditionalProperties.SearchTime {
+
+		//GW
+		//runtime.Breakpoint()
+		if params.AdditionalProperties.SearchTime {
 			additionalProperties["searchTime"] = res.SearchTime
 		}
-        //GW
+		//GW
 
 		if len(additionalProperties) > 0 {
 			res.Schema.(map[string]interface{})["_additional"] = additionalProperties
@@ -427,7 +427,7 @@ func (e *Explorer) searchResultsToGetResponse(ctx context.Context,
 		output = append(output, res.Schema)
 	}
 
-    //runtime.Breakpoint()	
+	//runtime.Breakpoint()
 	return output, nil
 }
 

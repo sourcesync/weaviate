@@ -12,19 +12,20 @@
 package gemini
 
 import (
-    "encoding/json"
-    "github.com/pkg/errors"
-    "github.com/weaviate/weaviate/entities/schema"
+	"encoding/json"
+
+	"github.com/pkg/errors"
+	"github.com/weaviate/weaviate/entities/schema"
 )
 
 // A minimal number of gemini index config parameters are available here in UserConfig.
 const (
-    DefaultSkip                 = false
-    DefaultSearchType           = "flat"
-    DefaultCentroidsHammingK    = 5000
-    DefaultCentroidsRerank      = 4000
-    DefaultHammingK             = 3200
-    DefaultNBits                = 768
+	DefaultSkip              = false
+	DefaultSearchType        = "flat"
+	DefaultCentroidsHammingK = 5000
+	DefaultCentroidsRerank   = 4000
+	DefaultHammingK          = 3200
+	DefaultNBits             = 768
 )
 
 type UserConfig struct {
@@ -50,15 +51,15 @@ func (c *UserConfig) SetDefaults() {
 }
 
 func ParseUserConfig(input interface{}) (schema.VectorIndexConfig, error) {
-    uc := UserConfig{}
-    uc.SetDefaults()
-    // TODO: Currently we are only allow the setting of nbits
-    dct := input.(map[string]interface {})
-    dval := dct["nBits"]
-    val, err := dval.(json.Number).Int64()
-    if err !=nil {
-        return nil, errors.Wrapf( err, "Could not parse user config.")
-    }
-    uc.NBits = int(val)
-    return uc, nil
+	uc := UserConfig{}
+	uc.SetDefaults()
+	// TODO: Currently we are only allow the setting of nbits
+	dct := input.(map[string]interface{})
+	dval := dct["nBits"]
+	val, err := dval.(json.Number).Int64()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Could not parse user config.")
+	}
+	uc.NBits = int(val)
+	return uc, nil
 }

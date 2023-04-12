@@ -17,7 +17,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
-    //GW"runtime"
+
+	//GW"runtime"
 
 	"github.com/pkg/errors"
 	"github.com/weaviate/weaviate/adapters/repos/db/refcache"
@@ -55,7 +56,7 @@ func (db *DB) GetQueryMaximumResults() int {
 func (db *DB) ClassObjectSearch(ctx context.Context,
 	params dto.GetParams,
 ) ([]*storobj.Object, []float32, error) {
-    //GW runtime.Breakpoint()
+	//GW runtime.Breakpoint()
 	idx := db.GetIndex(schema.ClassName(params.ClassName))
 	if idx == nil {
 		return nil, nil, fmt.Errorf("tried to browse non-existing index for %s", params.ClassName)
@@ -105,13 +106,13 @@ func (db *DB) VectorClassSearch(ctx context.Context,
 		return nil, errors.Wrapf(err, "invalid pagination params")
 	}
 
-    //GW runtime.Breakpoint()
+	//GW runtime.Breakpoint()
 	idx := db.GetIndex(schema.ClassName(params.ClassName))
 	if idx == nil {
 		return nil, fmt.Errorf("tried to browse non-existing index for %s", params.ClassName)
 	}
 
-    //GW runtime.Breakpoint()
+	//GW runtime.Breakpoint()
 	targetDist := extractDistanceFromParams(params)
 	res, dists, searchTook, err := idx.objectVectorSearch(ctx, params.SearchVector, targetDist,
 		totalLimit, params.Filters, params.Sort, params.AdditionalProperties)
@@ -149,7 +150,7 @@ func (db *DB) ClassObjectVectorSearch(ctx context.Context, class string, vector 
 ) ([]*storobj.Object, []float32, int64, error) {
 	totalLimit := offset + limit
 
-    //GW runtime.Breakpoint()
+	//GW runtime.Breakpoint()
 	index := db.GetIndex(schema.ClassName(class))
 	if index == nil {
 		return nil, nil, 0, fmt.Errorf("tried to browse non-existing index for %s", class)

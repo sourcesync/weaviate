@@ -17,7 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-    //"runtime"
+
+	//"runtime"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
@@ -1021,7 +1022,7 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 		return nil, nil, searchTook, err
 	}
 
-    //GW runtime.Breakpoint()
+	//GW runtime.Breakpoint()
 	if len(shardNames) == 1 {
 		return out, dists, searchTook, nil
 	}
@@ -1038,7 +1039,7 @@ func (i *Index) objectVectorSearch(ctx context.Context, searchVector []float32,
 		dists = dists[:limit]
 	}
 
-    //GW runtime.Breakpoint()
+	//GW runtime.Breakpoint()
 	return out, dists, searchTook, nil
 }
 
