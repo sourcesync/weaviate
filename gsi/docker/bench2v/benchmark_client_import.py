@@ -28,7 +28,7 @@ import platform
 WEAVIATE_CONN       = "http://localhost:8091"
 
 # Weaviate import batch size
-BATCH_SIZE          = 100
+BATCH_SIZE          = 10
 
 # Name of the custom class for this test program
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
@@ -46,10 +46,13 @@ VECTOR_INDEX        = False
 RESULTS_DIR         = "results"
 
 # Gemini index config ( nBits gets set via args )
-GEMINI_PARAMETERS   = {'skip': False, 'distance': 'flat', 'centroidsHammingK': 5000, 'centroidsRerank': 4000, 'hammingK': 3200, 'nBits': -1 }
+GEMINI_PARAMETERS   = {'skip': False, 'searchType': 'clusters', 'centroidsHammingK': 5000, 'centroidsRerank': 4000, 'hammingK': 3200, 'nBits': -1 }
 
 # Gemini training bits ( gets set via args )
 GEMINI_TRAINING_BITS= -1
+
+# Gemini search type ( gets set via args )
+GEMINI_SEARCH_TYPE  = None
 
 # Generally, we don't want to ever allow vector cache-ing in benchmarking
 ALLOW_CACHEING      = False
@@ -75,6 +78,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
 parser.add_argument("--gemini", action="store_true")
 parser.add_argument("--bitsize", type=int, default=-1)
+parser.add_argument("--searchtype", choices={'flat','clusters'})
 parser.add_argument("--dontexport", action="store_true",  default=False)
 args = parser.parse_args()
 
@@ -101,6 +105,12 @@ if args.gemini:
         raise Exception("valid --bitsize argument is required for gemini")
     GEMINI_TRAINING_BITS = args.bitsize
     GEMINI_PARAMETERS['nBits'] = GEMINI_TRAINING_BITS
+
+    if args.searchtype==None:
+        raise Exception("valid --searchtype argument is required for gemini")    
+    GEMINI_SEARCH_TYPE = args.searchtype 
+    GEMINI_PARAMETERS['searchType'] = GEMINI_SEARCH_TYPE
+
     print("Gemini index paramters=", GEMINI_PARAMETERS)
 
 else:
@@ -113,7 +123,7 @@ if not os.path.exists(RESULTS_DIR):
 
 # Get CSV export if any
 if not args.dontexport:
-    vectorstr = "%s__%s" % (VECTOR_INDEX, ("allowcacheing_%s__" % str(ALLOW_CACHEING)) if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
+    vectorstr = "%s__%s" % (VECTOR_INDEX, ("allowcacheing_%s__" % str(ALLOW_CACHEING)) if VECTOR_INDEX == "hnsw" else ("bt_%d__st_%s" % (GEMINI_TRAINING_BITS, GEMINI_SEARCH_TYPE) ))
     EXPORT_FNAME = "%s/Import-%s__%s__sz_%d__%s__%f.csv" % ( RESULTS_DIR, platform.node(), BENCH_CLASS_NAME, TOTAL_ADDS, vectorstr, time.time() )
     if os.path.exists(EXPORT_FNAME):
         raise Exception("File exists %s" % EXPORT_FNAME)
