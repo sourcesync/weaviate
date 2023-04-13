@@ -64,6 +64,9 @@ ALLOW_CACHEING      = False
 # The total number of imports - will be retrieved via args
 TOTAL_ADDS          = -1 
 
+# (Possibly) assume an existing dataset at the start
+START_AT            = -1
+
 # Store timings for later export to CSV
 STATS               = []
 
@@ -76,11 +79,15 @@ EXPORT_FNAME        = None
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
+parser.add_argument("--startat", type=int, default=-1)
 parser.add_argument("--gemini", action="store_true")
 parser.add_argument("--bitsize", type=int, default=-1)
 parser.add_argument("--searchtype", choices={'flat','clusters'})
 parser.add_argument("--dontexport", action="store_true",  default=False)
 args = parser.parse_args()
+
+# Determine if we are assuming an existing database
+START_AT = args.startat
 
 # Set number items to import
 if args.n == "10K":
@@ -151,7 +158,8 @@ STATS.append( {"event": "start_schema_check", "ts": time.time()} )
 if BENCH_CLASS_NAME in [ cls["class"] for cls in schema["classes"] ]:
     print("Warning: Found class='%s'.  Verifying..." % BENCH_CLASS_NAME)
 
-    raise Exception("Currently we don't recover from an existing benchmark run.  Please remove /var/lib/weaviate and run again.")
+    if START_AT <0:
+        raise Exception("expecting --startat to be set")
 
     # Get class schema and validate
     cls_schema = None
@@ -162,11 +170,11 @@ if BENCH_CLASS_NAME in [ cls["class"] for cls in schema["classes"] ]:
     if cls_schema['vectorIndexType'] != VECTOR_INDEX:
         raise Exception("The schema for class='%s' is not an %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX ))
     if VECTOR_INDEX=="gemini":
-        print("Gemini paramter check: got", cls_schema['vectorIndexConfig'], "expected", GEMINI_PARAMETERS)
-        if cls_schema['vectorIndexConfig'] != GEMINI_PARAMETERS:
-            raise Exception("gemini parameter check failed")
+        raise Exception("Gemini is not currently supported in this mode.")
+    elif VECTOR_INDEX=="hnsw":
+        if not ALLOW_CACHEING and cls['vectorIndexConfig']["vectorCacheMaxObjects"]!=0:
+            raise Exception("Expected 'vectorCacheMaxObjects'=0")
 
-    # Get object count
     resp = client.query.aggregate(BENCH_CLASS_NAME).with_meta_count().do()
     print(resp)
     # should look something like this - {'data': {'Aggregate': {'Benchmark_Deep1B': [{'meta': {'count': 0}}]}}}
@@ -176,9 +184,12 @@ if BENCH_CLASS_NAME in [ cls["class"] for cls in schema["classes"] ]:
     except:
         traceback.print_exc()
         raise Exception("Could not get count for '%s'" % BENCH_CLASS_NAME)
-    if count != 0:
-        raise Exception("Unexpected object count (%d) for '%s'" % ( count, BENCH_CLASS_NAME ))
-    print("Verified.")
+    if START_AT>=0:
+        print("Checking existing size is '%d'..." % START_AT )
+        if count != START_AT:
+            raise Exception("Unexpected object count (%d) for '%s', expected=%d" % ( count, BENCH_CLASS_NAME, START_AT))
+    print("Schema verified.")
+    time.sleep(5)
 
 else:
     # The schema class to create. Define the class first and then set..."
@@ -239,34 +250,59 @@ print("Import documents to Weaviate (max of %d docs)" % TOTAL_ADDS)
 
 # Prepare a batch process for sending data to weaviate
 print("Uploading benchmark indices to Weaviate (max of around %d strings)" % TOTAL_ADDS)
-count = 0
+
+if START_AT >= 0:
+    count = START_AT
+else:
+    count = 0
+print("Start count=", count)
+
 while True: # lets loop until we exceed the MAX configured above
     with client.batch as batch:
         batch.batch_size=BATCH_SIZE
         # Batch import all Questions
-        for i, d in enumerate(range(TOTAL_ADDS)):
-            if VERBOSE: print(f"importing index: {i}")
+        for i, d in enumerate(range(count, TOTAL_ADDS)):
 
+            #
+            # perform an interim validation
+            #
+            if (d % 1000) ==0:
+                print("Getting interim count to match=%d" % i)
+                interim_count = 0
+                try:
+                    interim_count = resp['data']['Aggregate'][BENCH_CLASS_NAME][0]['meta']['count']
+                except:
+                    traceback.print_exc()
+                    raise Exception("Could not get count for '%s'" % BENCH_CLASS_NAME)
+                if interim_count != d:
+                    raise Exception("Unexpected object count (%d) for '%s', expected=%d" % \
+                            ( interim_count, BENCH_CLASS_NAME, d))
+                print("Interim count verified (%d,%d)" % (interim_count, d))
+
+            #
+            # Add the new item
+            #
+            if VERBOSE: print(f"importing index: {i}")
             properties = {
-                "index": str(i)
+                "index": str(d)
             }
 
-            if BENCHMARK_DETAILED: STATS.append( {"event": "adding %d/%d" % ((i+1), TOTAL_ADDS), "ts": time.time()} )
-            elif (i % 1000) ==0: STATS.append( {"event": "adding %d/%d" % ((i+1), TOTAL_ADDS), "ts": time.time()} )
+            if BENCHMARK_DETAILED: STATS.append( {"event": "adding %d/%d" % ((d+1), TOTAL_ADDS), "ts": time.time()} )
+            elif (d % 1000) ==0: STATS.append( {"event": "adding %d/%d" % ((d+1), TOTAL_ADDS), "ts": time.time()} )
 
             resp = client.batch.add_data_object(properties, BENCH_CLASS_NAME)
             if 'error' in resp:
                 print("Got error adding object->", resp)
-                raise Exception("Add failed at %d" % idx)
+                raise Exception("Add failed at %d" % i)
 
-            if BENCHMARK_DETAILED: STATS.append( {"event": "added %d/%d" % ((i+1),TOTAL_ADDS), "ts": time.time()} )
-            elif (i % 1000) ==0: STATS.append( {"event": "added %d/%d" % ((i+1), TOTAL_ADDS), "ts": time.time()} )
+            if BENCHMARK_DETAILED: STATS.append( {"event": "added %d/%d" % ((d+1),TOTAL_ADDS), "ts": time.time()} )
+            elif (d % 1000) ==0: STATS.append( {"event": "added %d/%d" % ((d+1), TOTAL_ADDS), "ts": time.time()} )
 
-            if (i % 1000)==0: print("Imported %d/%d so far..." % (i+1, TOTAL_ADDS) )
+            if (d % 1000)==0: print("Imported %d/%d so far..." % (d+1, TOTAL_ADDS) )
 
             count += 1
             
-    if VERBOSE: print("Batch uploaded %d strings so far..." % count)
+    if VERBOSE: print("Batch uploaded %d items so far..." % count)
     if count == TOTAL_ADDS:
         break
 
