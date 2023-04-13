@@ -66,6 +66,9 @@ STATS               = []
 # Retrieved from gemini schema
 GEMINI_TRAINING_BITS= -1
 
+# Retrieved from gemini schema
+GEMINI_SEARCH_TYPE  = -1
+
 # csv export file, gets set later
 EXPORT_FNAME        = None
 
@@ -165,6 +168,7 @@ if cls_schema['vectorIndexType'] != VECTOR_INDEX:
     raise Exception("The schema for class='%s' is not an %s index." % (BENCH_CLASS_NAME, VECTOR_INDEX))
 if cls_schema['vectorIndexType'] == "gemini":
     GEMINI_TRAINING_BITS = cls_schema["vectorIndexConfig"]["nBits"]
+    GEMINI_SEARCH_TYPE = cls_schema["vectorIndexConfig"]["searchType"]
 elif cls_schema['vectorIndexType'] == "hnsw":
     ALLOW_CACHEING = False if cls_schema["vectorIndexConfig"]["vectorCacheMaxObjects"]==0 else True
 
@@ -194,7 +198,8 @@ if not os.path.exists(RESULTS_DIR):
 
 # Get CSV export if any
 if not args.dontexport:
-    vectorstr = "%s__%s" % (VECTOR_INDEX, ("allowcacheing_%s__" % str(ALLOW_CACHEING))  if VECTOR_INDEX == "hnsw" else ("bt_%d__" % GEMINI_TRAINING_BITS ))
+    vectorstr = "%s__%s" % (VECTOR_INDEX, ("allowcacheing_%s__" % str(ALLOW_CACHEING))  \
+        if VECTOR_INDEX == "hnsw" else ("bt_%d__st_%s" % (GEMINI_TRAINING_BITS, GEMINI_SEARCH_TYPE) ))
     EXPORT_FNAME = "%s/Search-%s__%s__sz_%d_of_Deep1B__q_%d__k_%d__%s__%f.csv" % \
         ( RESULTS_DIR, HOSTNAME, BENCH_CLASS_NAME,  TOTAL_ADDS, args.q, K_NEIGHBORS, vectorstr, time.time() )
     if os.path.exists(EXPORT_FNAME):

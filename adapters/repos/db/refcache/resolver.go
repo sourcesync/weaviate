@@ -193,7 +193,9 @@ func (r *Resolver) resolveRef(item *models.SingleRef, desiredClass string,
 		nested["creationTimeUnix"] = res.Created
 	}
 	if additionalProperties.LastUpdateTimeUnix {
-		nested["lastUpdateTimeUnix"] = res.Updated
+		// This is a horrible hack 
+        // nested["lastUpdateTimeUnix"] = res.Updated
+		nested["lastUpdateTimeUnix"] = res.SearchTime
 	}
 	out.Fields = nested
 
