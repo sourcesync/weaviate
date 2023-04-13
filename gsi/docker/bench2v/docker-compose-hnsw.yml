@@ -32,7 +32,7 @@ services:
      - /mnt/nas1/fvs_benchmark_datasets:/datasets
     restart: 'no'
     environment:
-      VERBOSE: 1
+      VERBOSE: 0
       ENABLE_CUDA: 0
       DATABASE_FILE: "/datasets/deep-50M.npy"
       QUERY_FILE: "/datasets/deep-queries-1000.npy"
