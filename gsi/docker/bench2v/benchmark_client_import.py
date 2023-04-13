@@ -268,6 +268,8 @@ while True: # lets loop until we exceed the MAX configured above
             #
             if (d % 1000) ==0:
                 print("Getting interim count to match=%d" % i)
+                resp = client.query.aggregate(BENCH_CLASS_NAME).with_meta_count().do()
+                print(resp)
                 interim_count = 0
                 try:
                     interim_count = resp['data']['Aggregate'][BENCH_CLASS_NAME][0]['meta']['count']
