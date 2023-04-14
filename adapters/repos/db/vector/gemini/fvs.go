@@ -40,8 +40,8 @@ const (
 )
 
 const (
-    SearchTypeFlat          = "flat"
-    SearchTypeClusters      = "clusters"
+	SearchTypeFlat     = "flat"
+	SearchTypeClusters = "clusters"
 )
 
 const (
@@ -67,7 +67,7 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 		fmt.Println("Fvs: Import_dataset: url=", url)
 	}
 
-    fmt.Println("Warning: Configurable FVS parameters being passed:", bits, search_type)
+	fmt.Println("Warning: Configurable FVS parameters being passed:", bits, search_type)
 
 	// create the post json payload
 	values := map[string]interface{}{
