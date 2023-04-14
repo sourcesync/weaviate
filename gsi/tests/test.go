@@ -119,27 +119,36 @@ func main() {
 	query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
 	bits := uint(512)
 	verbose := true
+	fmt.Println("\nImporting dataset...")
 	dataset_id, err := geminiplugin.Import_dataset(host, port, alloc, path, bits, verbose)
 	if err != nil {
-		log.Fatal(err, "error with Import Dataset")
+		log.Fatal(err, ", error with Import Dataset")
 	}
+	fmt.Println("\nTrain Status...")
 	_, err = geminiplugin.Train_status(host, port, alloc, dataset_id, verbose)
 	if err != nil {
-		log.Fatal(err, "error with train status")
+		log.Fatal(err, ", error with train status")
 	}
+	fmt.Println("\nLoading Dataset...")
 	_, err = geminiplugin.Load_dataset(host, port, alloc, dataset_id, verbose)
 	if err != nil {
-		log.Fatal(err, "error with Load Dataset")
+		log.Fatal(err, ", error with Load Dataset")
 	}
-	fmt.Println("\nImporting queries ")
-	_, err = geminiplugin.Import_queries(host, port, alloc, query_path, verbose)
+	fmt.Println("\nImporting queries...")
+	qid, err := geminiplugin.Import_queries(host, port, alloc, query_path, verbose)
 	if err != nil {
-		log.Fatal(err, "error with Import Queries")
+		log.Fatal(err, ", error with Import Queries")
 	}
-	fmt.Println("\nsetting focus to dataset ", dataset_id)
+	fmt.Println("\nSetting focus to dataset ", dataset_id)
 	err = geminiplugin.Set_focus(host, port, alloc, dataset_id, verbose)
 	if err != nil {
-		fmt.Println(err, "error with focus dataset")
+		fmt.Println(err, ", error with focus dataset")
 	}
+	fmt.Println("\nSearching dataset")
+	tmp_arr, tmp, num, err := geminiplugin.Search(host, port, alloc, dataset_id, query_path, uint(5), verbose)
+	fmt.Println(tmp_arr, tmp, num)
+	fmt.Println("\nDeleting queries")
+	ok, err := geminiplugin.Delete_queries(host, port, alloc, qid, verbose)
+	fmt.Println(ok, " should be ok")
 
 }
