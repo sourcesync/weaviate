@@ -19,6 +19,10 @@ func randomString(length int) string {
 	return fmt.Sprintf("%x", b)[2 : length+2]
 }
 
+func numpy_append_float_test() {
+
+}
+
 func uint32_test() string {
 	fmt.Println("Starting Numpy_append_uint32 testing")
 	ranstr := randomString(10)
@@ -106,5 +110,36 @@ func main() {
 	uintfp := uint32_test()
 	numpy_read_uint_test(uintfp)
 	numpy_read_float_test(ranfilepath)
+
+	// FVS function testing
+	host := "localhost"
+	port := uint(7761)
+	alloc := "0b391a1a-b916-11ed-afcb-0242ac1c0002"
+	path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
+	query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
+	bits := uint(512)
+	verbose := true
+	dataset_id, err := geminiplugin.Import_dataset(host, port, alloc, path, bits, verbose)
+	if err != nil {
+		log.Fatal(err, "error with Import Dataset")
+	}
+	_, err = geminiplugin.Train_status(host, port, alloc, dataset_id, verbose)
+	if err != nil {
+		log.Fatal(err, "error with train status")
+	}
+	_, err = geminiplugin.Load_dataset(host, port, alloc, dataset_id, verbose)
+	if err != nil {
+		log.Fatal(err, "error with Load Dataset")
+	}
+	fmt.Println("\nImporting queries ")
+	_, err = geminiplugin.Import_queries(host, port, alloc, query_path, verbose)
+	if err != nil {
+		log.Fatal(err, "error with Import Queries")
+	}
+	fmt.Println("\nsetting focus to dataset ", dataset_id)
+	err = geminiplugin.Set_focus(host, port, alloc, dataset_id, verbose)
+	if err != nil {
+		fmt.Println(err, "error with focus dataset")
+	}
 
 }
