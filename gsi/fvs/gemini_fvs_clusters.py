@@ -167,7 +167,7 @@ def run_benchmark(args):
     print("Importing the dataset. Training with searchtype=clusters and nbit=%d ..." % args.bits)
     ts_train_start = time.time()
     response = gsi_datasets_apis.controllers_dataset_controller_import_dataset( \
-                    ImportDatasetRequest(ds_file_path=dataset_public_path, train_ind=True, search_type="clusters", \
+                    ImportDatasetRequest(ds_file_path=dataset_public_path, train_ind=True, \
                             nbits=args.bits), allocation_token=Allocation_id)
     dataset_id = response.dataset_id
     print("...got dataset_id=", dataset_id)
@@ -194,7 +194,7 @@ def run_benchmark(args):
     # Load dataset
     print("Loading the dataset...")
     gsi_datasets_apis.controllers_dataset_controller_load_dataset(
-                    LoadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id), 
+                    LoadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id,  search_type="clusters" ), 
                     allocation_token=Allocation_id)
 
     # Set in focusa
