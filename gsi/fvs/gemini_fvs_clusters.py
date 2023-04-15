@@ -166,8 +166,8 @@ def run_benchmark(args):
     # Import dataset
     print("Importing the dataset. Training with searchtype=clusters and nbit=%d ..." % args.bits)
     ts_train_start = time.time()
-    response = gsi_datasets_apis.controllers_dataset_controller_import_dataset( search_type="clusters", \
-                    ImportDatasetRequest(ds_file_path=dataset_public_path, train_ind=True, \
+    response = gsi_datasets_apis.controllers_dataset_controller_import_dataset( \
+                    ImportDatasetRequest(ds_file_path=dataset_public_path, train_ind=True, search_type="clusters", \
                             nbits=args.bits), allocation_token=Allocation_id)
     dataset_id = response.dataset_id
     print("...got dataset_id=", dataset_id)
