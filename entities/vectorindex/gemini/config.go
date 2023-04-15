@@ -29,8 +29,8 @@ const (
 )
 
 const (
-    GeminiSearchTypeFlat    = "flat"
-    GeminiSearchTypeClusters= "clusters"
+	GeminiSearchTypeFlat     = "flat"
+	GeminiSearchTypeClusters = "clusters"
 )
 
 type UserConfig struct {
@@ -60,9 +60,9 @@ func ParseUserConfig(input interface{}) (schema.VectorIndexConfig, error) {
 	uc.SetDefaults()
 
 	// TODO: Currently we are only allow the setting of nbits and searchtype
-    
+
 	dct := input.(map[string]interface{})
-    // configure nBits 
+	// configure nBits
 	dval := dct["nBits"]
 	val, err := dval.(json.Number).Int64()
 	if err != nil {
@@ -70,13 +70,13 @@ func ParseUserConfig(input interface{}) (schema.VectorIndexConfig, error) {
 	}
 	uc.NBits = int(val)
 
-    // configure searchType
-    sdval := dct["searchType"]
-    stval, sterr := sdval.(string)
-    if !sterr  {
-        return nil, errors.Wrapf(err, "Could not parse user config 'searchType'.")
-    }
-    uc.SearchType = stval
+	// configure searchType
+	sdval := dct["searchType"]
+	stval, sterr := sdval.(string)
+	if !sterr {
+		return nil, errors.Wrapf(err, "Could not parse user config 'searchType'.")
+	}
+	uc.SearchType = stval
 
 	return uc, nil
 }
