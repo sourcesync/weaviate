@@ -140,7 +140,7 @@ func main() {
 		log.Fatal(err, ", error with Load Dataset")
 	}
 	fmt.Println("\nImporting queries...")
-	qid, err := geminiplugin.Import_queries(host, port, alloc, query_path, verbose)
+	_, err = geminiplugin.Import_queries(host, port, alloc, query_path, verbose)
 	if err != nil {
 		log.Fatal(err, ", error with Import Queries")
 	}
@@ -155,12 +155,12 @@ func main() {
 		log.Fatal(err, " error with search")
 	}
 	fmt.Println("dists:", dists, " inds:", inds, " topk:", topk)
-	fmt.Println("\nDeleting queries")
-	ok, err := geminiplugin.Delete_queries(host, port, alloc, qid, verbose)
-	if err != nil {
-		log.Fatal(err, " error from Delete Queries")
-	}
-	fmt.Println(ok, "==ok")
+	// fmt.Println("\nDeleting queries")
+	// ok, err := geminiplugin.Delete_queries(host, port, alloc, qid, verbose)
+	// if err != nil {
+	// 	log.Fatal(err, " error from Delete Queries")
+	// }
+	// fmt.Println(ok, "==ok")
 	fmt.Println("Unloading dataset")
 	status, err := geminiplugin.Unload_dataset(host, port, alloc, dataset_id, verbose)
 	if err != nil {
