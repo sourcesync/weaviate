@@ -23,6 +23,8 @@ VERBOSE = False
 #
 DATASET_ID = None
 DS_FILE_PATH = None
+QUERY_ID = None
+Q_FILE_PATH = None
 
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
@@ -49,8 +51,9 @@ class S(BaseHTTPRequestHandler):
             self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
 
     def do_POST(self):
-        global DATASET_ID, DS_FILE_PATH
+        global DATASET_ID, DS_FILE_PATH, QUERY_ID, Q_FILE_PATH
 
+        print("\nHEADERS:", self.headers)
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
         logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
@@ -90,8 +93,39 @@ class S(BaseHTTPRequestHandler):
             jsonret = json.dumps( srch ).encode('utf-8')
             if VERBOSE: print("sending search=", type(jsonret),jsonret)
             self.wfile.write( jsonret  )
+        elif str(self.path) == "/v1.0/demo/query/import":
+            if not QUERY_ID:
+                QUERY_ID = str(uuid.uuid1())
+            else:
+                print("Warning, already got a query_id and replacing it...")
+                QUERY_ID = str(uuid.uuid1())
+            body_dct = json.loads(post_data.decode('utf-8'))
+            Q_FILE_PATH = body_dct["queriesFilePath"]
+            if VERBOSE: print("Q_FILE_PATH=",Q_FILE_PATH)
+            a = numpy.load(Q_FILE_PATH)
+            if VERBOSE: print(type(a))
+            if VERBOSE: print(a.shape)
+            jsonret = json.dumps({"addedQuery": {"id": QUERY_ID}}).encode('utf-8')
+            if VERBOSE: print("sending queryid=", type(jsonret), jsonret)
+            self.wfile.write(jsonret)
+        elif str(self.path) == "/v1.0/dataset/unload":
+            jsonret = json.dumps({"status": "ok"}).encode("utf-8")
+            if VERBOSE: print("sending unload=", type(jsonret), jsonret)
+            self.wfile.write(jsonret)
         else:
             self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
+
+    def do_DELETE(self):
+
+        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
+        delete_data = self.rfile.read(content_length) # <--- Gets the data itself
+        logging.info("DELETE request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
+                str(self.path), str(self.headers), delete_data.decode('utf-8'))
+        self._set_response()
+
+        if str(self.path) == f"/v1.0/demo/query/remove{QUERY_ID}":
+            body_dct = json.loads(delete_data)
+            print("\nBODY_DCT: ", body_dct) 
 
 
 def run(server_class=HTTPServer, handler_class=S, port=8080):
