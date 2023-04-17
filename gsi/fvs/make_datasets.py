@@ -37,6 +37,18 @@ DEEP20M_GT_1000 = "deep-20M-gt-1000.npy"
 DEEP20M_GT_100 = "deep-20M-gt-100.npy"
 DEEP20M_GT_10 = "deep-20M-gt-10.npy"
 
+# Deep30M filenames
+DEEP30M =  "deep-30M.npy"
+DEEP30M_GT_1000 = "deep-30M-gt-1000.npy"
+DEEP30M_GT_100 = "deep-30M-gt-100.npy"
+DEEP30M_GT_10 = "deep-30M-gt-10.npy"
+
+# Deep40M filenames
+DEEP40M =  "deep-40M.npy"
+DEEP40M_GT_1000 = "deep-40M-gt-1000.npy"
+DEEP40M_GT_100 = "deep-40M-gt-100.npy"
+DEEP40M_GT_10 = "deep-40M-gt-10.npy"
+
 # Deep50M filenames
 DEEP50M =  "deep-50M.npy"
 DEEP50M_GT_1000 = "deep-50M-gt-1000.npy"
@@ -131,6 +143,94 @@ def test_append():
     arr = numpy.load("./test.npy")
     print("test=", arr)
 
+def make_deep1B_queries_subsets():
+
+    if not os.path.exists( os.path.join(FVS_DATA_DIR, DEEP1B_QUERY_OG_SET) ):
+        raise Exception("OG Deep1B query set does not exists->%s" %  DEEP1B_QUERY_OG_SET)
+
+    # Get the full queries set
+    ds = datasets.DATASETS["deep-1M"]() # Note that we could supply any subseet of Deep-1B here
+    ds.prepare(False)
+    queries = ds.get_queries()
+
+    # Make q=1000 subsets
+    subdir = os.path.join(FVS_DATA_DIR, "deep-1B-q1000-subsets")
+    if not os.path.exists( subdir ):
+        print("Making subdir", subdir)
+        os.makedirs( subdir, exist_ok=False)
+    num_subsets = int( queries.shape[0] / 1000 ) # floor
+    for i in range(num_subsets):
+        fname = "deep-queries-%d-%d.npy" % (i*1000+1, i*1000+1000)
+        fpath = os.path.join( subdir, fname )
+        if not os.path.exists(fpath):
+            q = queries[i*1000:i*1000+1000,:]
+            print("saving",fpath)
+            numpy.save( fpath, q )   
+        elif VERIFY:
+            # Verify it
+            print("Found %s.  Verifying it (this may take a sec.)" % fpath)
+            arr = numpy.load(fpath)
+            if arr.shape[0]!=1000:
+                raise Exception("Invalid size.")
+        
+    # Make q=100 subsets
+    subdir = os.path.join(FVS_DATA_DIR, "deep-1B-q100-subsets")
+    if not os.path.exists( subdir ):
+        print("Making subdir", subdir)
+        os.makedirs( subdir, exist_ok=False)
+    for i in range(10): # for now, we are only doing 10
+        fname = "deep-queries-%d-%d.npy" % (i*100+1, i*100+100)
+        fpath = os.path.join( subdir, fname )
+        if not os.path.exists(fpath):
+            q = queries[i*100:i*100+100,:]
+            print("saving",fpath)
+            numpy.save( fpath, q )
+        elif VERIFY:
+            # Verify it
+            print("Found %s.  Verifying it (this may take a sec.)" % fpath)
+            arr = numpy.load(fpath)
+            if arr.shape[0]!=100:
+                raise Exception("Invalid size.")
+ 
+    # Make q=10 subsets
+    subdir = os.path.join(FVS_DATA_DIR, "deep-1B-q10-subsets")
+    if not os.path.exists( subdir ):
+        print("Making subdir", subdir)
+        os.makedirs( subdir, exist_ok=False)
+    for i in range(100): # for now, we are only doing 100
+        fname = "deep-queries-%d-%d.npy" % (i*10+1, i*10+10)
+        fpath = os.path.join( subdir, fname )
+        if not os.path.exists(fpath):
+            q = queries[i*10:i*10+10,:]
+            print("saving",fpath)
+            numpy.save( fpath, q )
+        elif VERIFY:
+            # Verify it
+            print("Found %s.  Verifying it (this may take a sec.)" % fpath)
+            arr = numpy.load(fpath)
+            if arr.shape[0]!=10:
+                raise Exception("Invalid size.")
+
+    # Make q=1 subsets
+    subdir = os.path.join(FVS_DATA_DIR, "deep-1B-q1-subsets")
+    if not os.path.exists( subdir ):
+        print("Making subdir", subdir)
+        os.makedirs( subdir, exist_ok=False)
+    for i in range(1000): # for now, we are only doing 1000
+        fname = "deep-queries-%d-%d.npy" % (i+1, i+1)
+        fpath = os.path.join( subdir, fname )
+        if not os.path.exists(fpath):
+            q = queries[i:i+1,:]
+            print("saving",fpath)
+            numpy.save( fpath, q )
+        elif VERIFY:
+            # Verify it
+            print("Found %s.  Verifying it (this may take a sec.)" % fpath)
+            arr = numpy.load(fpath)
+            if arr.shape[0]!=1:
+                raise Exception("Invalid size.")
+
+
 # Verify Deep1B original queries
 fpath = os.path.join(FVS_DATA_DIR, DEEP1B_QUERY_OG_SET)
 print("Checking ", fpath,"exists...")
@@ -139,6 +239,10 @@ if not os.path.exists(fpath):
 elif VERIFY:
     # TODO
     pass 
+
+# Make all the Deep1B queries subsets
+make_deep1B_queries_subsets()
+
 
 # Create/verify deep-20M
 fname = os.path.join( FVS_DATA_DIR, DEEP20M )
@@ -181,6 +285,242 @@ elif VERIFY:
     print("Found %s.  Verifying it (this may take a sec.)" % fname)
     arr = numpy.load(fname)
     if arr.shape[0]!=20000000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# Create/verify deep-30M
+fname = os.path.join( FVS_DATA_DIR, DEEP30M )
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    print("Creating", fname, "...")
+
+    print("Downloading Competition Deep1B base, query, and gt...")
+    ds = datasets.DATASETS["deep-30M"]()
+    ds.prepare(False)
+
+    for dt in ds.get_dataset_iterator(bs=1000):
+        newsize = append_floatarray(fname, dt)
+        print("Making deep-30M, appended batch, newsize=", newsize)
+        if newsize[0]==30000000:
+            break
+
+    print("done")
+
+    if False:
+        print("counting...")
+        count = 0
+        for dt in ds.get_dataset_iterator():
+            count += 1
+        print("%d" % count, type(dt), dt.shape, dt.dtype)
+
+        arr = numpy.empty( (0,96), dt.dtype )
+        print("arr shape", dt.shape)
+
+        print("appending")
+        for dt in ds.get_dataset_iterator():
+            arr = numpy.concatenate( (arr, dt), axis=0 )
+            print(dt.shape, arr.shape)
+
+        print("saving",fname)
+        numpy.save( fname, arr )
+        print("done")
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it (this may take a sec.)" % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=30000000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+
+# DEEP30M of DEEP1B, gt set - 1000
+fname = os.path.join( FVS_DATA_DIR, DEEP30M_GT_1000)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-30M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:1000,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=1000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP30M of DEEP1B, gt set - 100
+fname = os.path.join( FVS_DATA_DIR, DEEP30M_GT_100)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-30M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:100,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=100:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP30M of DEEP1B, gt set - 10
+fname = os.path.join( FVS_DATA_DIR, DEEP30M_GT_10)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-30M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:10,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=10:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+
+
+# Create/verify deep-40M
+fname = os.path.join( FVS_DATA_DIR, DEEP40M )
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    print("Creating", fname, "...")
+
+    print("Downloading Competition Deep1B base, query, and gt...")
+    ds = datasets.DATASETS["deep-40M"]()
+    ds.prepare(False)
+
+    for dt in ds.get_dataset_iterator(bs=1000):
+        newsize = append_floatarray(fname, dt)
+        print("Making deep-40M, appended batch, newsize=", newsize)
+        if newsize[0]==40000000:
+            break
+
+    print("done")
+
+    if False:
+        print("counting...")
+        count = 0
+        for dt in ds.get_dataset_iterator():
+            count += 1
+        print("%d" % count, type(dt), dt.shape, dt.dtype)
+
+        arr = numpy.empty( (0,96), dt.dtype )
+        print("arr shape", dt.shape)
+
+        print("appending")
+        for dt in ds.get_dataset_iterator():
+            arr = numpy.concatenate( (arr, dt), axis=0 )
+            print(dt.shape, arr.shape)
+
+        print("saving",fname)
+        numpy.save( fname, arr )
+        print("done")
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it (this may take a sec.)" % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=40000000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+
+# DEEP40M of DEEP1B, gt set - 1000
+fname = os.path.join( FVS_DATA_DIR, DEEP40M_GT_1000)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-40M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:1000,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=1000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP40M of DEEP1B, gt set - 100
+fname = os.path.join( FVS_DATA_DIR, DEEP40M_GT_100)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-40M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:100,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=100:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP40M of DEEP1B, gt set - 10
+fname = os.path.join( FVS_DATA_DIR, DEEP40M_GT_1000)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-40M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:10,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=10:
         raise Exception("Bad size for %s" % fname, arr.shape)
     print("Verified.")
 
