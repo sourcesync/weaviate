@@ -49,6 +49,12 @@ DEEP40M_GT_1000 = "deep-40M-gt-1000.npy"
 DEEP40M_GT_100 = "deep-40M-gt-100.npy"
 DEEP40M_GT_10 = "deep-40M-gt-10.npy"
 
+# Deep45M filenames
+DEEP45M =  "deep-45M.npy"
+DEEP45M_GT_1000 = "deep-45M-gt-1000.npy"
+DEEP45M_GT_100 = "deep-45M-gt-100.npy"
+DEEP45M_GT_10 = "deep-45M-gt-10.npy"
+
 # Deep50M filenames
 DEEP50M =  "deep-50M.npy"
 DEEP50M_GT_1000 = "deep-50M-gt-1000.npy"
@@ -425,24 +431,6 @@ if not os.path.exists(fname):
 
     print("done")
 
-    if False:
-        print("counting...")
-        count = 0
-        for dt in ds.get_dataset_iterator():
-            count += 1
-        print("%d" % count, type(dt), dt.shape, dt.dtype)
-
-        arr = numpy.empty( (0,96), dt.dtype )
-        print("arr shape", dt.shape)
-
-        print("appending")
-        for dt in ds.get_dataset_iterator():
-            arr = numpy.concatenate( (arr, dt), axis=0 )
-            print(dt.shape, arr.shape)
-
-        print("saving",fname)
-        numpy.save( fname, arr )
-        print("done")
 elif VERIFY:
     # Verify it
     print("Found %s.  Verifying it (this may take a sec.)" % fname)
@@ -524,6 +512,105 @@ elif VERIFY:
         raise Exception("Bad size for %s" % fname, arr.shape)
     print("Verified.")
 
+# Create/verify deep-45M
+fname = os.path.join( FVS_DATA_DIR, DEEP45M )
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    print("Creating", fname, "...")
+
+    print("Downloading Competition Deep1B base, query, and gt...")
+    ds = datasets.DATASETS["deep-45M"]()
+    ds.prepare(False)
+
+    for dt in ds.get_dataset_iterator(bs=1000):
+        newsize = append_floatarray(fname, dt)
+        print("Making deep-45M, appended batch, newsize=", newsize)
+        if newsize[0]==45000000:
+            break
+
+    print("done")
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it (this may take a sec.)" % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=45000000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP45M of DEEP1B, gt set - 1000
+fname = os.path.join( FVS_DATA_DIR, DEEP45M_GT_1000)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-45M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:1000,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=1000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP45M of DEEP1B, gt set - 100
+fname = os.path.join( FVS_DATA_DIR, DEEP45M_GT_100)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-45M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:100,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=100:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP45M of DEEP1B, gt set - 10
+fname = os.path.join( FVS_DATA_DIR, DEEP45M_GT_10)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-45M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:10,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=10:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+
+#
 # DEEP1B query set - 1000
 fname = os.path.join( FVS_DATA_DIR, DEEP1B_QUERY_1000_SET )
 print("Checking ", fname,"exists...")
