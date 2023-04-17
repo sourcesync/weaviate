@@ -130,9 +130,18 @@ func main() {
 		log.Fatal(err, ", error with Import Dataset")
 	}
 	fmt.Println("\nTrain Status...")
-	_, err = geminiplugin.Train_status(host, port, alloc, dataset_id, verbose)
+	status, err := geminiplugin.Train_status(host, port, alloc, dataset_id, verbose)
 	if err != nil {
 		log.Fatal(err, ", error with train status")
+	}
+	for status == "training" {
+		fmt.Println("still training, waiting 5 seconds...")
+		time.Sleep(5 * time.Second)
+		status, err = geminiplugin.Train_status(host, port, alloc, dataset_id, verbose)
+		if err != nil {
+			log.Fatal(err, ", error with train status")
+		}
+		fmt.Println("current status: ", status)
 	}
 	fmt.Println("\nLoading Dataset...")
 	_, err = geminiplugin.Load_dataset(host, port, alloc, dataset_id, verbose)
@@ -140,7 +149,7 @@ func main() {
 		log.Fatal(err, ", error with Load Dataset")
 	}
 	fmt.Println("\nImporting queries...")
-	_, err = geminiplugin.Import_queries(host, port, alloc, query_path, verbose)
+	qid, err := geminiplugin.Import_queries(host, port, alloc, query_path, verbose)
 	if err != nil {
 		log.Fatal(err, ", error with Import Queries")
 	}
@@ -155,14 +164,14 @@ func main() {
 		log.Fatal(err, " error with search")
 	}
 	fmt.Println("dists:", dists, " inds:", inds, " topk:", topk)
-	// fmt.Println("\nDeleting queries")
-	// ok, err := geminiplugin.Delete_queries(host, port, alloc, qid, verbose)
-	// if err != nil {
-	// 	log.Fatal(err, " error from Delete Queries")
-	// }
-	// fmt.Println(ok, "==ok")
+	fmt.Println("\nDeleting queries")
+	ok, err := geminiplugin.Delete_queries(host, port, alloc, qid, verbose)
+	if err != nil {
+		log.Fatal(err, " error from Delete Queries")
+	}
+	fmt.Println(ok, "==ok")
 	fmt.Println("Unloading dataset")
-	status, err := geminiplugin.Unload_dataset(host, port, alloc, dataset_id, verbose)
+	status, err = geminiplugin.Unload_dataset(host, port, alloc, dataset_id, verbose)
 	if err != nil {
 		log.Fatal(err, " error with Unload dataset")
 	}
