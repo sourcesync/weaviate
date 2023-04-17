@@ -69,11 +69,11 @@ type Gemini struct {
 	// determines if we do a min records count
 	min_records_check bool
 
-    // trained bitvector size
-    nbits uint
+	// trained bitvector size
+	nbits uint
 
-    // trained search_type
-    search_type string
+	// trained search_type
+	search_type string
 }
 
 // func New(centroidsHammingK int, centroidsRerank int, hammingK int, nbits int, searchType string) (*Gemini, error) {
@@ -89,15 +89,15 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 		return nil, fmt.Errorf("Currently you cannot override the Gemini's default hamming k.")
 	}
 
-    // Validate searchType
-    if searchType != string(SearchTypeFlat) && searchType != string(SearchTypeClusters) {
-		return nil, fmt.Errorf("Unsupported search type=", searchType)
-    }
+	// Validate searchType
+	if searchType != string(SearchTypeFlat) && searchType != string(SearchTypeClusters) {
+		return nil, fmt.Errorf("Unsupported search type=%s", searchType)
+	}
 
-    // Validate nBits
-    if nBits!=64 && nBits!=128 && nBits!=256 && nBits!=512 && nBits!=768 {
-		return nil, fmt.Errorf("Unsupported bitvector size=:", nBits)
-    } 
+	// Validate nBits
+	if nBits != 64 && nBits != 128 && nBits != 256 && nBits != 512 && nBits != 768 {
+		return nil, fmt.Errorf("Unsupported bitvector size=%d", nBits)
+	}
 
 	//
 	// get special verbose/debug flag if present in environment
@@ -188,8 +188,8 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 	idx.last_fvs_status = ""
 	idx.fvs_server = fvs_server
 	idx.min_records_check = min_records_check
-    idx.nbits = uint(nBits)
-    idx.search_type = searchType
+	idx.nbits = uint(nBits)
+	idx.search_type = searchType
 
 	if idx.verbose {
 		fmt.Println("Gemini index constructor db_path=", idx.db_path)
