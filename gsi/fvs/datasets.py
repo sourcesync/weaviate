@@ -492,6 +492,7 @@ class Deep1BDataset(DatasetCompetitionFormat):
             "https://storage.yandexcloud.net/yandex-research/ann-datasets/deep_new_groundtruth.public.10K.bin" if self.nb_M == 1000 else
             subset_url + "GT_100M/deep-100M" if self.nb_M == 100 else
             subset_url + "GT_50M/deep-50M" if self.nb_M == 50 else
+            subset_url + "GT_100M/deep-45M" if self.nb_M == 45 else
             subset_url + "GT_100M/deep-40M" if self.nb_M == 40 else
             subset_url + "GT_100M/deep-30M" if self.nb_M == 30 else
             subset_url + "GT_20M/deep-20M" if self.nb_M == 20 else
@@ -747,6 +748,7 @@ DATASETS = {
     'deep-1B': lambda : Deep1BDataset(),
     'deep-100M': lambda : Deep1BDataset(100),
     'deep-50M': lambda : Deep1BDataset(50),
+    'deep-45M': lambda : Deep1BDataset(45),
     'deep-40M': lambda : Deep1BDataset(40),
     'deep-30M': lambda : Deep1BDataset(30),
     'deep-20M': lambda : Deep1BDataset(20),
