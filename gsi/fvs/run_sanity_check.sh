@@ -17,8 +17,11 @@ DATASET="/mnt/nas1/fvs_benchmark_datasets/deep-1M.npy"
 # Path to queries numpy file
 QUERIES="/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
 
-## Path to the ground truth numpy file
+# Path to the ground truth numpy file
 GROUNDTRUTH="/mnt/nas1/fvs_benchmark_datasets/deep-1M-gt-10.npy"
+
+# Set Swagger to emit verbose http payload messages
+export GEMINI_SWAGGER_VERBOSE='true'
 
 #
 # Check the arguments and the system before running the benchmarks.
