@@ -86,7 +86,7 @@ def unload_datasets(args):
             if len(loaded.allocations_list[Allocation_id]["loadedDatasets"]) > 0:
                 # Unloading all datasets
                 print("Unloading all loaded datasets...")
-                loaded = loaded.allocations_list["0b391a1a-b916-11ed-afcb-0242ac1c0002"]["loadedDatasets"]
+                loaded = loaded.allocations_list[Allocation_id]["loadedDatasets"]
                 for data in loaded:
                     dataset_id = data['datasetId']
                     resp = gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
