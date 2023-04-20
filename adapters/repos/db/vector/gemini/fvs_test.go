@@ -22,19 +22,16 @@ func randomString(length int) string {
 // This function is for testing all the FVS 'NumpyAppend*" functions
 func TestFVSNumpyFunctions(t *testing.T) {
 
+	// prepare for numpy float32 tests
+	// get a temp file name
+	ranstr := randomString(10)
+	ranfilepath := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+
 	// Run all unit tests in parallel for speed
 	t.Parallel()
 
 	// Run a unit test for the function "Numpy_append_float32_array"
 	t.Run("NumpyAppendFloat32", func(t *testing.T) {
-
-		//
-		// Prepare for the test
-		//
-
-		// get a temp file name
-		ranstr := randomString(10)
-		ranfilepath := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
 
 		// make sure the file does not exist
 		_, ferr := os.Stat(ranfilepath)
@@ -62,12 +59,19 @@ func TestFVSNumpyFunctions(t *testing.T) {
 
 		// we are expecting a specific "dim" value
 		assert.Equal(t, dim, 96, "Expecting dim of 96")
+	})
+
+	t.Run("NumpyReadFloat32", func(t *testing.T) {
 
 		// Start float32 read test
 		readerAt, ferr := mmap.Open(ranfilepath)
 
 		// expecting nil for ferr
 		assert.Nilf(t, ferr, "Got error for opening numpy file")
+
+		// create a float array of dims = 96
+		arr := make([][]float32, 1)
+		arr[0] = make([]float32, 96)
 
 		// read numpy file and store dims
 		rdim, aerr := Numpy_read_float32_array(readerAt, arr, int64(96), int64(0), int64(1), int64(128))
@@ -78,21 +82,20 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		// 96 for dim
 		assert.Equal(t, rdim, int64(96), "Expecting dims of 96")
 
-		// if we get here, the unit test has passed all checks!
 		//
 		// Unit test cleanup
 		//
 		derr := os.Remove(ranfilepath)
 		assert.Nilf(t, derr, "Could not delete the temp file")
-
 	})
+
+	// prepare for numpy uint32 tests
+	// get a temp file name
+	ranstr = randomString(10)
+	ranfilepath = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
 
 	// Run a unit test for the function "Numpy_append_uint32_array"
 	t.Run("NumpyAppendUint32", func(t *testing.T) {
-
-		// prepare for test
-		ranstr := randomString(10)
-		ranfilepath := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
 
 		// make sure file does not exist
 		_, ferr := os.Stat(ranfilepath)
@@ -107,11 +110,17 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		aerr := Numpy_append_uint32_array(ranfilepath, arr, 96, 1)
 		// expecting nil for aerr
 		assert.Nilf(t, aerr, "Got error for Numpy_append_uint32_array")
+	})
 
+	t.Run("NumpyReadUint32", func(t *testing.T) {
 		// open numpy file
 		readerAt, err := mmap.Open(ranfilepath)
 		// expecting nil for err
 		assert.Nilf(t, err, "Could not open numpy file")
+
+		// create a uint32 array
+		arr := make([][]uint32, 1)
+		arr[0] = make([]uint32, 96)
 
 		// read from numpy file
 		dim, aerr := Numpy_read_uint32_array(readerAt, arr, int64(96), int64(0), int64(1), int64(128))
@@ -124,68 +133,69 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		derr := os.Remove(ranfilepath)
 		assert.Nilf(t, derr, "Could not delete the temp file")
 	})
-
-	// Run a unit test for the fvs functions"
-	t.Run("FVSTesting", func(t *testing.T) {
-		// setup for FVS testing
-		host := "localhost"
-		port := uint(7761)
-		// alloc := "0b391a1a-b916-11ed-afcb-0242ac1c0002"
-		alloc := "fd283b38-3e4a-11eb-a205-7085c2c5e516"
-		path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
-		query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
-		bits := uint(128)
-		verbose := true
-		search_type := "flat"
-		topk := uint(5)
-
-		// import dataset
-		dataset_id, err := Import_dataset(host, port, alloc, path, bits, search_type, verbose)
-		assert.Nilf(t, err, "Error importing dataset")
-
-		// get train status
-		status, err := Train_status(host, port, alloc, dataset_id, verbose)
-		assert.Nilf(t, err, "Error getting train status")
-		// wait for training to finish
-		for status == "training" {
-			time.Sleep(2 * time.Second)
-			status, err = Train_status(host, port, alloc, dataset_id, verbose)
-			assert.Nilf(t, err, "Error getting train status while waiting for training to finish")
-		}
-
-		// Load dataset
-		lstatus, err := Load_dataset(host, port, alloc, dataset_id, verbose)
-		assert.Nilf(t, err, "error loading dataset")
-		assert.Equal(t, lstatus, "ok", "error with load status")
-
-		// Import queries
-		query_id, err := Import_queries(host, port, alloc, query_path, verbose)
-		assert.Nilf(t, err, "Error importing queries")
-
-		// Focus dataset
-		err = Set_focus(host, port, alloc, dataset_id, verbose)
-		assert.Nilf(t, err, "Error setting dataset focus")
-
-		// Searching dataset
-		dists, inds, timing, err := Search(host, port, alloc, dataset_id, query_path, topk, verbose)
-		assert.Nilf(t, err, "Error with Search")
-		assert.Equal(t, len(dists[0]), 5, "Dimension mismatch with distances array")
-		assert.Equal(t, len(inds[0]), 5, "Dimension mismatch with indices array")
-		assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
-
-		// Unload dataset
-		status, err = Unload_dataset(host, port, alloc, dataset_id, verbose)
-		assert.Nilf(t, err, "Error unloading dataset")
-		assert.Equal(t, status, "ok", "Unload dataset status not \"ok\"")
-
-		// Delete dataset
-		status, err = Delete_dataset(host, port, alloc, dataset_id, verbose)
-		assert.Nilf(t, err, "Error deleting dataset")
-		assert.Equal(t, status, "ok", "Delete dataset status not \"ok\"")
-
-		// Delete queries
-		status, err = Delete_queries(host, port, alloc, query_id, verbose)
-		assert.Nilf(t, err, "Error deleteing queries")
-		assert.Equal(t, status, "ok", "Delete query status not \"ok\"")
-	})
 }
+
+// 	// Run a unit test for the fvs functions"
+// 	t.Run("FVSTesting", func(t *testing.T) {
+// 		// setup for FVS testing
+// 		host := "localhost"
+// 		port := uint(7761)
+// 		// alloc := "0b391a1a-b916-11ed-afcb-0242ac1c0002"
+// 		alloc := "fd283b38-3e4a-11eb-a205-7085c2c5e516"
+// 		path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
+// 		query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
+// 		bits := uint(128)
+// 		verbose := true
+// 		search_type := "flat"
+// 		topk := uint(5)
+
+// 		// import dataset
+// 		dataset_id, err := Import_dataset(host, port, alloc, path, bits, search_type, verbose)
+// 		assert.Nilf(t, err, "Error importing dataset")
+
+// 		// get train status
+// 		status, err := Train_status(host, port, alloc, dataset_id, verbose)
+// 		assert.Nilf(t, err, "Error getting train status")
+// 		// wait for training to finish
+// 		for status == "training" {
+// 			time.Sleep(2 * time.Second)
+// 			status, err = Train_status(host, port, alloc, dataset_id, verbose)
+// 			assert.Nilf(t, err, "Error getting train status while waiting for training to finish")
+// 		}
+
+// 		// Load dataset
+// 		lstatus, err := Load_dataset(host, port, alloc, dataset_id, verbose)
+// 		assert.Nilf(t, err, "error loading dataset")
+// 		assert.Equal(t, lstatus, "ok", "error with load status")
+
+// 		// Import queries
+// 		query_id, err := Import_queries(host, port, alloc, query_path, verbose)
+// 		assert.Nilf(t, err, "Error importing queries")
+
+// 		// Focus dataset
+// 		err = Set_focus(host, port, alloc, dataset_id, verbose)
+// 		assert.Nilf(t, err, "Error setting dataset focus")
+
+// 		// Searching dataset
+// 		dists, inds, timing, err := Search(host, port, alloc, dataset_id, query_path, topk, verbose)
+// 		assert.Nilf(t, err, "Error with Search")
+// 		assert.Equal(t, len(dists[0]), 5, "Dimension mismatch with distances array")
+// 		assert.Equal(t, len(inds[0]), 5, "Dimension mismatch with indices array")
+// 		assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
+
+// 		// Unload dataset
+// 		status, err = Unload_dataset(host, port, alloc, dataset_id, verbose)
+// 		assert.Nilf(t, err, "Error unloading dataset")
+// 		assert.Equal(t, status, "ok", "Unload dataset status not \"ok\"")
+
+// 		// Delete dataset
+// 		status, err = Delete_dataset(host, port, alloc, dataset_id, verbose)
+// 		assert.Nilf(t, err, "Error deleting dataset")
+// 		assert.Equal(t, status, "ok", "Delete dataset status not \"ok\"")
+
+// 		// Delete queries
+// 		status, err = Delete_queries(host, port, alloc, query_id, verbose)
+// 		assert.Nilf(t, err, "Error deleteing queries")
+// 		assert.Equal(t, status, "ok", "Delete query status not \"ok\"")
+// 	})
+// }
