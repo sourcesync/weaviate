@@ -55,10 +55,10 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		assert.Nilf(t, aerr, "Got error for Numpy_append_float32_array")
 
 		// we are expecting a specific "row_count" value
-		assert.Equal(t, row_count, 1, "Expecting row_count of 1")
+		assert.Equal(t, 1, row_count, "Expecting row_count of 1")
 
 		// we are expecting a specific "dim" value
-		assert.Equal(t, dim, 96, "Expecting dim of 96")
+		assert.Equal(t, 96, dim, "Expecting dim of 96")
 	})
 
 	t.Run("NumpyReadFloat32", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		assert.Nilf(t, aerr, "Got error for Numpy_read_float32_array")
 
 		// 96 for dim
-		assert.Equal(t, rdim, int64(96), "Expecting dims of 96")
+		assert.Equal(t, int64(96), rdim, "Expecting dims of 96")
 
 		//
 		// Unit test cleanup
@@ -127,81 +127,88 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		// expecting nil for aerr
 		assert.Nilf(t, aerr, "Could not read from numpy file")
 		// expecting 96 for dim
-		assert.Equal(t, dim, int64(96), "Expecting dims of 96")
+		assert.Equal(t, int64(96), dim, "Expecting dims of 96")
 
 		// all tests passed, cleanup
 		derr := os.Remove(ranfilepath)
 		assert.Nilf(t, derr, "Could not delete the temp file")
 	})
-	// setup for FVS function testing
+}
+
+func TestFVSCRUDFunctions(t *testing.T) {
+	// setup for FVS testing
 	host := "localhost"
 	port := uint(7761)
-	// alloc := "0b391a1a-b916-11ed-afcb-0242ac1c0002"
-	alloc := "fd283b38-3e4a-11eb-a205-7085c2c5e516"
+	alloc := "0b391a1a-b916-11ed-afcb-0242ac1c0002"
+	// alloc := "fd283b38-3e4a-11eb-a205-7085c2c5e516"
 	path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 	query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
-	bits := uint(128)
+	bits := uint(512)
 	verbose := true
 	search_type := "flat"
 	topk := uint(5)
-	dataset_id := ""
+	var dataset_id = ""
+	var query_id = ""
 
-	// Unit tests for FVS functions
-	// Import Dataset tests
+	// Import dataset tests
 	t.Run("ImportDataset", func(t *testing.T) {
-
-		// import dataset
-		dataset_id, err := Import_dataset(host, port, alloc, path, bits, search_type, verbose)
+		tmp, err := Import_dataset(host, port, alloc, path, bits, search_type, verbose)
+		dataset_id = tmp
 		assert.Nilf(t, err, "Error importing dataset")
-
+		fmt.Println("dataset_id:", dataset_id)
 	})
-
 	// Train status tests
-	t.run("TrainStatus", func(t *testing.T) {
+	t.Run("TrainStatus", func(t *testing.T) {
 		status, err := Train_status(host, port, alloc, dataset_id, verbose)
 		assert.Nilf(t, err, "Error getting train status")
-		// wait for training to finish
 		for status == "training" {
 			time.Sleep(2 * time.Second)
 			status, err = Train_status(host, port, alloc, dataset_id, verbose)
-			assert.Nilf(t, err, "Error getting train status while waiting for training to finish")
+			assert.Nilf(t, err, "Error getting train status while waiting on training")
+			fmt.Println("\nstatus:", status)
 		}
 	})
-		
-
-		// Load dataset
+	// Load Dataset tests
+	t.Run("LoadDataset", func(t *testing.T) {
 		lstatus, err := Load_dataset(host, port, alloc, dataset_id, verbose)
-		assert.Nilf(t, err, "error loading dataset")
-		assert.Equal(t, lstatus, "ok", "error with load status")
-
-		// Import queries
-		query_id, err := Import_queries(host, port, alloc, query_path, verbose)
+		assert.Nilf(t, err, "Error loading dataset")
+		assert.Equal(t, "ok", lstatus, "Load status not \"ok\"")
+	})
+	// Import Query tests
+	t.Run("ImportQueries", func(t *testing.T) {
+		tmp, err := Import_queries(host, port, alloc, query_path, verbose)
+		query_id = tmp
 		assert.Nilf(t, err, "Error importing queries")
-
-		// Focus dataset
-		err = Set_focus(host, port, alloc, dataset_id, verbose)
-		assert.Nilf(t, err, "Error setting dataset focus")
-
-		// Searching dataset
+	})
+	// Focus Dataset
+	t.Run("FocusDataset", func(t *testing.T) {
+		err := Set_focus(host, port, alloc, dataset_id, verbose)
+		assert.Nilf(t, err, "Error setting dataset in focus")
+	})
+	// Search
+	t.Run("Search", func(t *testing.T) {
 		dists, inds, timing, err := Search(host, port, alloc, dataset_id, query_path, topk, verbose)
-		assert.Nilf(t, err, "Error with Search")
-		assert.Equal(t, len(dists[0]), 5, "Dimension mismatch with distances array")
-		assert.Equal(t, len(inds[0]), 5, "Dimension mismatch with indices array")
+		assert.Nilf(t, err, "Error quering dataset")
+		assert.Equal(t, topk, uint(len(dists[0])), "Error in dimension mismatch with distances vector")
+		assert.Equal(t, topk, uint(len(inds[0])), "Error in dimension mismatch with indices vector")
 		assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
-
-		// Unload dataset
-		status, err = Unload_dataset(host, port, alloc, dataset_id, verbose)
+	})
+	// Unload Dataset
+	t.Run("UnloadDataset", func(t *testing.T) {
+		status, err := Unload_dataset(host, port, alloc, dataset_id, verbose)
 		assert.Nilf(t, err, "Error unloading dataset")
-		assert.Equal(t, status, "ok", "Unload dataset status not \"ok\"")
-
-		// Delete dataset
-		status, err = Delete_dataset(host, port, alloc, dataset_id, verbose)
+		assert.Equal(t, "ok", status, "Unload dataset status not \"ok\"")
+	})
+	// Delete Dataset
+	t.Run("DeleteDataset", func(t *testing.T) {
+		status, err := Delete_dataset(host, port, alloc, dataset_id, verbose)
 		assert.Nilf(t, err, "Error deleting dataset")
-		assert.Equal(t, status, "ok", "Delete dataset status not \"ok\"")
-
-		// Delete queries
-		status, err = Delete_queries(host, port, alloc, query_id, verbose)
-		assert.Nilf(t, err, "Error deleteing queries")
-		assert.Equal(t, status, "ok", "Delete query status not \"ok\"")
+		assert.Equal(t, "ok", status, "Delete dataset status not \"ok\"")
+	})
+	// Delete Queries
+	t.Run("DeleteQueries", func(t *testing.T) {
+		status, err := Delete_queries(host, port, alloc, query_id, verbose)
+		assert.Nilf(t, err, "Error deleting queries")
+		assert.Equal(t, "ok", status, "Delete query status not \"ok\"")
 	})
 }
