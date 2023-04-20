@@ -125,4 +125,67 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		assert.Nilf(t, derr, "Could not delete the temp file")
 	})
 
+	// Run a unit test for the fvs functions"
+	t.Run("FVSTesting", func(t *testing.T) {
+		// setup for FVS testing
+		host := "localhost"
+		port := uint(7761)
+		// alloc := "0b391a1a-b916-11ed-afcb-0242ac1c0002"
+		alloc := "fd283b38-3e4a-11eb-a205-7085c2c5e516"
+		path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
+		query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
+		bits := uint(128)
+		verbose := true
+		search_type := "flat"
+		topk := uint(5)
+
+		// import dataset
+		dataset_id, err := Import_dataset(host, port, alloc, path, bits, search_type, verbose)
+		assert.Nilf(t, err, "Error importing dataset")
+
+		// get train status
+		status, err := Train_status(host, port, alloc, dataset_id, verbose)
+		assert.Nilf(t, err, "Error getting train status")
+		// wait for training to finish
+		for status == "training" {
+			time.Sleep(2 * time.Second)
+			status, err = Train_status(host, port, alloc, dataset_id, verbose)
+			assert.Nilf(t, err, "Error getting train status while waiting for training to finish")
+		}
+
+		// Load dataset
+		lstatus, err := Load_dataset(host, port, alloc, dataset_id, verbose)
+		assert.Nilf(t, err, "error loading dataset")
+		assert.Equal(t, lstatus, "ok", "error with load status")
+
+		// Import queries
+		query_id, err := Import_queries(host, port, alloc, query_path, verbose)
+		assert.Nilf(t, err, "Error importing queries")
+
+		// Focus dataset
+		err = Set_focus(host, port, alloc, dataset_id, verbose)
+		assert.Nilf(t, err, "Error setting dataset focus")
+
+		// Searching dataset
+		dists, inds, timing, err := Search(host, port, alloc, dataset_id, query_path, topk, verbose)
+		assert.Nilf(t, err, "Error with Search")
+		assert.Equal(t, len(dists[0]), 5, "Dimension mismatch with distances array")
+		assert.Equal(t, len(inds[0]), 5, "Dimension mismatch with indices array")
+		assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
+
+		// Unload dataset
+		status, err = Unload_dataset(host, port, alloc, dataset_id, verbose)
+		assert.Nilf(t, err, "Error unloading dataset")
+		assert.Equal(t, status, "ok", "Unload dataset status not \"ok\"")
+
+		// Delete dataset
+		status, err = Delete_dataset(host, port, alloc, dataset_id, verbose)
+		assert.Nilf(t, err, "Error deleting dataset")
+		assert.Equal(t, status, "ok", "Delete dataset status not \"ok\"")
+
+		// Delete queries
+		status, err = Delete_queries(host, port, alloc, query_id, verbose)
+		assert.Nilf(t, err, "Error deleteing queries")
+		assert.Equal(t, status, "ok", "Delete query status not \"ok\"")
+	})
 }
