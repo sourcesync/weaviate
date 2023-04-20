@@ -87,18 +87,40 @@ func TestFVSNumpyFunctions(t *testing.T) {
 
 	})
 
-	// Run a unit test for the function "Numpy_append_int32_array"
-	t.Run("NumpyAppendFloat32", func(t *testing.T) {
+	// Run a unit test for the function "Numpy_append_uint32_array"
+	t.Run("NumpyAppendUint32", func(t *testing.T) {
 
+		// prepare for test
 		ranstr := randomString(10)
 		ranfilepath := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+
+		// make sure file does not exist
 		_, ferr := os.Stat(ranfilepath)
+		// expecting an err because file should not exist
 		assert.NotNilf(t, ferr, "The file alerady exists")
+
 		// create uint array
 		arr := make([][]uint32, 1)
 		arr[0] = make([]uint32, 96)
+
+		// write uint32 numpy file
 		aerr := Numpy_append_uint32_array(ranfilepath, arr, 96, 1)
+		// expecting nil for aerr
 		assert.Nilf(t, aerr, "Got error for Numpy_append_uint32_array")
+
+		// open numpy file
+		readerAt, err := mmap.Open(ranfilepath)
+		// expecting nil for err
+		assert.Nilf(t, err, "Could not open numpy file")
+
+		// read from numpy file
+		dim, aerr := Numpy_read_uint32_array(readerAt, arr, int64(96), int64(0), int64(1), int64(128))
+		// expecting nil for aerr
+		assert.Nilf(t, aerr, "Could not read from numpy file")
+		// expecting 96 for dim
+		assert.Equal(t, dim, int64(96), "Expecting dims of 96")
+
+		// all tests passed, cleanup
 		derr := os.Remove(ranfilepath)
 		assert.Nilf(t, derr, "Could not delete the temp file")
 	})
