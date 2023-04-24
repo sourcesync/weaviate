@@ -274,6 +274,9 @@ func Load_dataset(host string, port uint, allocation_token string, dataset_id st
 	if verbose {
 		fmt.Println("Fvs: Load_dataset: json resp=", respData, rErr)
 	}
+	if fmt.Sprintf("%T", respData["status"]) != "string" {
+		return "error", fmt.Errorf("error: status: %g, title: %s", respData["status"], respData["title"])
+	}
 
 	status := respData["status"].(string)
 	if verbose {
