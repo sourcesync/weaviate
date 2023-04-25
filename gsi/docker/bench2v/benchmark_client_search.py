@@ -108,6 +108,16 @@ elif args.n == "45M":
     TOTAL_ADDS = 45000000
 elif args.n == "50M":
     TOTAL_ADDS = 50000000
+elif args.n == "60M":
+    TOTAL_ADDS = 60000000
+elif args.n == "70M":
+    TOTAL_ADDS = 70000000
+elif args.n == "80M":
+    TOTAL_ADDS = 80000000
+elif args.n == "90M":
+    TOTAL_ADDS = 90000000
+elif args.n == "100M":
+    TOTAL_ADDS = 100000000
 else:
     TOTAL_ADDS = int(args.n)
 
@@ -150,6 +160,16 @@ elif TOTAL_ADDS == 45000000:
     gt_file = os.path.join( BENCH_DATASET_DIR, "deep-45M-gt-%d.npy" %  args.q )
 elif TOTAL_ADDS == 50000000:
     gt_file = os.path.join( BENCH_DATASET_DIR, "deep-50M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 60000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-60M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 70000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-70M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 80000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-80M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 90000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-90M-gt-%d.npy" %  args.q )
+elif TOTAL_ADDS == 100000000:
+    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-100M-gt-%d.npy" %  args.q )
     
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
