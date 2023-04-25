@@ -34,7 +34,6 @@ var topk = uint(5)
 var bits = uint(128)
 var search_type = "flat"
 var path = "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
-var query_path = "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
 var dataset_id = ""
 var query_id = ""
 
