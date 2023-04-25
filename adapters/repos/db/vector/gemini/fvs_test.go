@@ -178,6 +178,7 @@ func TestFVSFunctions1(t *testing.T) {
 			assert.Nilf(t, err, "Error getting train status while waiting on training")
 			fmt.Println("\nstatus:", status)
 		}
+		assert.Equal(t, "completed", status, "Status should be \"completed\" after training")
 	})
 	// Load Dataset tests
 	t.Run("LoadDataset", func(t *testing.T) {
@@ -225,9 +226,9 @@ func TestFVSFunctions1(t *testing.T) {
 }
 
 // Testing import dataset with size less than 4k
+// Error is expected during training
 func TestFVSFunctions2(t *testing.T) {
 	fmt.Println("\n\n----------TEST 2----------")
-	time.Sleep(5 * time.Second)
 	path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-1000.npy"
 	search_type := "flat"
 
@@ -260,9 +261,9 @@ func TestFVSFunctions2(t *testing.T) {
 }
 
 // Testing import dataset with odd bits
+// Error is expected during dataset load
 func TestFVSFunctions3(t *testing.T) {
 	fmt.Println("\n\n----------TEST 3-----------")
-	time.Sleep(5 * time.Second)
 	// setup for FVS testing
 	bits := uint(137)
 
@@ -282,6 +283,7 @@ func TestFVSFunctions3(t *testing.T) {
 			status, err = Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 			assert.Nilf(t, err, "Error getting train status while waiting on training")
 		}
+		assert.Equal(t, "completed", status, "Status should be \"completed\" after training")
 	})
 	// load dataset
 	t.Run("LoadDataset", func(t *testing.T) {
@@ -301,7 +303,6 @@ func TestFVSFunctions3(t *testing.T) {
 // test invalid search type (typo "fat")
 func TestFVSFunctions4(t *testing.T) {
 	fmt.Println("\n\n----------TEST 4-----------")
-	time.Sleep(5 * time.Second)
 	path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 	search_type := "fat"
 
@@ -312,5 +313,3 @@ func TestFVSFunctions4(t *testing.T) {
 		assert.Equal(t, "", dataset_id, "Error, dataset_id should be nil")
 	})
 }
-
-//
