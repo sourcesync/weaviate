@@ -1,11 +1,17 @@
 #!/bin/bash
 
+set -e
+set -x
+
 #
 # You need to change these parameters to reflect your local setup
 #
 
 # Write/append the benchmark results to this file
-OUTPUT="results/benchmarks-deep50M-q1000-clusters.csv"
+DT=$(date +%s)
+DTDIR="results/$DT"
+mkdir -p $DTDIR
+OUTPUT="$DTDIR/benchmarks-deep50M-q1000-clusters-$DT.csv"
 
 # Set a valid allocation id
 ALLOCATION_ID="0b391a1a-b916-11ed-afcb-0242ac1c0002" #"fd283b38-3e4a-11eb-a205-7085c2c5e516"
@@ -36,20 +42,20 @@ set -e
 #
 # Now run all the benchmarks.  Note that this might take a while, so you should consider running it behind the 'screen' utility.
 #
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 2>&1 | tee "./results/50M_1000_768b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 2>&1 | tee "./results/50M_1000_768b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 2>&1 | tee "./results/50M_1000_768b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 512 2>&1 | tee "./results/50M_1000_512b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 512 2>&1 | tee "./results/50M_1000_512b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 512 2>&1 | tee "./results/50M_1000_512b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 256 2>&1 | tee "./results/50M_1000_256b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 256 2>&1 | tee "./results/50M_1000_256b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 256 2>&1 | tee "./results/50M_1000_256b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 128 2>&1 | tee "./results/50M_1000_128b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 128 2>&1 | tee "./results/50M_1000_128b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 128 2>&1 | tee "./results/50M_1000_128b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 64 2>&1 | tee "./results/50M_1000_64b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 64 2>&1 | tee "./results/50M_1000_64b_$(date +%s).txt"
-python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 64 2>&1 | tee "./results/50M_1000_64b_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 2>&1 | tee "$DTDIR/50M_1000_768b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 2>&1 | tee "$DTDIR/50M_1000_768b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 2>&1 | tee "$DTDIR/50M_1000_768b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 512 2>&1 | tee "$DTDIR/50M_1000_512b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 512 2>&1 | tee "$DTDIR/50M_1000_512b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 512 2>&1 | tee "$DTDIR/50M_1000_512b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 256 2>&1 | tee "$DTDIR/50M_1000_256b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 256 2>&1 | tee "$DTDIR/50M_1000_256b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 256 2>&1 | tee "$DTDIR/50M_1000_256b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 128 2>&1 | tee "$DTDIR/50M_1000_128b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 128 2>&1 | tee "$DTDIR/50M_1000_128b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 128 2>&1 | tee "$DTDIR/50M_1000_128b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 64 2>&1  | tee "$DTDIR/50M_1000_64b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 64 2>&1  | tee "$DTDIR/50M_1000_64b_clusters_$DT_$(date +%s).txt"
+python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 64 2>&1  | tee "$DTDIR/50M_1000_64b_clusters_$DT_$(date +%s).txt"
 
-
+echo "Done. $OUTPUT"
