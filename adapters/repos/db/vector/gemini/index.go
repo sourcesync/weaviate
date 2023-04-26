@@ -295,7 +295,7 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 		return nil, nil, errors.Errorf("No items in the gemini index.")
 	} else {
 
-		// TODO:  This bit of code is a gnarly and deserves a refactor into an FSM.
+		// TODO:  This bit of code is a bit gnarly and deserves a refactor into an FSM.
 		// TODO:  Basically, it will kick off an index asynchronous build at FVS and continues
 		// TODO:  to monitor its status, returning appropriate messages to the client along the way.
 		// TODO:  Finally, when the index is built it performs the actual search and returns
@@ -307,11 +307,15 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 				// Initiate the index build asynchronously
 
 				if i.verbose {
-					fmt.Println("Gemini SearchByVector: About to import dataset with dataset_id=", i.dataset_id)
+					fmt.Println("Gemini SearchByVector: About to import dataset...")
 				}
 
 				if i.min_records_check && i.count <= DefaultCentroidsRerank {
 					return nil, nil, fmt.Errorf("FVS requires a mininum of %d vectors in the dataset.", DefaultCentroidsRerank)
+				}
+				
+                if i.verbose {
+					fmt.Println("Gemini SearchByVector: Import parameters -> ", i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, i.nbits, i.search_type)
 				}
 
 				dataset_id, err := Import_dataset(i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, i.nbits, i.search_type, i.verbose)
