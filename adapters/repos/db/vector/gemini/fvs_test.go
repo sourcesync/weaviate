@@ -85,13 +85,13 @@ func TestTmpStuff(t *testing.T) {
 		assert.Nilf(t, err, "Error setting dataset in focus")
 	})
 	// Search
-	// t.Run("Search", func(t *testing.T) {
-	// 	dists, inds, timing, err := Search(HOST, PORT, ALLOC, dataset_id, query_path, topk, VERBOSE)
-	// 	assert.Nilf(t, err, "Error querying dataset")
-	// 	assert.Equal(t, topk, uint(len(dists[0])), "Error in dimension mismatch with distances vector")
-	// 	assert.Equal(t, topk, uint(len(inds[0])), "Error in dimension mismatch with indices vector")
-	// 	assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
-	// })
+	t.Run("Search", func(t *testing.T) {
+		dists, inds, timing, err := Search(HOST, PORT, ALLOC, dataset_id, query_path, topk, VERBOSE)
+		assert.Nilf(t, err, "Error querying dataset")
+		assert.Equal(t, topk, uint(len(dists[0])), "Error in dimension mismatch with distances vector")
+		assert.Equal(t, topk, uint(len(inds[0])), "Error in dimension mismatch with indices vector")
+		assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
+	})
 	// Unload Dataset
 	t.Run("UnloadDataset", func(t *testing.T) {
 		status, err := Unload_dataset(HOST, PORT, ALLOC, dataset_id, VERBOSE)

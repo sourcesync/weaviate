@@ -42,7 +42,7 @@ func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("\nGET TRAIN STATUS")
+	fmt.Println("\nTRAIN STATUS")
 	if r.Method != "GET" {
 		http.Error(w, "Method is not suppored.", http.StatusNotFound)
 	}
@@ -66,7 +66,7 @@ func handleLoadDataset(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nLOAD DATASET:")
+	fmt.Println("\nLOAD DATASET")
 	values := map[string]interface{}{
 		"status": "ok",
 		"title":  "none",
@@ -134,18 +134,21 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nDOING SEARCH, reqData:", reqData)
-	// dim := reqData["topk"].(float64)
-	dist := map[string]interface{}{
-		"hello": "world",
+	fmt.Println("\nSEARCH")
+	dim := reqData["topk"].(float64)
+	dist := make([][]float32, int(dim))
+	for i := 0; i < len(dist); i++ {
+		dist[i] = make([]float32, int(dim))
+		for j := 0; j < len(dist); j++ {
+			dist[i][j] = float32(1)
+		}
 	}
-	search := float64(1)
+	search := float64(.001)
 	values := map[string]interface{}{
 		"distance": dist,
 		"indices":  dist,
 		"search":   search,
 	}
-	fmt.Println(len(values))
 	jsonret, _ := json.Marshal(values)
 	w.Write(jsonret)
 }
@@ -197,7 +200,7 @@ func main() {
 	myRouter.HandleFunc("/v1.0/dataset/search", handleSearch)
 	myRouter.HandleFunc("/v1.0/dataset/unload", handleUnloadDataset)
 	myRouter.HandleFunc("/v1.0/dataset/remove/{dataset_id}", handleDeleteDataset)
-	myRouter.HandleFunc("/v1.0/demo/query/remove/{dataset_id}", handleDeleteQueries)
+	myRouter.HandleFunc("/v1.0/demo/query/remove/{query_id}", handleDeleteQueries)
 
 	fmt.Printf("Starting server at port %d\n", PORT)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", PORT), myRouter))
