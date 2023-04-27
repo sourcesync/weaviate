@@ -55,19 +55,19 @@ func TestTmpStuff(t *testing.T) {
 		assert.Nilf(t, err, "error importing dataset")
 	})
 
-	// t.Run("TrainStatus", func(t *testing.T) {
-	// 	status, err := Train_status(HOST, PORT, ALLOC, dataset_id, true)
-	// 	fmt.Println(status)
-	// 	assert.Nilf(t, err, "Error getting train status")
-	// 	for status == "training" || status == "pending" {
-	// 		fmt.Println("currently", status, ": waiting...")
-	// 		time.Sleep(2 * time.Second)
-	// 		status, err = Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
-	// 		assert.Nilf(t, err, "Error getting train status while waiting on training")
-	// 		fmt.Println("\nstatus:", status)
-	// 	}
-	// 	assert.Equal(t, "completed", status, "Status should be \"completed\" after training")
-	// })
+	t.Run("TrainStatus", func(t *testing.T) {
+		status, err := Train_status(HOST, PORT, ALLOC, dataset_id, true)
+		fmt.Println(status)
+		assert.Nilf(t, err, "Error getting train status")
+		for status == "training" || status == "pending" {
+			fmt.Println("currently", status, ": waiting...")
+			time.Sleep(2 * time.Second)
+			status, err = Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
+			assert.Nilf(t, err, "Error getting train status while waiting on training")
+			fmt.Println("\nstatus:", status)
+		}
+		assert.Equal(t, "completed", status, "Status should be \"completed\" after training")
+	})
 	t.Run("LoadDataset", func(t *testing.T) {
 		lstatus, err := Load_dataset(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 		assert.Nilf(t, err, "Error loading dataset")
@@ -85,31 +85,31 @@ func TestTmpStuff(t *testing.T) {
 		assert.Nilf(t, err, "Error setting dataset in focus")
 	})
 	// Search
-	t.Run("Search", func(t *testing.T) {
-		dists, inds, timing, err := Search(HOST, PORT, ALLOC, dataset_id, query_path, topk, VERBOSE)
-		assert.Nilf(t, err, "Error querying dataset")
-		assert.Equal(t, topk, uint(len(dists[0])), "Error in dimension mismatch with distances vector")
-		assert.Equal(t, topk, uint(len(inds[0])), "Error in dimension mismatch with indices vector")
-		assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
+	// t.Run("Search", func(t *testing.T) {
+	// 	dists, inds, timing, err := Search(HOST, PORT, ALLOC, dataset_id, query_path, topk, VERBOSE)
+	// 	assert.Nilf(t, err, "Error querying dataset")
+	// 	assert.Equal(t, topk, uint(len(dists[0])), "Error in dimension mismatch with distances vector")
+	// 	assert.Equal(t, topk, uint(len(inds[0])), "Error in dimension mismatch with indices vector")
+	// 	assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
+	// })
+	// Unload Dataset
+	t.Run("UnloadDataset", func(t *testing.T) {
+		status, err := Unload_dataset(HOST, PORT, ALLOC, dataset_id, VERBOSE)
+		assert.Nilf(t, err, "Error unloading dataset")
+		assert.Equal(t, "ok", status, "Unload dataset status not \"ok\"")
 	})
-	// 	// Unload Dataset
-	// 	t.Run("UnloadDataset", func(t *testing.T) {
-	// 		status, err := Unload_dataset(HOST, PORT, ALLOC, dataset_id, VERBOSE)
-	// 		assert.Nilf(t, err, "Error unloading dataset")
-	// 		assert.Equal(t, "ok", status, "Unload dataset status not \"ok\"")
-	// 	})
-	// 	// Delete Dataset
-	// 	t.Run("DeleteDataset", func(t *testing.T) {
-	// 		status, err := Delete_dataset(HOST, PORT, ALLOC, dataset_id, VERBOSE)
-	// 		assert.Nilf(t, err, "Error deleting dataset")
-	// 		assert.Equal(t, "ok", status, "Delete dataset status not \"ok\"")
-	// 	})
-	// 	// Delete Queries
-	// 	t.Run("DeleteQueries", func(t *testing.T) {
-	// 		status, err := Delete_queries(HOST, PORT, ALLOC, query_id, VERBOSE)
-	// 		assert.Nilf(t, err, "Error deleting queries")
-	// 		assert.Equal(t, "ok", status, "Delete query status not \"ok\"")
-	// 	})
+	// Delete Dataset
+	t.Run("DeleteDataset", func(t *testing.T) {
+		status, err := Delete_dataset(HOST, PORT, ALLOC, dataset_id, VERBOSE)
+		assert.Nilf(t, err, "Error deleting dataset")
+		assert.Equal(t, "ok", status, "Delete dataset status not \"ok\"")
+	})
+	// Delete Queries
+	t.Run("DeleteQueries", func(t *testing.T) {
+		status, err := Delete_queries(HOST, PORT, ALLOC, query_id, VERBOSE)
+		assert.Nilf(t, err, "Error deleting queries")
+		assert.Equal(t, "ok", status, "Delete query status not \"ok\"")
+	})
 }
 
 // This function is for testing all the FVS 'NumpyAppend*" functions

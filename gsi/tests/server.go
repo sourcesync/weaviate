@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
@@ -41,17 +42,10 @@ func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("DOING GET TRAIN STATUS")
+	fmt.Println("\nGET TRAIN STATUS")
 	if r.Method != "GET" {
 		http.Error(w, "Method is not suppored.", http.StatusNotFound)
 	}
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
-	fmt.Println("\nGET REQUEST")
 	values := map[string]interface{}{
 		"datasetStatus": "completed",
 	}
@@ -173,12 +167,6 @@ func handleUnloadDataset(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteQueries(w http.ResponseWriter, r *http.Request) {
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
 	fmt.Println("\nDELETING QUERIES")
 	values := map[string]interface{}{
 		"status": "ok",
@@ -189,12 +177,6 @@ func handleDeleteQueries(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteDataset(w http.ResponseWriter, r *http.Request) {
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
 	fmt.Println("\nDELETING DATASET")
 	values := map[string]interface{}{
 		"status": "ok",
@@ -204,19 +186,19 @@ func handleDeleteDataset(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/v1.0/dataset/import", handleImportDataset)
-	http.HandleFunc("/v1.0/dataset/train/status/*", handleTrainStatus)
-	http.HandleFunc("/v1.0/dataset/load", handleLoadDataset)
-	http.HandleFunc("/v1.0/demo/query/import", handleImportQueries)
-	http.HandleFunc("/v1.0/dataset/focus", handleFocusDataset)
-	http.HandleFunc("/v1.0/dataset/search", handleSearch)
-	http.HandleFunc("/v1.0/dataset/unload", handleUnloadDataset)
-	http.HandleFunc("/v1.0/dataset/remove/*", handleDeleteDataset)
-	http.HandleFunc("/v1.0/demo/query/remove/*", handleDeleteQueries)
+
+	myRouter := mux.NewRouter().StrictSlash(true)
+
+	myRouter.HandleFunc("/v1.0/dataset/import", handleImportDataset)
+	myRouter.HandleFunc("/v1.0/dataset/train/status/{dataset_id}", handleTrainStatus)
+	myRouter.HandleFunc("/v1.0/dataset/load", handleLoadDataset)
+	myRouter.HandleFunc("/v1.0/demo/query/import", handleImportQueries)
+	myRouter.HandleFunc("/v1.0/dataset/focus", handleFocusDataset)
+	myRouter.HandleFunc("/v1.0/dataset/search", handleSearch)
+	myRouter.HandleFunc("/v1.0/dataset/unload", handleUnloadDataset)
+	myRouter.HandleFunc("/v1.0/dataset/remove/{dataset_id}", handleDeleteDataset)
+	myRouter.HandleFunc("/v1.0/demo/query/remove/{dataset_id}", handleDeleteQueries)
 
 	fmt.Printf("Starting server at port %d\n", PORT)
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), nil); err != nil {
-		log.Fatal(err)
-	}
-
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", PORT), myRouter))
 }
