@@ -29,12 +29,13 @@ services:
      - "8080:8080"
     volumes:
 #     - /Users/gwilliams/Projects/GSI/Weaviate/data/:/datasets
-     - /home/gwilliams/Projects/Weaviate/github.fork/data/datasets:/datasets
+#     - /home/gwilliams/Projects/Weaviate/github.fork/data/datasets:/datasets
+     - /mnt/nas1/fvs_benchmark_datasets:/datasets
     restart: 'no'
     environment:
       VERBOSE: 0
       ENABLE_CUDA: 0
-      DATABASE_FILE: "/datasets/deep-250M.npy"
+      DATABASE_FILE: "/datasets/deep-10K.npy"
       QUERY_FILE: "/datasets/deep-queries-1000.npy"
-      GROUND_TRUTH_FILE: "/datasets/deep-250M-gt-1000.npy"
+      GROUND_TRUTH_FILE: "/datasets/deep-10K-gt-1000.npy"
 

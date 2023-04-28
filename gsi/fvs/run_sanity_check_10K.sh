@@ -15,13 +15,13 @@ echo "log=$LOG"
 ALLOCATION_ID="0b391a1a-b916-11ed-afcb-0242ac1c0002" #"fd283b38-3e4a-11eb-a205-7085c2c5e516"
 
 # Path to dataset numpy file
-DATASET="/mnt/nas1/fvs_benchmark_datasets/deep-1M.npy"
+DATASET="/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 
 # Path to queries numpy file
 QUERIES="/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
 
 # Path to the ground truth numpy file
-GROUNDTRUTH="/mnt/nas1/fvs_benchmark_datasets/deep-1M-gt-10.npy"
+GROUNDTRUTH="/mnt/nas1/fvs_benchmark_datasets/deep-10K-gt-10.npy"
 
 # Set Swagger to emit verbose http payload messages
 export GEMINI_SWAGGER_VERBOSE='true'
@@ -40,6 +40,6 @@ set -e
 #
 # Now run all the benchmarks.  Note that this might take a while, so you should consider running it behind the 'screen' utility.
 #
-python -u gemini_fvs.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 64 2>&1 | tee "$LOG"
+python -u gemini_fvs.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --save --b 64 2>&1 | tee "$LOG"
 
 echo "Done. Output=$OUTPUT, Log=$LOG"

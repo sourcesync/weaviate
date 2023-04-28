@@ -50,6 +50,9 @@ K_NEIGHBORS         = -1
 # dir for export
 RESULTS_DIR         = "results"
 
+# Only process first query (useful in verbose debugging) 
+SHORT_CIRCUIT       = False
+
 #
 # Globals
 #
@@ -84,8 +87,13 @@ parser.add_argument("-n", required=True)
 parser.add_argument("-q", type=int, required=True)
 parser.add_argument("-k", type=int, required=True)
 parser.add_argument("--gemini", action="store_true")
+parser.add_argument("--verbose", action="store_true")
+parser.add_argument("--shortcircuit", action="store_true")
 parser.add_argument("--dontexport",  default=False, action="store_true")
 args = parser.parse_args()
+
+VERBOSE = args.verbose
+SHORT_CIRCUIT = args.shortcircuit
 
 # Set the search dabasize size
 if args.n == "10K":
@@ -258,7 +266,7 @@ def parse_result(result):
         raise Exception("Got error response from search query")
 
     items = result['data']['Get']['BenchmarkDeep1B']
-    timing = int(items[0]['_additional']['lastUpdateTimeUnix'])
+    timing = 0 #int(items[0]['_additional']['lastUpdateTimeUnix'])
     inds = [ int(item['index']) for item in items ]
 
     return timing, inds
@@ -277,8 +285,9 @@ def do_benchmark_query(idx):
    
     # prepare and perform the weaviate query 
     nearText = {"concepts": [ "q-%d" % idx ]}
-    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
-
+    #result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
+    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
+    print("res", result)
     # get the data from the results we want
     timing, inds = parse_result(result)
     if VERBOSE:
@@ -295,9 +304,9 @@ def do_benchmark_query(idx):
 
 
 # do one test first
-print("Testing one query...")
-timing, recall = do_benchmark_query(1)
-print("Verfied.")
+#print("Testing one query...")
+#timing, recall = do_benchmark_query(1)
+##print("Verfied.")
 
 # now do the entire query set
 print("Running %d queries..." % args.q)
@@ -309,6 +318,10 @@ for idx in range(args.q):
     # accumulate results
     STATS.append( { "qidx": idx, "recall": recall, "searchTime": timing, "host": HOSTNAME, \
                     "gt_file": gt_file, "dset_size": TOTAL_ADDS, "argsn": args.n , "vectorindex": VECTOR_INDEX } )
+
+    if SHORT_CIRCUIT:
+        print("Short circuiting query set.  Stopping now.")
+        break
 
 print("Done.")
 
