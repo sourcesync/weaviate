@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/kshedden/gonpy"
 	"io"
 	"log"
 	"net/http"
@@ -14,8 +15,9 @@ const (
 	PORT = uint(7760)
 )
 
-var dataset_id = ""
-var path = ""
+var dataset_id string
+var path string
+var bits float64
 
 func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -29,16 +31,29 @@ func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
 	fmt.Println("\nIMPORT DATASET")
-
-	dataset_id = uuid.New().String()
-	values := map[string]interface{}{
-		"datasetId": dataset_id,
+	bits = reqData["nbits"].(float64)
+	path = reqData["dsFilePath"].(string)
+	types := [3]string{"flat", "cluster", "hnsw"}
+	searchType := reqData["searchType"]
+	valid := false
+	for i := 0; i < len(types); i++ {
+		if types[i] == searchType {
+			valid = true
+		}
 	}
-	jsonret, err := json.Marshal(values)
-	if err != nil {
-		log.Fatal(err, "failed to marshal values")
+	if !valid {
+		http.Error(w, "Not valid search type", 400)
+	} else {
+		dataset_id = uuid.New().String()
+		values := map[string]interface{}{
+			"datasetId": dataset_id,
+		}
+		jsonret, err := json.Marshal(values)
+		if err != nil {
+			log.Fatal(err, "failed to marshal values")
+		}
+		w.Write(jsonret)
 	}
-	w.Write(jsonret)
 }
 
 func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
@@ -46,14 +61,23 @@ func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method is not suppored.", http.StatusNotFound)
 	}
-	values := map[string]interface{}{
-		"datasetStatus": "completed",
+	reader, _ := gonpy.NewFileReader(path)
+	if reader.Shape[0] < 4000 {
+		values := map[string]interface{}{
+			"datasetStatus": "error",
+		}
+		jsonret, _ := json.Marshal(values)
+		w.Write(jsonret)
+	} else {
+		values := map[string]interface{}{
+			"datasetStatus": "completed",
+		}
+		jsonret, err := json.Marshal(values)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.Write(jsonret)
 	}
-	jsonret, err := json.Marshal(values)
-	if err != nil {
-		log.Fatal(err)
-	}
-	w.Write(jsonret)
 }
 
 func handleLoadDataset(w http.ResponseWriter, r *http.Request) {
@@ -67,16 +91,26 @@ func handleLoadDataset(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
 	fmt.Println("\nLOAD DATASET")
-	values := map[string]interface{}{
-		"status": "ok",
-		"title":  "none",
+	if uint(bits)%2 != 0 {
+		values := map[string]interface{}{
+			"detail": "The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.",
+			"status": 500,
+			"title":  "Internal Server Error",
+			"type":   "about:blank",
+		}
+		jsonret, _ := json.Marshal(values)
+		w.Write(jsonret)
+	} else {
+		values := map[string]interface{}{
+			"status": "ok",
+			"title":  "none",
+		}
+		jsonret, err := json.Marshal(values)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.Write(jsonret)
 	}
-	jsonret, err := json.Marshal(values)
-	if err != nil {
-		log.Fatal(err)
-	}
-	w.Write(jsonret)
-
 }
 
 func handleImportQueries(w http.ResponseWriter, r *http.Request) {
