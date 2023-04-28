@@ -120,6 +120,9 @@ if args.gemini:
 
     print("Gemini index paramters=", GEMINI_PARAMETERS)
 
+    print("Overriding batch size to 1 because multithreading causes out-of-seq issues...")
+    BATCH_SIZE=1
+
 else:
     VECTOR_INDEX = "hnsw"
 

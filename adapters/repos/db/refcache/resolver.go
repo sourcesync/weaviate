@@ -196,7 +196,7 @@ func (r *Resolver) resolveRef(item *models.SingleRef, desiredClass string,
 		// This is a horrible hack.  Chooose from
 		// nested["lastUpdateTimeUnix"] = res.Updated
 		// nested["lastUpdateTimeUnix"] = res.SearchTime
-		nested["lastUpdateTimeUnix"] = res.Updated
+		nested["lastUpdateTimeUnix"] = res.SearchTime
 	}
 	out.Fields = nested
 

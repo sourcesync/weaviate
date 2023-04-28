@@ -39,7 +39,7 @@ type Result struct {
 	Dims int
 
 	// Inner vector search time if captured, 0 otherwise
-	//GW SearchTime int64
+	SearchTime int64
 }
 
 type Results []Result

@@ -266,7 +266,7 @@ def parse_result(result):
         raise Exception("Got error response from search query")
 
     items = result['data']['Get']['BenchmarkDeep1B']
-    timing = 0 #int(items[0]['_additional']['lastUpdateTimeUnix'])
+    timing = int(items[0]['_additional']['lastUpdateTimeUnix'])
     inds = [ int(item['index']) for item in items ]
 
     return timing, inds
@@ -285,9 +285,8 @@ def do_benchmark_query(idx):
    
     # prepare and perform the weaviate query 
     nearText = {"concepts": [ "q-%d" % idx ]}
-    #result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
-    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
-    print("res", result)
+    result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
+    #result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
     # get the data from the results we want
     timing, inds = parse_result(result)
     if VERBOSE:
