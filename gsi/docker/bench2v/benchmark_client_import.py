@@ -19,6 +19,10 @@ import requests
 import argparse
 import pandas as pd
 import platform
+import shutil
+import socket
+import swagger_client
+from swagger_client.models import *
 
 #
 # Configuration
@@ -56,6 +60,13 @@ GEMINI_SEARCH_TYPE  = None
 
 # Generally, we don't want to ever allow vector cache-ing in benchmarking
 ALLOW_CACHEING      = False
+
+# Do some APU purging 
+PURGE_UNLOAD        = True  # Loaded datasets could affect performance timing
+PURGE_DELETE        = False # Unloaded datasets take up disk space but should not affect timing
+
+# We need the allocation id to purge datasets here
+ALLOCATION_ID       = 'fd283b38-3e4a-11eb-a205-7085c2c5e516'
 
 #
 # Globals
@@ -102,6 +113,8 @@ elif args.n == "10M":
     TOTAL_ADDS =10000000
 elif args.n == "20M":
     TOTAL_ADDS = 20000000
+elif args.n == "50M":
+    TOTAL_ADDS = 50000000
 else:
     TOTAL_ADDS = int(args.n)
 
@@ -131,7 +144,7 @@ else:
 if not os.path.exists(RESULTS_DIR):
     raise Exception("The output dir %s does not exist." % RESULTS_DIR)
 
-# Get CSV export if any
+# Get CSV export filename if needed
 if not args.dontexport:
     vectorstr = "%s__%s" % (VECTOR_INDEX, ("allowcacheing_%s__" % str(ALLOW_CACHEING)) if VECTOR_INDEX == "hnsw" else ("bt_%d__st_%s" % (GEMINI_TRAINING_BITS, GEMINI_SEARCH_TYPE) ))
     EXPORT_FNAME = "%s/Import-%s__%s__sz_%d__%s__%f.csv" % ( RESULTS_DIR, platform.node(), BENCH_CLASS_NAME, TOTAL_ADDS, vectorstr, time.time() )
@@ -142,6 +155,77 @@ if not args.dontexport:
 else:
     print("WARNING: not exporting csv results")
     time.sleep(1)
+
+#
+# Purge APU datasets as needed
+#
+
+# Setup connection to local FVS api
+server = socket.gethostbyname(socket.gethostname())
+port = "7761"
+version = 'v1.0'
+
+# Create FVS api objects
+config = swagger_client.configuration.Configuration()
+api_config = swagger_client.ApiClient(config)
+gsi_boards_apis = swagger_client.BoardsApi(api_config)
+gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
+
+# Configure the FVS api
+config.verify_ssl = False
+config.host = f'http://{server}:{port}/{version}'
+
+# Capture the supplied allocation id
+Allocation_id = ALLOCATION_ID
+
+# Set default header
+api_config.default_headers["allocationToken"] = Allocation_id
+
+# Print dataset count
+print("Getting total datasets...")
+dsets = gsi_datasets_apis.controllers_dataset_controller_get_datasets_list(allocation_token=Allocation_id)
+print(f"Number of datasets:{len(dsets.datasets_list)}")
+    
+if len(dsets.datasets_list) > 0:
+
+    if PURGE_UNLOAD: # unload datasets
+
+        # Print loaded dataset count
+        print("Getting loaded datasets for allocation token: ", Allocation_id)
+        loaded = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
+        print(f"Number of loaded datasets: {len(loaded.allocations_list[Allocation_id]['loadedDatasets'])}")
+        # check loaded dataset count
+        if len(loaded.allocations_list[Allocation_id]["loadedDatasets"]) > 0:
+            # Unloading all datasets
+            print("Unloading all loaded datasets...")
+            loaded = loaded.allocations_list[Allocation_id]["loadedDatasets"]
+            for data in loaded:
+                dataset_id = data['datasetId']
+                resp = gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
+                            UnloadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id),
+                            allocation_token=Allocation_id)
+                if resp.status != 'ok':
+                    print(f"error unloading dataset: {dataset_id}")
+
+            # Getting current number of loaded datasets
+            curr = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
+            print(f"Unloaded datasets, current loaded dataset count: {len(curr.allocations_list[Allocation_id]['loadedDatasets'])}")
+
+        else:
+            print("Currently no loaded datasets. Done.")
+
+    if PURGE_DELETE == True: # delete datasets
+
+        wipe = input("are you super sure? y/[n]: ") # let's ask first
+        if wipe == "y":
+            print("deleting all datasets...")
+            for data in dsets.datasets_list:
+                dataset_id = data['id']
+                resp = gsi_datasets_apis.controllers_dataset_controller_remove_dataset(\
+                        dataset_id=dataset_id, allocation_token=Allocation_id)
+                if resp.status != "ok":
+                    print(f"Error removing dataset: {dataset_id}")
+
 
 #
 # Start schema checks and import
