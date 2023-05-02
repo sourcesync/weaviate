@@ -12,12 +12,22 @@
 package gemini
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/kshedden/gonpy"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/mmap"
 )
@@ -28,10 +38,11 @@ const (
 	ALLOC = "fd283b38-3e4a-11eb-a205-7085c2c5e516"
 	// var ALLOC = "0b391a1a-b916-11ed-afcb-0242ac1c0002"
 	VERBOSE = true
+	FAKE    = true
 )
 
 var topk = uint(5)
-var bits = uint(128)
+var bits = float64(128)
 var search_type = "flat"
 var path = "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 var dataset_id = ""
@@ -160,12 +171,263 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		assert.Nilf(t, derr, "Could not delete the temp file")
 	})
 }
+func handleImportDataset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method is not suppported.", http.StatusNotFound)
+		return
+	}
+	reqBody, _ := io.ReadAll(r.Body)
+	reqData := map[string]interface{}{}
+	juErr := json.Unmarshal(reqBody, &reqData)
+	if juErr != nil {
+		log.Fatal(juErr, "could not unmarshal request body")
+	}
+	fmt.Println("\nIMPORT DATASET")
+	bits = reqData["nbits"].(float64)
+	path = reqData["dsFilePath"].(string)
+	types := [3]string{"flat", "cluster", "hnsw"}
+	searchType := reqData["searchType"]
+	valid := false
+	for i := 0; i < len(types); i++ {
+		if types[i] == searchType {
+			valid = true
+		}
+	}
+	if !valid {
+		http.Error(w, "Not valid search type", 400)
+	} else {
+		dataset_id = uuid.New().String()
+		values := map[string]interface{}{
+			"datasetId": dataset_id,
+		}
+		jsonret, err := json.Marshal(values)
+		if err != nil {
+			log.Fatal(err, "failed to marshal values")
+		}
+		w.Write(jsonret)
+	}
+}
+
+func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("\nTRAIN STATUS")
+	if r.Method != "GET" {
+		http.Error(w, "Method is not suppored.", http.StatusNotFound)
+	}
+	reader, _ := gonpy.NewFileReader(path)
+	fmt.Println("dataset shape:", reader.Shape)
+	if reader.Shape[0] < 4000 {
+		values := map[string]interface{}{
+			"datasetStatus": "error",
+		}
+		jsonret, _ := json.Marshal(values)
+		w.Write(jsonret)
+	} else {
+		values := map[string]interface{}{
+			"datasetStatus": "completed",
+		}
+		jsonret, err := json.Marshal(values)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.Write(jsonret)
+	}
+}
+
+func handleLoadDataset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method is not supported", http.StatusNotFound)
+	}
+	reqBody, _ := io.ReadAll(r.Body)
+	reqData := map[string]interface{}{}
+	juErr := json.Unmarshal(reqBody, &reqData)
+	if juErr != nil {
+		log.Fatal(juErr, "could not unmarshal request body")
+	}
+	fmt.Println("\nLOAD DATASET")
+	if uint(bits)%2 != 0 {
+		values := map[string]interface{}{
+			"detail": "The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.",
+			"status": 500,
+			"title":  "Internal Server Error",
+			"type":   "about:blank",
+		}
+		jsonret, _ := json.Marshal(values)
+		w.Write(jsonret)
+	} else {
+		values := map[string]interface{}{
+			"status": "ok",
+			"title":  "none",
+		}
+		jsonret, err := json.Marshal(values)
+		if err != nil {
+			log.Fatal(err)
+		}
+		w.Write(jsonret)
+	}
+}
+
+func handleImportQueries(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method is not supported.", http.StatusNotFound)
+	}
+	reqBody, _ := io.ReadAll(r.Body)
+	reqData := map[string]interface{}{}
+	juErr := json.Unmarshal(reqBody, &reqData)
+	if juErr != nil {
+		log.Fatal(juErr, "could not unmarshal request body")
+	}
+	fmt.Println("\nIMPORT QUERIES")
+	qid := uuid.New().String()
+	values := map[string]interface{}{
+		"addedQuery": map[string]interface{}{
+			"id": qid,
+		},
+	}
+	jsonret, err := json.Marshal(values)
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Write(jsonret)
+}
+
+func handleFocusDataset(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method is not supported.", http.StatusNotFound)
+	}
+	reqBody, _ := io.ReadAll(r.Body)
+	reqData := map[string]interface{}{}
+	juErr := json.Unmarshal(reqBody, &reqData)
+	if juErr != nil {
+		log.Fatal(juErr, "could not unmarshal request body")
+	}
+	fmt.Println("\nFOCUS DATASET")
+	values := map[string]interface{}{
+		"hello": "world",
+	}
+	jsonret, err := json.Marshal(values)
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Write(jsonret)
+}
+
+func handleSearch(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method is not supported", http.StatusNotFound)
+	}
+	reqBody, _ := io.ReadAll(r.Body)
+	reqData := map[string]interface{}{}
+	juErr := json.Unmarshal(reqBody, &reqData)
+	if juErr != nil {
+		log.Fatal(juErr, "could not unmarshal request body")
+	}
+	fmt.Println("\nSEARCH")
+	dim := reqData["topk"].(float64)
+	dist := make([][]float32, int(dim))
+	for i := 0; i < len(dist); i++ {
+		dist[i] = make([]float32, int(dim))
+		for j := 0; j < len(dist); j++ {
+			dist[i][j] = float32(1)
+		}
+	}
+	search := float64(.001)
+	values := map[string]interface{}{
+		"distance": dist,
+		"indices":  dist,
+		"search":   search,
+	}
+	jsonret, _ := json.Marshal(values)
+	w.Write(jsonret)
+}
+
+func handleUnloadDataset(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := io.ReadAll(r.Body)
+	reqData := map[string]interface{}{}
+	juErr := json.Unmarshal(reqBody, &reqData)
+	if juErr != nil {
+		log.Fatal(juErr, "could not unmarshal request body")
+	}
+	fmt.Println("\nUNLOADING DATASET")
+	values := map[string]interface{}{
+		"status": "ok",
+	}
+	jsonret, _ := json.Marshal(values)
+	w.Write(jsonret)
+}
+
+func handleDeleteQueries(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("\nDELETING QUERIES")
+	values := map[string]interface{}{
+		"status": "ok",
+	}
+	jsonret, _ := json.Marshal(values)
+	w.Write(jsonret)
+}
+
+func handleDeleteDataset(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("\nDELETING DATASET")
+	values := map[string]interface{}{
+		"status": "ok",
+	}
+	jsonret, _ := json.Marshal(values)
+	w.Write(jsonret)
+}
+
+func TestFakeServer(t *testing.T) {
+	if FAKE == false {
+		t.Skip("using Gemini FVS hardware for server")
+	} else {
+		fmt.Println("Using fake server instead of Gemini hardware")
+	}
+
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/v1.0/dataset/import", handleImportDataset)
+	router.HandleFunc("/v1.0/dataset/train/status/{dataset_id}", handleTrainStatus)
+	router.HandleFunc("/v1.0/dataset/load", handleLoadDataset)
+	router.HandleFunc("/v1.0/demo/query/import", handleImportQueries)
+	router.HandleFunc("/v1.0/dataset/focus", handleFocusDataset)
+	router.HandleFunc("/v1.0/dataset/search", handleSearch)
+	router.HandleFunc("/v1.0/dataset/unload", handleUnloadDataset)
+	router.HandleFunc("/v1.0/dataset/remove/{dataset_id}", handleDeleteDataset)
+	router.HandleFunc("/v1.0/demo/query/remove/{query_id}", handleDeleteQueries)
+
+	ctx := context.Background()
+	graceperiod := 5 * time.Second
+	httpAddr := ":7760"
+
+	srv := &http.Server{
+		Addr:    httpAddr,
+		Handler: router,
+	}
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	fmt.Println("starting http server")
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	t.Parallel()
+	ctxTimeout, cancel := context.WithTimeout(ctx, graceperiod)
+	defer func() {
+		cancel()
+		fmt.Println("STOPPING SERVER")
+	}()
+
+	if err := srv.Shutdown(ctxTimeout); err != nil {
+		log.Fatal(err)
+	}
+}
 
 // Tests for FVS functions
 // Test1: 10k dataset, 10 queries, 128 bits, flat search, topk 5
 // no errors expected
 func TestFVSFunctions1(t *testing.T) {
 	// setup for FVS testing
+	fmt.Println("----------TEST 1----------")
 	path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 	query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
 
@@ -173,7 +435,7 @@ func TestFVSFunctions1(t *testing.T) {
 	// Import dataset tests
 	t.Run("ImportDataset", func(t *testing.T) {
 		// successful test
-		tmp, err := Import_dataset(HOST, PORT, ALLOC, path, bits, search_type, VERBOSE)
+		tmp, err := Import_dataset(HOST, PORT, ALLOC, path, uint(bits), search_type, VERBOSE)
 		dataset_id = tmp
 		assert.Nilf(t, err, "Error importing dataset")
 	})
@@ -245,7 +507,7 @@ func TestFVSFunctions2(t *testing.T) {
 	// Import dataset test
 	t.Run("ImportDataset", func(t *testing.T) {
 		// successful test
-		tmp, err := Import_dataset(HOST, PORT, ALLOC, path, bits, search_type, VERBOSE)
+		tmp, err := Import_dataset(HOST, PORT, ALLOC, path, uint(bits), search_type, VERBOSE)
 		dataset_id = tmp
 		assert.Nilf(t, err, "Error importing dataset")
 	})
@@ -275,6 +537,7 @@ func TestFVSFunctions2(t *testing.T) {
 func TestFVSFunctions3(t *testing.T) {
 	fmt.Println("\n\n----------TEST 3-----------")
 	// setup for FVS testing
+	path = "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 	bits := uint(137)
 
 	// import dataset
@@ -318,7 +581,7 @@ func TestFVSFunctions4(t *testing.T) {
 
 	// import dataset
 	t.Run("ImportDataset", func(t *testing.T) {
-		dataset_id, err := Import_dataset(HOST, PORT, ALLOC, path, bits, search_type, VERBOSE)
+		dataset_id, err := Import_dataset(HOST, PORT, ALLOC, path, uint(bits), search_type, VERBOSE)
 		assert.NotNilf(t, err, "Error, search type is invalid, should not continue")
 		assert.Equal(t, "", dataset_id, "Error, dataset_id should be nil")
 	})

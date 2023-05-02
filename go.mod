@@ -47,6 +47,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/edsrzf/mmap-go v1.1.0
+	github.com/gorilla/mux v1.8.0
+	github.com/kshedden/gonpy v0.0.0-20210519231815-fa3c8dd8e59b
 	github.com/tailor-inc/graphql v0.1.0
 	github.com/weaviate/sroar v0.0.0-20230210105426-26108af5465d
 	golang.org/x/exp v0.0.0-20230304125523-9ff063c70017
