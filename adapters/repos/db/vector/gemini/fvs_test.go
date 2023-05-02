@@ -45,7 +45,7 @@ var (
 	topk        = uint(5)
 	bits        = float64(128)
 	search_type = "flat"
-	path        = "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
+	path        = "../../../../../gsi/data/deep-5k.npy"
 	dataset_id  = ""
 	query_id    = ""
 )
@@ -428,7 +428,7 @@ func TestFVSFunctions1(t *testing.T) {
 	// setup for FVS testing
 	fmt.Println("----------TEST 1----------")
 	path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
-	query_path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-10.npy"
+	query_path := "../../../../../gsi/data/deep-queries-10.npy"
 
 	search_type := "flat"
 	// Import dataset tests
@@ -500,7 +500,7 @@ func TestFVSFunctions1(t *testing.T) {
 // Error is expected during training
 func TestFVSFunctions2(t *testing.T) {
 	fmt.Println("\n\n----------TEST 2----------")
-	path := "/mnt/nas1/fvs_benchmark_datasets/deep-queries-1000.npy"
+	path := "../../../../../gsi/data/deep-queries-10.npy"
 	search_type := "flat"
 
 	// Import dataset test
