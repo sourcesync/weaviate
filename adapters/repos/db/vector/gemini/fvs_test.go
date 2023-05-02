@@ -41,12 +41,14 @@ const (
 	FAKE    = true
 )
 
-var topk = uint(5)
-var bits = float64(128)
-var search_type = "flat"
-var path = "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
-var dataset_id = ""
-var query_id = ""
+var (
+	topk        = uint(5)
+	bits        = float64(128)
+	search_type = "flat"
+	path        = "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
+	dataset_id  = ""
+	query_id    = ""
+)
 
 // Generate a random string useful for generate a temp filename that does not already exist
 func randomString(length int) string {
@@ -58,7 +60,6 @@ func randomString(length int) string {
 
 // This function is for testing all the FVS 'NumpyAppend*" functions
 func TestFVSNumpyFunctions(t *testing.T) {
-
 	// prepare for numpy float32 tests
 	// get a temp file name
 	ranstr := randomString(10)
@@ -69,7 +70,6 @@ func TestFVSNumpyFunctions(t *testing.T) {
 
 	// Run a unit test for the function "Numpy_append_float32_array"
 	t.Run("NumpyAppendFloat32", func(t *testing.T) {
-
 		// make sure the file does not exist
 		_, ferr := os.Stat(ranfilepath)
 		// we are expecting an err because the file should not exist
@@ -99,7 +99,6 @@ func TestFVSNumpyFunctions(t *testing.T) {
 	})
 
 	t.Run("NumpyReadFloat32", func(t *testing.T) {
-
 		// Start float32 read test
 		readerAt, ferr := mmap.Open(ranfilepath)
 
@@ -133,7 +132,6 @@ func TestFVSNumpyFunctions(t *testing.T) {
 
 	// Run a unit test for the function "Numpy_append_uint32_array"
 	t.Run("NumpyAppendUint32", func(t *testing.T) {
-
 		// make sure file does not exist
 		_, ferr := os.Stat(ranfilepath)
 		// expecting an err because file should not exist
@@ -171,6 +169,7 @@ func TestFVSNumpyFunctions(t *testing.T) {
 		assert.Nilf(t, derr, "Could not delete the temp file")
 	})
 }
+
 func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Method is not suppported.", http.StatusNotFound)
