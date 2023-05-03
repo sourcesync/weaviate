@@ -429,6 +429,7 @@ func TestFVSFunctions1(t *testing.T) {
 	fmt.Println("----------TEST 1----------")
 	ranstr := randomString(10)
 	path := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	tmp := path
 	ranstr = randomString(10)
 	query_path := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
 	arr := make([][]float32, 4000)
@@ -572,7 +573,7 @@ func TestFVSFunctions3(t *testing.T) {
 	fmt.Println("\n\n----------TEST 3-----------")
 	// setup for FVS testing
 	bits := uint(137)
-
+	path = tmp
 	// import dataset
 	t.Run("ImportDataset", func(t *testing.T) {
 		tmp, err := Import_dataset(HOST, PORT, ALLOC, path, bits, search_type, VERBOSE)
