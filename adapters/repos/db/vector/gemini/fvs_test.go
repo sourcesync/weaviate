@@ -42,12 +42,13 @@ const (
 )
 
 var (
-	topk        = uint(5)
-	bits        = float64(128)
-	search_type = "flat"
-	path        = ""
-	dataset_id  = ""
-	query_id    = ""
+	topk         = uint(5)
+	bits         = float64(128)
+	search_type  = "flat"
+	dataset_path string
+	path         string
+	dataset_id   string
+	query_id     string
 )
 
 // Generate a random string useful for generate a temp filename that does not already exist
@@ -213,7 +214,6 @@ func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method is not suppored.", http.StatusNotFound)
 	}
 	reader, _ := gonpy.NewFileReader(path)
-	fmt.Println("dataset shape:", reader.Shape)
 	if reader.Shape[0] < 4000 {
 		values := map[string]interface{}{
 			"datasetStatus": "error",
@@ -428,8 +428,8 @@ func TestFVSFunctions1(t *testing.T) {
 	// setup for FVS testing
 	fmt.Println("----------TEST 1----------")
 	ranstr := randomString(10)
-	path := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
-	tmp := path
+	path = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	dataset_path = path
 	ranstr = randomString(10)
 	query_path := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
 	arr := make([][]float32, 4000)
@@ -453,6 +453,7 @@ func TestFVSFunctions1(t *testing.T) {
 		log.Fatal(aerr)
 	}
 	search_type := "flat"
+	defer os.Remove(query_path)
 	// Import dataset tests
 	t.Run("ImportDataset", func(t *testing.T) {
 		// successful test
@@ -525,6 +526,7 @@ func TestFVSFunctions2(t *testing.T) {
 	fmt.Println("\n\n----------TEST 2----------")
 	ranstr := randomString(10)
 	path = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	defer os.Remove(path)
 	arr := make([][]float32, 1000)
 	for i := 0; i < len(arr); i++ {
 		arr[i] = make([]float32, 96)
@@ -573,7 +575,7 @@ func TestFVSFunctions3(t *testing.T) {
 	fmt.Println("\n\n----------TEST 3-----------")
 	// setup for FVS testing
 	bits := uint(137)
-	path = tmp
+	path := dataset_path
 	// import dataset
 	t.Run("ImportDataset", func(t *testing.T) {
 		tmp, err := Import_dataset(HOST, PORT, ALLOC, path, bits, search_type, VERBOSE)
@@ -610,13 +612,16 @@ func TestFVSFunctions3(t *testing.T) {
 // test invalid search type (typo "fat")
 func TestFVSFunctions4(t *testing.T) {
 	fmt.Println("\n\n----------TEST 4-----------")
-	path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 	search_type := "fat"
-
+	path := dataset_path
 	// import dataset
 	t.Run("ImportDataset", func(t *testing.T) {
 		dataset_id, err := Import_dataset(HOST, PORT, ALLOC, path, uint(bits), search_type, VERBOSE)
 		assert.NotNilf(t, err, "Error, search type is invalid, should not continue")
 		assert.Equal(t, "", dataset_id, "Error, dataset_id should be nil")
 	})
+	err := os.Remove(path)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
