@@ -571,7 +571,6 @@ func TestFVSFunctions2(t *testing.T) {
 func TestFVSFunctions3(t *testing.T) {
 	fmt.Println("\n\n----------TEST 3-----------")
 	// setup for FVS testing
-	path = "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
 	bits := uint(137)
 
 	// import dataset
