@@ -45,7 +45,7 @@ var (
 	topk        = uint(5)
 	bits        = float64(128)
 	search_type = "flat"
-	path        = "../../../../../gsi/data/deep-5k.npy"
+	path        = ""
 	dataset_id  = ""
 	query_id    = ""
 )
@@ -427,9 +427,30 @@ func TestFakeServer(t *testing.T) {
 func TestFVSFunctions1(t *testing.T) {
 	// setup for FVS testing
 	fmt.Println("----------TEST 1----------")
-	path := "/mnt/nas1/fvs_benchmark_datasets/deep-10K.npy"
-	query_path := "../../../../../gsi/data/deep-queries-10.npy"
-
+	ranstr := randomString(10)
+	path := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	ranstr = randomString(10)
+	query_path := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	arr := make([][]float32, 4000)
+	for i := 0; i < len(arr); i++ {
+		arr[i] = make([]float32, 96)
+	}
+	row_count, dim, aerr := Numpy_append_float32_array(path, arr, 96, 4000)
+	if row_count != 4000 {
+		log.Fatal("row mismatch")
+	} else if dim != 96 {
+		log.Fatal("dimension mismatch")
+	} else if aerr != nil {
+		log.Fatal(aerr)
+	}
+	row_count, dim, aerr = Numpy_append_float32_array(query_path, arr[:10], 96, 10)
+	if row_count != 10 {
+		log.Fatal("row mismatch")
+	} else if dim != 96 {
+		log.Fatal("dimension mismatch")
+	} else if aerr != nil {
+		log.Fatal(aerr)
+	}
 	search_type := "flat"
 	// Import dataset tests
 	t.Run("ImportDataset", func(t *testing.T) {
@@ -498,9 +519,23 @@ func TestFVSFunctions1(t *testing.T) {
 
 // Testing import dataset with size less than 4k
 // Error is expected during training
+
 func TestFVSFunctions2(t *testing.T) {
 	fmt.Println("\n\n----------TEST 2----------")
-	path := "../../../../../gsi/data/deep-queries-10.npy"
+	ranstr := randomString(10)
+	path = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	arr := make([][]float32, 1000)
+	for i := 0; i < len(arr); i++ {
+		arr[i] = make([]float32, 96)
+	}
+	row_count, dim, aerr := Numpy_append_float32_array(path, arr, 96, 1000)
+	if row_count != 1000 {
+		log.Fatal("row mismatch")
+	} else if dim != 96 {
+		log.Fatal("dimension mismatch")
+	} else if aerr != nil {
+		log.Fatal(aerr)
+	}
 	search_type := "flat"
 
 	// Import dataset test
