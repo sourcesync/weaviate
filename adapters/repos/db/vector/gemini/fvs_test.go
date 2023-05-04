@@ -182,7 +182,6 @@ func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nIMPORT DATASET")
 	bits = reqData["nbits"].(float64)
 	path = reqData["dsFilePath"].(string)
 	types := [3]string{"flat", "cluster", "hnsw"}
@@ -209,7 +208,6 @@ func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("\nTRAIN STATUS")
 	if r.Method != "GET" {
 		http.Error(w, "Method is not suppored.", http.StatusNotFound)
 	}
@@ -242,7 +240,6 @@ func handleLoadDataset(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nLOAD DATASET")
 	if uint(bits)%2 != 0 {
 		values := map[string]interface{}{
 			"detail": "The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.",
@@ -275,7 +272,6 @@ func handleImportQueries(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nIMPORT QUERIES")
 	qid := uuid.New().String()
 	values := map[string]interface{}{
 		"addedQuery": map[string]interface{}{
@@ -299,9 +295,8 @@ func handleFocusDataset(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nFOCUS DATASET")
 	values := map[string]interface{}{
-		"hello": "world",
+		"status": "ok",
 	}
 	jsonret, err := json.Marshal(values)
 	if err != nil {
@@ -320,7 +315,6 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nSEARCH")
 	dim := reqData["topk"].(float64)
 	dist := make([][]float32, int(dim))
 	for i := 0; i < len(dist); i++ {
@@ -346,7 +340,6 @@ func handleUnloadDataset(w http.ResponseWriter, r *http.Request) {
 	if juErr != nil {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
-	fmt.Println("\nUNLOADING DATASET")
 	values := map[string]interface{}{
 		"status": "ok",
 	}
@@ -355,7 +348,6 @@ func handleUnloadDataset(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteQueries(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("\nDELETING QUERIES")
 	values := map[string]interface{}{
 		"status": "ok",
 	}
@@ -364,7 +356,6 @@ func handleDeleteQueries(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteDataset(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("\nDELETING DATASET")
 	values := map[string]interface{}{
 		"status": "ok",
 	}
@@ -391,7 +382,7 @@ func TestFakeServer(t *testing.T) {
 	router.HandleFunc("/v1.0/demo/query/remove/{query_id}", handleDeleteQueries)
 
 	ctx := context.Background()
-	graceperiod := 5 * time.Second
+	graceperiod := 1 * time.Second
 	httpAddr := ":7760"
 
 	srv := &http.Server{
@@ -426,7 +417,9 @@ func TestFakeServer(t *testing.T) {
 // no errors expected
 func TestFVSFunctions1(t *testing.T) {
 	// setup for FVS testing
-	fmt.Println("----------TEST 1----------")
+	if VERBOSE {
+		fmt.Println("----------TEST 1----------")
+	}
 	ranstr := randomString(10)
 	path = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
 	dataset_path = path
@@ -466,11 +459,15 @@ func TestFVSFunctions1(t *testing.T) {
 		status, err := Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 		assert.Nilf(t, err, "Error getting train status")
 		for status == "training" || status == "pending" {
-			fmt.Println("currently", status, ": waiting...")
+			if VERBOSE {
+				fmt.Println("currently", status, ": waiting...")
+			}
 			time.Sleep(2 * time.Second)
 			status, err = Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 			assert.Nilf(t, err, "Error getting train status while waiting on training")
-			fmt.Println("\nstatus:", status)
+			if VERBOSE {
+				fmt.Println("\nstatus:", status)
+			}
 		}
 		assert.Equal(t, "completed", status, "Status should be \"completed\" after training")
 	})
@@ -523,7 +520,9 @@ func TestFVSFunctions1(t *testing.T) {
 // Error is expected during training
 
 func TestFVSFunctions2(t *testing.T) {
-	fmt.Println("\n\n----------TEST 2----------")
+	if VERBOSE {
+		fmt.Println("\n\n----------TEST 2----------")
+	}
 	ranstr := randomString(10)
 	path = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
 	defer os.Remove(path)
@@ -553,7 +552,9 @@ func TestFVSFunctions2(t *testing.T) {
 		status, err := Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 		assert.Nilf(t, err, "Error getting train status")
 		for status == "training" || status == "pending" { // wait for training to finish, should end with "error"
-			fmt.Println("currently", status, ": waiting...")
+			if VERBOSE {
+				fmt.Println("currently", status, ": waiting...")
+			}
 			time.Sleep(2 * time.Second)
 			status, err = Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 			assert.Nilf(t, err, "Error getting train status while waiting on training")
@@ -572,7 +573,9 @@ func TestFVSFunctions2(t *testing.T) {
 // Testing import dataset with odd bits
 // Error is expected during dataset load
 func TestFVSFunctions3(t *testing.T) {
-	fmt.Println("\n\n----------TEST 3-----------")
+	if VERBOSE {
+		fmt.Println("\n\n----------TEST 3-----------")
+	}
 	// setup for FVS testing
 	bits := uint(137)
 	path := dataset_path
@@ -587,7 +590,9 @@ func TestFVSFunctions3(t *testing.T) {
 		status, err := Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 		assert.Nilf(t, err, "Error getting training status")
 		for status == "training" || status == "pending" {
-			fmt.Println("currently", status, ": waiting...")
+			if VERBOSE {
+				fmt.Println("currently", status, ": waiting...")
+			}
 			time.Sleep(2 * time.Second)
 			status, err = Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 			assert.Nilf(t, err, "Error getting train status while waiting on training")
@@ -611,7 +616,9 @@ func TestFVSFunctions3(t *testing.T) {
 
 // test invalid search type (typo "fat")
 func TestFVSFunctions4(t *testing.T) {
-	fmt.Println("\n\n----------TEST 4-----------")
+	if VERBOSE {
+		fmt.Println("\n\n----------TEST 4-----------")
+	}
 	search_type := "fat"
 	path := dataset_path
 	// import dataset
