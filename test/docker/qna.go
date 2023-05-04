@@ -30,7 +30,7 @@ func startQnATransformers(ctx context.Context, networkName, qnaImage string) (*D
 	out, err := cmd.Output()
 	if err != nil {
 		fmt.Println(err.Error())
-		return _, err
+		return nil, err
 	}
 	fmt.Println(string(out))
 	if len(qnaImage) > 0 {
