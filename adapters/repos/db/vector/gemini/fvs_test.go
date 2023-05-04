@@ -393,7 +393,9 @@ func TestFakeServer(t *testing.T) {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	fmt.Println("starting http server")
+	if VERBOSE {
+		fmt.Println("starting http server")
+	}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
@@ -404,7 +406,9 @@ func TestFakeServer(t *testing.T) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, graceperiod)
 	defer func() {
 		cancel()
-		fmt.Println("STOPPING SERVER")
+		if VERBOSE {
+			fmt.Println("STOPPING SERVER")
+		}
 	}()
 
 	if err := srv.Shutdown(ctxTimeout); err != nil {
