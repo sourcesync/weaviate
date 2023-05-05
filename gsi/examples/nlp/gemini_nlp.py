@@ -6,7 +6,7 @@ import random
 
 DATADIR = "/mnt/nas1/news20/"
 CLASS_NAME = "News"
-WEAVIATE_CONN = "http://localhost:8081"
+WEAVIATE_CONN = "http://localhost:8091"
 VERBOSE = True
 MAX_ADDS = 5000
 MAX_SEARCHES = 10
