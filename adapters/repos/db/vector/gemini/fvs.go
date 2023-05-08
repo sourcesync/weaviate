@@ -704,13 +704,13 @@ func Delete_dataset(host string, port uint, allocation_token string, dataset_id 
 	return status, nil
 }
 
-func List_datasets(host string, port uint, allocation_token string) (map[string][]map[string][]map[string]interface{}, error) {
+func List_datasets(host string, port uint, allocation_token string, verbose bool) (int, []map[string]interface{}, error) {
 	url := fmt.Sprintf("http://%s:%d/v1.0/dataset/list", host, port)
 	values := map[string]interface{}{}
 	jsonValue, _ := json.Marshal(values)
 	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
 	if err != nil {
-		return nil, errors.Wrap(err, "Fvs: Get dataset list could not create new http request.")
+		return 0, nil, errors.Wrap(err, "Fvs: Get dataset list could not create new http request.")
 	}
 
 	// add headers
@@ -723,18 +723,21 @@ func List_datasets(host string, port uint, allocation_token string) (map[string]
 	client := &http.Client{}
 	response, dErr := client.Do(request)
 	if dErr != nil {
-		return nil, errors.Wrap(dErr, "client.Do failed at List_datasets")
+		return 0, nil, errors.Wrap(dErr, "client.Do failed at List_datasets")
 	}
 	defer response.Body.Close()
 
 	respbody, _ := io.ReadAll(response.Body)
-	respData := map[string][]map[string][]map[string]interface{}{}
+	respData := map[string][]map[string]interface{}{}
 	rErr := json.Unmarshal(respbody, &respData)
 	if rErr != nil {
-		return nil, rErr
+		return 0, nil, rErr
+	}
+	if verbose {
+		fmt.Println("Fvs: List_datasets: json resp=", respData, rErr)
 	}
 
-	return respData, nil
+	return len(respData["datasetsList"]), respData["datasetsList"], nil
 }
 
 func List_loaded(host string, port uint, allocation_token string, verbose bool) (int, []interface{}, error) {
@@ -767,7 +770,7 @@ func List_loaded(host string, port uint, allocation_token string, verbose bool) 
 		return 0, nil, rErr
 	}
 	if verbose {
-		fmt.Println("Fvs: List_laoded: json resp=", respData, rErr)
+		fmt.Println("Fvs: List_loaded: json resp=", respData, rErr)
 	}
 
 	loaded := respData["allocationsList"]["0b391a1a-b916-11ed-afcb-0242ac1c0002"]["loadedDatasets"].([]interface{})
