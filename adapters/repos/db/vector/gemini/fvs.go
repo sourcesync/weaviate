@@ -740,7 +740,7 @@ func List_datasets(host string, port uint, allocation_token string, verbose bool
 	return len(respData["datasetsList"]), respData["datasetsList"], nil
 }
 
-func List_loaded(host string, port uint, allocation_token string, verbose bool) (int, []interface{}, error) {
+func List_loaded(host string, port uint, allocation_token string, verbose bool) (int, map[string]interface{}, error) {
 	url := fmt.Sprintf("http://%s:%d/v1.0/board/allocation/list", host, port)
 	values := map[string]interface{}{}
 	jsonValue, _ := json.Marshal(values)
@@ -773,8 +773,38 @@ func List_loaded(host string, port uint, allocation_token string, verbose bool) 
 		fmt.Println("Fvs: List_loaded: json resp=", respData, rErr)
 	}
 
-	loaded := respData["allocationsList"]["0b391a1a-b916-11ed-afcb-0242ac1c0002"]["loadedDatasets"].([]interface{})
+	loaded := respData["allocationsList"][allocation_token]
 	return len(loaded), loaded, nil
+}
+
+func Unload_loaded(host string, port uint, allocation_token string, ignore_focus bool, verbose bool) (string, error) {
+	count, loaded, err := List_loaded(host, port, allocation_token, verbose)
+	dsets := loaded["loadedDatasets"].([]interface{})
+	focused := loaded["datasetInFocus"].(map[string]interface{})["datasetId"]
+	fmt.Println("focused", focused)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if count == 0 {
+		return "ok", nil
+	}
+	for _, v := range dsets {
+		dataset_id := v.(map[string]interface{})["datasetId"].(string)
+		if dataset_id != focused || ignore_focus {
+			status, err := Unload_dataset(host, port, allocation_token, dataset_id, verbose)
+			if err != nil {
+				return "", err
+			} else if status != "ok" {
+				return "", fmt.Errorf("status should be \"ok\"")
+			}
+			if verbose {
+				fmt.Println("Fvs: Unloading dataset", dataset_id)
+			}
+		} else {
+			fmt.Println("ignoring focused dataset, please unfocus before unloading")
+		}
+	}
+	return "ok", nil
 }
 
 // Read a uint32 array from data stored in numpy format
