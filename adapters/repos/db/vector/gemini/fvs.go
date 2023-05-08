@@ -737,6 +737,43 @@ func List_datasets(host string, port uint, allocation_token string) (map[string]
 	return respData, nil
 }
 
+func List_loaded(host string, port uint, allocation_token string, verbose bool) (int, []interface{}, error) {
+	url := fmt.Sprintf("http://%s:%d/v1.0/board/allocation/list", host, port)
+	values := map[string]interface{}{}
+	jsonValue, _ := json.Marshal(values)
+	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fvs: Get loaded datasets could not create new http request.")
+	}
+
+	// add headers
+	// {'allocationToken': '0b391a1a-b916-11ed-afcb-0242ac1c0002', 'Accept': 'application/json', 'Content-Type': 'application/json', 'User-Agent': 'Swagger-Codegen/1.0.0/python'}
+	request.Header.Set("allocationToken", allocation_token)
+	request.Header.Set("Accept", "application/json")       //; charset=UTF-8")
+	request.Header.Set("Content-Type", "application/json") //; charset=UTF-8")
+	request.Header.Set("User-Agent", "weaviate_gemini_plugin")
+
+	client := &http.Client{}
+	response, dErr := client.Do(request)
+	if dErr != nil {
+		return 0, nil, errors.Wrap(dErr, "client.Do failed at List_loaded")
+	}
+	defer response.Body.Close()
+
+	respbody, _ := io.ReadAll(response.Body)
+	var respData map[string]map[string]map[string]interface{}
+	rErr := json.Unmarshal(respbody, &respData)
+	if rErr != nil {
+		return 0, nil, rErr
+	}
+	if verbose {
+		fmt.Println("Fvs: List_laoded: json resp=", respData, rErr)
+	}
+
+	loaded := respData["allocationsList"]["0b391a1a-b916-11ed-afcb-0242ac1c0002"]["loadedDatasets"].([]interface{})
+	return len(loaded), loaded, nil
+}
+
 // Read a uint32 array from data stored in numpy format
 func Numpy_read_uint32_array(f *mmap.ReaderAt, arr [][]uint32, dim int64, index int64, count int64, offset int64) (int64, error) {
 	// Iterate rows
