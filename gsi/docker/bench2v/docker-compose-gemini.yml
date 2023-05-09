@@ -25,8 +25,8 @@ services:
       TRANSFORMERS_INFERENCE_API: 'http://localhost:8080'
       CLUSTER_HOSTNAME: 'node1'
       DEFAULT_VECTOR_INDEX_TYPE: 'gemini'
-      GEMINI_ALLOCATION_ID: '0b391a1a-b916-11ed-afcb-0242ac1c0002'
-      GEMINI_DATA_DIRECTORY: '/var/lib/weaviate'
+      GEMINI_ALLOCATION_ID: 'fd283b38-3e4a-11eb-a205-7085c2c5e516' #'0b391a1a-b916-11ed-afcb-0242ac1c0002' #'fd283b38-3e4a-11eb-a205-7085c2c5e516'
+      GEMINI_DATA_DIRECTORY: '/home/public' #'/var/lib/weaviate'
       GEMINI_FVS_SERVER: 'localhost'
       GEMINI_DEBUG: 'false'
       GEMINI_MIN_RECORDS_CHECK: 'false'
@@ -42,6 +42,6 @@ services:
     environment:
       VERBOSE: 0
       ENABLE_CUDA: 0
-      DATABASE_FILE: "/datasets/deep-5M.npy"
+      DATABASE_FILE: "/datasets/deep-250M.npy"
       QUERY_FILE: "/datasets/deep-queries-1000.npy"
-      GROUND_TRUTH_FILE: "/datasets/deep-5M-gt-1000.npy"
+      GROUND_TRUTH_FILE: "/datasets/deep-250M-gt-1000.npy"

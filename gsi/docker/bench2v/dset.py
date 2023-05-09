@@ -37,6 +37,7 @@ def get(idx):
     if idx>=sz[0]:
         raise Exception("Index at %d is out of range" % idx )
 
+    ##print("ds %d %f", idx, database_dset)
     return database_dset[idx]
 
 def query(idx):
