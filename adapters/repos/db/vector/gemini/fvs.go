@@ -807,6 +807,34 @@ func Unload_loaded(host string, port uint, allocation_token string, ignore_focus
 	return "ok", nil
 }
 
+func Delete_all(host string, port uint, allocation_token string, verbose bool) error {
+	status, err := Unload_loaded(host, port, allocation_token, verbose)
+	if err != nil {
+		return err
+	} else if status != ok {
+		return fmt.Errorf("Fvs Unload_loaded status should be \"ok\", got", status)
+	}
+	count, dsets, err := List_datasets(host, port, allocation_token, verbose)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return nil
+	}
+	for k, v := range dsets {
+		if verbose {
+			fmt.Println("Deleting dataset", k, ", id:", v["id"])
+		}
+		status, err := Delete_dataset(host, port, allocation_token, v["id"], verbose)
+		if err != nil {
+			return err
+		} else if status != "ok" {
+			return fmt.Errorf("Fvs Delete_dataset status should be \"ok\", got", status)
+		}
+	}
+	return nil
+}
+
 // Read a uint32 array from data stored in numpy format
 func Numpy_read_uint32_array(f *mmap.ReaderAt, arr [][]uint32, dim int64, index int64, count int64, offset int64) (int64, error) {
 	// Iterate rows
