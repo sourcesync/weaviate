@@ -33,12 +33,12 @@ import (
 )
 
 const (
-	HOST  = "localhost"
-	PORT  = uint(7760)
-	ALLOC = "fd283b38-3e4a-11eb-a205-7085c2c5e516"
-	// var ALLOC = "0b391a1a-b916-11ed-afcb-0242ac1c0002"
+	HOST = "localhost"
+	PORT = uint(7760)
+	// ALLOC = "fd283b38-3e4a-11eb-a205-7085c2c5e516"
+	ALLOC   = "0b391a1a-b916-11ed-afcb-0242ac1c0002"
 	VERBOSE = true
-	FAKE    = true
+	FAKE    = false
 )
 
 var (
@@ -425,16 +425,16 @@ func TestFVSFunctions1(t *testing.T) {
 		fmt.Println("----------TEST 1----------")
 	}
 	ranstr := randomString(10)
-	path = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	path = fmt.Sprintf("/home/public/datasets/gemini_plugin_test_%s.npy", ranstr)
 	dataset_path = path
 	ranstr = randomString(10)
-	query_path := fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
-	arr := make([][]float32, 4000)
+	query_path := fmt.Sprintf("/home/public/datasets/gemini_plugin_test_%s.npy", ranstr)
+	arr := make([][]float32, 4001)
 	for i := 0; i < len(arr); i++ {
 		arr[i] = make([]float32, 96)
 	}
-	row_count, dim, aerr := Numpy_append_float32_array(path, arr, 96, 4000)
-	if row_count != 4000 {
+	row_count, dim, aerr := Numpy_append_float32_array(path, arr, 96, 4001)
+	if row_count != 4001 {
 		log.Fatal("row mismatch")
 	} else if dim != 96 {
 		log.Fatal("dimension mismatch")
@@ -451,22 +451,40 @@ func TestFVSFunctions1(t *testing.T) {
 	}
 	search_type := "flat"
 	defer os.Remove(query_path)
+
+	// List datasets test
+	t.Run("ListDatasets", func(t *testing.T) {
+		count, dsets, err := List_datasets(HOST, PORT, ALLOC, VERBOSE)
+		assert.Nilf(t, err, "Error listing datasets")
+		assert.GreaterOrEqual(t, count, 0, "Dataset count should be 0 or positive int")
+		if count > 0 {
+			for _, v := range dsets {
+				assert.Contains(t, v, "id")
+			}
+		}
+	})
+	// Unload all datasets test
+	t.Run("UnloadDatasets", func(t *testing.T) {
+		status, err := Unload_loaded(HOST, PORT, ALLOC, true, VERBOSE)
+		assert.Nilf(t, err, "Error unloading datasets")
+		assert.Equal(t, "ok", status, "Error unloading datasets")
+	})
 	// Import dataset tests
 	t.Run("ImportDataset", func(t *testing.T) {
-		// successful test
 		tmp, err := Import_dataset(HOST, PORT, ALLOC, path, uint(bits), search_type, VERBOSE)
 		dataset_id = tmp
 		assert.Nilf(t, err, "Error importing dataset")
+		assert.GreaterOrEqual(t, len(dataset_id), 30, "Error importing dataset")
 	})
 	// Train status tests
 	t.Run("TrainStatus", func(t *testing.T) {
 		status, err := Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 		assert.Nilf(t, err, "Error getting train status")
-		for status == "training" || status == "pending" {
+		for status == "training" || status == "pending" || status == "loading" {
 			if VERBOSE {
 				fmt.Println("currently", status, ": waiting...")
 			}
-			time.Sleep(2 * time.Second)
+			time.Sleep(3 * time.Second)
 			status, err = Train_status(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 			assert.Nilf(t, err, "Error getting train status while waiting on training")
 			if VERBOSE {
@@ -480,6 +498,15 @@ func TestFVSFunctions1(t *testing.T) {
 		lstatus, err := Load_dataset(HOST, PORT, ALLOC, dataset_id, VERBOSE)
 		assert.Nilf(t, err, "Error loading dataset")
 		assert.Equal(t, "ok", lstatus, "Load status not \"ok\"")
+	})
+	// List Loaded datasets tests
+	t.Run("ListLoaded", func(t *testing.T) {
+		count, loaded, err := List_loaded(HOST, PORT, ALLOC, VERBOSE)
+		assert.Nilf(t, err, "Error listing loaded datasets")
+		assert.Equal(t, 1, count, "Error: should be 1 loaded dataset")
+		assert.Contains(t, loaded, "loadedDatasets", "Error: should have \"loadedDatasets\" key in response")
+		dsets := loaded["loadedDatasets"].([]interface{})[0].(map[string]interface{})
+		assert.Equal(t, dsets["datasetId"], dataset_id)
 	})
 	// Import Query tests
 	t.Run("ImportQueries", func(t *testing.T) {
@@ -498,7 +525,7 @@ func TestFVSFunctions1(t *testing.T) {
 		assert.Nilf(t, err, "Error querying dataset")
 		assert.Equal(t, topk, uint(len(dists[0])), "Error in dimension mismatch with distances vector")
 		assert.Equal(t, topk, uint(len(inds[0])), "Error in dimension mismatch with indices vector")
-		assert.Less(t, timing, float32(0.01), "Search time suspiciously long")
+		assert.Less(t, timing, float32(1.0), "Search time suspiciously long")
 	})
 	// Unload Dataset
 	t.Run("UnloadDataset", func(t *testing.T) {
@@ -528,7 +555,7 @@ func TestFVSFunctions2(t *testing.T) {
 		fmt.Println("\n\n----------TEST 2----------")
 	}
 	ranstr := randomString(10)
-	path = fmt.Sprintf("/tmp/gemini_plugin_test_%s", ranstr)
+	path = fmt.Sprintf("/home/public/datasets/gemini_plugin_test_%s.npy", ranstr)
 	defer os.Remove(path)
 	arr := make([][]float32, 1000)
 	for i := 0; i < len(arr); i++ {
@@ -543,6 +570,9 @@ func TestFVSFunctions2(t *testing.T) {
 		log.Fatal(aerr)
 	}
 	search_type := "flat"
+	if _, err := os.Stat(path); err != nil {
+		fmt.Println("could not find path=", path)
+	}
 
 	// Import dataset test
 	t.Run("ImportDataset", func(t *testing.T) {

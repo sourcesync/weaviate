@@ -67,6 +67,10 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 		fmt.Println("Fvs: Import_dataset: url=", url)
 	}
 
+	if _, err := os.Stat(path); err != nil {
+		fmt.Println("Error: could not find file at path=", path)
+		return "", err
+	}
 	fmt.Println("Warning: Configurable FVS parameters being passed:", bits, search_type)
 
 	// create the post json payload
@@ -706,6 +710,9 @@ func Delete_dataset(host string, port uint, allocation_token string, dataset_id 
 
 func List_datasets(host string, port uint, allocation_token string, verbose bool) (int, []map[string]interface{}, error) {
 	url := fmt.Sprintf("http://%s:%d/v1.0/dataset/list", host, port)
+	if verbose {
+		fmt.Println("Fvs: List_datasets: url=", url)
+	}
 	values := map[string]interface{}{}
 	jsonValue, _ := json.Marshal(values)
 	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
@@ -734,7 +741,7 @@ func List_datasets(host string, port uint, allocation_token string, verbose bool
 		return 0, nil, rErr
 	}
 	if verbose {
-		fmt.Println("Fvs: List_datasets: json resp=", respData, rErr)
+		fmt.Println("Fvs: List_datasets: total count:", len(respData["datasetsList"]))
 	}
 
 	return len(respData["datasetsList"]), respData["datasetsList"], nil
@@ -742,6 +749,9 @@ func List_datasets(host string, port uint, allocation_token string, verbose bool
 
 func List_loaded(host string, port uint, allocation_token string, verbose bool) (int, map[string]interface{}, error) {
 	url := fmt.Sprintf("http://%s:%d/v1.0/board/allocation/list", host, port)
+	if verbose {
+		fmt.Println("Fvs: List_loaded: url=", url)
+	}
 	values := map[string]interface{}{}
 	jsonValue, _ := json.Marshal(values)
 	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
@@ -774,18 +784,17 @@ func List_loaded(host string, port uint, allocation_token string, verbose bool) 
 	}
 
 	loaded := respData["allocationsList"][allocation_token]
-	return len(loaded), loaded, nil
+	count := len(loaded["loadedDatasets"].([]interface{}))
+	return count, loaded, nil
 }
 
 func Unload_loaded(host string, port uint, allocation_token string, ignore_focus bool, verbose bool) (string, error) {
 	count, loaded, err := List_loaded(host, port, allocation_token, verbose)
 	dsets := loaded["loadedDatasets"].([]interface{})
 	focused := loaded["datasetInFocus"].(map[string]interface{})["datasetId"]
-	fmt.Println("focused", focused)
 	if err != nil {
 		fmt.Println(err)
-	}
-	if count == 0 {
+	} else if count == 0 {
 		return "ok", nil
 	}
 	for _, v := range dsets {
@@ -795,7 +804,7 @@ func Unload_loaded(host string, port uint, allocation_token string, ignore_focus
 			if err != nil {
 				return "", err
 			} else if status != "ok" {
-				return "", fmt.Errorf("status should be \"ok\"")
+				return "", fmt.Errorf("status should be \"ok\", got %s", status)
 			}
 			if verbose {
 				fmt.Println("Fvs: Unloading dataset", dataset_id)
@@ -808,11 +817,11 @@ func Unload_loaded(host string, port uint, allocation_token string, ignore_focus
 }
 
 func Delete_all(host string, port uint, allocation_token string, verbose bool) error {
-	status, err := Unload_loaded(host, port, allocation_token, verbose)
+	status, err := Unload_loaded(host, port, allocation_token, true, verbose)
 	if err != nil {
 		return err
-	} else if status != ok {
-		return fmt.Errorf("Fvs Unload_loaded status should be \"ok\", got", status)
+	} else if status != "ok" {
+		return fmt.Errorf("Fvs Unload_loaded status should be \"ok\", got %s", status)
 	}
 	count, dsets, err := List_datasets(host, port, allocation_token, verbose)
 	if err != nil {
@@ -822,14 +831,15 @@ func Delete_all(host string, port uint, allocation_token string, verbose bool) e
 		return nil
 	}
 	for k, v := range dsets {
+		dataset_id := v["id"].(string)
 		if verbose {
-			fmt.Println("Deleting dataset", k, ", id:", v["id"])
+			fmt.Println("Deleting dataset", k, ", id:", dataset_id)
 		}
-		status, err := Delete_dataset(host, port, allocation_token, v["id"], verbose)
+		status, err := Delete_dataset(host, port, allocation_token, dataset_id, verbose)
 		if err != nil {
 			return err
 		} else if status != "ok" {
-			return fmt.Errorf("Fvs Delete_dataset status should be \"ok\", got", status)
+			return fmt.Errorf("Fvs Delete_dataset status should be \"ok\", got %s", status)
 		}
 	}
 	return nil
