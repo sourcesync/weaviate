@@ -752,6 +752,7 @@ func List_loaded(host string, port uint, allocation_token string, verbose bool) 
 	if verbose {
 		fmt.Println("Fvs: List_loaded: url=", url)
 	}
+	fmt.Println("Hello jacob")
 	values := map[string]interface{}{}
 	jsonValue, _ := json.Marshal(values)
 	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
@@ -774,7 +775,7 @@ func List_loaded(host string, port uint, allocation_token string, verbose bool) 
 	defer response.Body.Close()
 
 	respbody, _ := io.ReadAll(response.Body)
-	var respData map[string]map[string]map[string]interface{}
+	var respData interface{}
 	rErr := json.Unmarshal(respbody, &respData)
 	if rErr != nil {
 		return 0, nil, rErr
@@ -783,13 +784,14 @@ func List_loaded(host string, port uint, allocation_token string, verbose bool) 
 		fmt.Println("Fvs: List_loaded: json resp=", respData, rErr)
 	}
 
-	loaded := respData["allocationsList"][allocation_token]
+	loaded := respData.(map[string]interface{})["allocationsList"].(map[string]interface{})[allocation_token].(map[string]interface{})
 	count := len(loaded["loadedDatasets"].([]interface{}))
 	return count, loaded, nil
 }
 
 func Unload_loaded(host string, port uint, allocation_token string, ignore_focus bool, verbose bool) (string, error) {
 	count, loaded, err := List_loaded(host, port, allocation_token, verbose)
+	fmt.Println("loaded count:", count)
 	dsets := loaded["loadedDatasets"].([]interface{})
 	focused := loaded["datasetInFocus"].(map[string]interface{})["datasetId"]
 	if err != nil {

@@ -13,9 +13,7 @@ package gemini
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -25,9 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/kshedden/gonpy"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/mmap"
 )
@@ -38,7 +34,7 @@ const (
 	// ALLOC = "fd283b38-3e4a-11eb-a205-7085c2c5e516"
 	ALLOC   = "0b391a1a-b916-11ed-afcb-0242ac1c0002"
 	VERBOSE = true
-	FAKE    = false
+	FAKE    = true
 )
 
 var (
@@ -171,198 +167,6 @@ func TestFVSNumpyFunctions(t *testing.T) {
 	})
 }
 
-func handleImportDataset(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method is not suppported.", http.StatusNotFound)
-		return
-	}
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
-	bits = reqData["nbits"].(float64)
-	path = reqData["dsFilePath"].(string)
-	types := [3]string{"flat", "cluster", "hnsw"}
-	searchType := reqData["searchType"]
-	valid := false
-	for i := 0; i < len(types); i++ {
-		if types[i] == searchType {
-			valid = true
-		}
-	}
-	if !valid {
-		http.Error(w, "Not valid search type", 400)
-	} else {
-		dataset_id = uuid.New().String()
-		values := map[string]interface{}{
-			"datasetId": dataset_id,
-		}
-		jsonret, err := json.Marshal(values)
-		if err != nil {
-			log.Fatal(err, "failed to marshal values")
-		}
-		w.Write(jsonret)
-	}
-}
-
-func handleTrainStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method is not suppored.", http.StatusNotFound)
-	}
-	reader, _ := gonpy.NewFileReader(path)
-	if reader.Shape[0] < 4000 {
-		values := map[string]interface{}{
-			"datasetStatus": "error",
-		}
-		jsonret, _ := json.Marshal(values)
-		w.Write(jsonret)
-	} else {
-		values := map[string]interface{}{
-			"datasetStatus": "completed",
-		}
-		jsonret, err := json.Marshal(values)
-		if err != nil {
-			log.Fatal(err)
-		}
-		w.Write(jsonret)
-	}
-}
-
-func handleLoadDataset(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method is not supported", http.StatusNotFound)
-	}
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
-	if uint(bits)%2 != 0 {
-		values := map[string]interface{}{
-			"detail": "The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.",
-			"status": 500,
-			"title":  "Internal Server Error",
-			"type":   "about:blank",
-		}
-		jsonret, _ := json.Marshal(values)
-		w.Write(jsonret)
-	} else {
-		values := map[string]interface{}{
-			"status": "ok",
-			"title":  "none",
-		}
-		jsonret, err := json.Marshal(values)
-		if err != nil {
-			log.Fatal(err)
-		}
-		w.Write(jsonret)
-	}
-}
-
-func handleImportQueries(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method is not supported.", http.StatusNotFound)
-	}
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
-	qid := uuid.New().String()
-	values := map[string]interface{}{
-		"addedQuery": map[string]interface{}{
-			"id": qid,
-		},
-	}
-	jsonret, err := json.Marshal(values)
-	if err != nil {
-		log.Fatal(err)
-	}
-	w.Write(jsonret)
-}
-
-func handleFocusDataset(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method is not supported.", http.StatusNotFound)
-	}
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
-	values := map[string]interface{}{
-		"status": "ok",
-	}
-	jsonret, err := json.Marshal(values)
-	if err != nil {
-		log.Fatal(err)
-	}
-	w.Write(jsonret)
-}
-
-func handleSearch(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method is not supported", http.StatusNotFound)
-	}
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
-	dim := reqData["topk"].(float64)
-	dist := make([][]float32, int(dim))
-	for i := 0; i < len(dist); i++ {
-		dist[i] = make([]float32, int(dim))
-		for j := 0; j < len(dist); j++ {
-			dist[i][j] = float32(1)
-		}
-	}
-	search := float64(.001)
-	values := map[string]interface{}{
-		"distance": dist,
-		"indices":  dist,
-		"search":   search,
-	}
-	jsonret, _ := json.Marshal(values)
-	w.Write(jsonret)
-}
-
-func handleUnloadDataset(w http.ResponseWriter, r *http.Request) {
-	reqBody, _ := io.ReadAll(r.Body)
-	reqData := map[string]interface{}{}
-	juErr := json.Unmarshal(reqBody, &reqData)
-	if juErr != nil {
-		log.Fatal(juErr, "could not unmarshal request body")
-	}
-	values := map[string]interface{}{
-		"status": "ok",
-	}
-	jsonret, _ := json.Marshal(values)
-	w.Write(jsonret)
-}
-
-func handleDeleteQueries(w http.ResponseWriter, r *http.Request) {
-	values := map[string]interface{}{
-		"status": "ok",
-	}
-	jsonret, _ := json.Marshal(values)
-	w.Write(jsonret)
-}
-
-func handleDeleteDataset(w http.ResponseWriter, r *http.Request) {
-	values := map[string]interface{}{
-		"status": "ok",
-	}
-	jsonret, _ := json.Marshal(values)
-	w.Write(jsonret)
-}
-
 func TestFakeServer(t *testing.T) {
 	if FAKE == false {
 		t.Skip("using Gemini FVS hardware for server")
@@ -380,6 +184,8 @@ func TestFakeServer(t *testing.T) {
 	router.HandleFunc("/v1.0/dataset/unload", handleUnloadDataset)
 	router.HandleFunc("/v1.0/dataset/remove/{dataset_id}", handleDeleteDataset)
 	router.HandleFunc("/v1.0/demo/query/remove/{query_id}", handleDeleteQueries)
+	router.HandleFunc("/v1.0/dataset/list", handleListDatasets)
+	router.HandleFunc("/v1.0/board/allocation/list", handleListLoaded)
 
 	ctx := context.Background()
 	graceperiod := 1 * time.Second
@@ -425,29 +231,29 @@ func TestFVSFunctions1(t *testing.T) {
 		fmt.Println("----------TEST 1----------")
 	}
 	ranstr := randomString(10)
-	path = fmt.Sprintf("/home/public/datasets/gemini_plugin_test_%s.npy", ranstr)
+	path = fmt.Sprintf("/home/public/gemini_plugin_test_%s.npy", ranstr)
 	dataset_path = path
 	ranstr = randomString(10)
-	query_path := fmt.Sprintf("/home/public/datasets/gemini_plugin_test_%s.npy", ranstr)
+	query_path := fmt.Sprintf("/home/public/gemini_plugin_test_%s.npy", ranstr)
 	arr := make([][]float32, 4001)
 	for i := 0; i < len(arr); i++ {
 		arr[i] = make([]float32, 96)
 	}
 	row_count, dim, aerr := Numpy_append_float32_array(path, arr, 96, 4001)
-	if row_count != 4001 {
+	if aerr != nil {
+		log.Fatal(aerr)
+	} else if row_count != 4001 {
 		log.Fatal("row mismatch")
 	} else if dim != 96 {
 		log.Fatal("dimension mismatch")
-	} else if aerr != nil {
-		log.Fatal(aerr)
 	}
 	row_count, dim, aerr = Numpy_append_float32_array(query_path, arr[:10], 96, 10)
-	if row_count != 10 {
+	if aerr != nil {
+		log.Fatal(aerr)
+	} else if row_count != 10 {
 		log.Fatal("row mismatch")
 	} else if dim != 96 {
 		log.Fatal("dimension mismatch")
-	} else if aerr != nil {
-		log.Fatal(aerr)
 	}
 	search_type := "flat"
 	defer os.Remove(query_path)
@@ -555,7 +361,7 @@ func TestFVSFunctions2(t *testing.T) {
 		fmt.Println("\n\n----------TEST 2----------")
 	}
 	ranstr := randomString(10)
-	path = fmt.Sprintf("/home/public/datasets/gemini_plugin_test_%s.npy", ranstr)
+	path = fmt.Sprintf("/home/public/gemini_plugin_test_%s.npy", ranstr)
 	defer os.Remove(path)
 	arr := make([][]float32, 1000)
 	for i := 0; i < len(arr); i++ {
