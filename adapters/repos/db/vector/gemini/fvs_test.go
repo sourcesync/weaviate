@@ -45,6 +45,7 @@ var (
 	path         string
 	dataset_id   string
 	query_id     string
+	datadir      string
 )
 
 // Generate a random string useful for generate a temp filename that does not already exist
@@ -230,11 +231,16 @@ func TestFVSFunctions1(t *testing.T) {
 	if VERBOSE {
 		fmt.Println("----------TEST 1----------")
 	}
+	if FAKE {
+		datadir = "/tmp"
+	} else {
+		datadir = "/home/public"
+	}
 	ranstr := randomString(10)
-	path = fmt.Sprintf("/home/public/gemini_plugin_test_%s.npy", ranstr)
+	path = fmt.Sprintf("%s/gemini_plugin_test_%s.npy", datadir, ranstr)
 	dataset_path = path
 	ranstr = randomString(10)
-	query_path := fmt.Sprintf("/home/public/gemini_plugin_test_%s.npy", ranstr)
+	query_path := fmt.Sprintf("%s/gemini_plugin_test_%s.npy", datadir, ranstr)
 	arr := make([][]float32, 4001)
 	for i := 0; i < len(arr); i++ {
 		arr[i] = make([]float32, 96)
@@ -361,7 +367,7 @@ func TestFVSFunctions2(t *testing.T) {
 		fmt.Println("\n\n----------TEST 2----------")
 	}
 	ranstr := randomString(10)
-	path = fmt.Sprintf("/home/public/gemini_plugin_test_%s.npy", ranstr)
+	path = fmt.Sprintf("%s/gemini_plugin_test_%s.npy", datadir, ranstr)
 	defer os.Remove(path)
 	arr := make([][]float32, 1000)
 	for i := 0; i < len(arr); i++ {
