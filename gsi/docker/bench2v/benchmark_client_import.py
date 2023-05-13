@@ -115,6 +115,8 @@ elif args.n == "20M":
     TOTAL_ADDS = 20000000
 elif args.n == "50M":
     TOTAL_ADDS = 50000000
+elif args.n == "100M":
+    TOTAL_ADDS = 100000000
 else:
     TOTAL_ADDS = int(args.n)
 
