@@ -156,75 +156,76 @@ else:
     print("WARNING: not exporting csv results")
     time.sleep(1)
 
-#
-# Purge APU datasets as needed
-#
+if False:
+    #
+    # Purge APU datasets as needed
+    #
 
-# Setup connection to local FVS api
-server = socket.gethostbyname(socket.gethostname())
-port = "7761"
-version = 'v1.0'
+    # Setup connection to local FVS api
+    server = socket.gethostbyname(socket.gethostname())
+    port = "7761"
+    version = 'v1.0'
 
-# Create FVS api objects
-config = swagger_client.configuration.Configuration()
-api_config = swagger_client.ApiClient(config)
-gsi_boards_apis = swagger_client.BoardsApi(api_config)
-gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
+    # Create FVS api objects
+    config = swagger_client.configuration.Configuration()
+    api_config = swagger_client.ApiClient(config)
+    gsi_boards_apis = swagger_client.BoardsApi(api_config)
+    gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
 
-# Configure the FVS api
-config.verify_ssl = False
-config.host = f'http://{server}:{port}/{version}'
+    # Configure the FVS api
+    config.verify_ssl = False
+    config.host = f'http://{server}:{port}/{version}'
 
-# Capture the supplied allocation id
-Allocation_id = ALLOCATION_ID
+    # Capture the supplied allocation id
+    Allocation_id = ALLOCATION_ID
 
-# Set default header
-api_config.default_headers["allocationToken"] = Allocation_id
+    # Set default header
+    api_config.default_headers["allocationToken"] = Allocation_id
 
-# Print dataset count
-print("Getting total datasets...")
-dsets = gsi_datasets_apis.controllers_dataset_controller_get_datasets_list(allocation_token=Allocation_id)
-print(f"Number of datasets:{len(dsets.datasets_list)}")
-    
-if len(dsets.datasets_list) > 0:
+    # Print dataset count
+    print("Getting total datasets...")
+    dsets = gsi_datasets_apis.controllers_dataset_controller_get_datasets_list(allocation_token=Allocation_id)
+    print(f"Number of datasets:{len(dsets.datasets_list)}")
+        
+    if len(dsets.datasets_list) > 0:
 
-    if PURGE_UNLOAD: # unload datasets
+        if PURGE_UNLOAD: # unload datasets
 
-        # Print loaded dataset count
-        print("Getting loaded datasets for allocation token: ", Allocation_id)
-        loaded = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
-        print(f"Number of loaded datasets: {len(loaded.allocations_list[Allocation_id]['loadedDatasets'])}")
-        # check loaded dataset count
-        if len(loaded.allocations_list[Allocation_id]["loadedDatasets"]) > 0:
-            # Unloading all datasets
-            print("Unloading all loaded datasets...")
-            loaded = loaded.allocations_list[Allocation_id]["loadedDatasets"]
-            for data in loaded:
-                dataset_id = data['datasetId']
-                resp = gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
-                            UnloadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id),
-                            allocation_token=Allocation_id)
-                if resp.status != 'ok':
-                    print(f"error unloading dataset: {dataset_id}")
+            # Print loaded dataset count
+            print("Getting loaded datasets for allocation token: ", Allocation_id)
+            loaded = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
+            print(f"Number of loaded datasets: {len(loaded.allocations_list[Allocation_id]['loadedDatasets'])}")
+            # check loaded dataset count
+            if len(loaded.allocations_list[Allocation_id]["loadedDatasets"]) > 0:
+                # Unloading all datasets
+                print("Unloading all loaded datasets...")
+                loaded = loaded.allocations_list[Allocation_id]["loadedDatasets"]
+                for data in loaded:
+                    dataset_id = data['datasetId']
+                    resp = gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
+                                UnloadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id),
+                                allocation_token=Allocation_id)
+                    if resp.status != 'ok':
+                        print(f"error unloading dataset: {dataset_id}")
 
-            # Getting current number of loaded datasets
-            curr = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
-            print(f"Unloaded datasets, current loaded dataset count: {len(curr.allocations_list[Allocation_id]['loadedDatasets'])}")
+                # Getting current number of loaded datasets
+                curr = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
+                print(f"Unloaded datasets, current loaded dataset count: {len(curr.allocations_list[Allocation_id]['loadedDatasets'])}")
 
-        else:
-            print("Currently no loaded datasets. Done.")
+            else:
+                print("Currently no loaded datasets. Done.")
 
-    if PURGE_DELETE == True: # delete datasets
+        if PURGE_DELETE == True: # delete datasets
 
-        wipe = input("are you super sure? y/[n]: ") # let's ask first
-        if wipe == "y":
-            print("deleting all datasets...")
-            for data in dsets.datasets_list:
-                dataset_id = data['id']
-                resp = gsi_datasets_apis.controllers_dataset_controller_remove_dataset(\
-                        dataset_id=dataset_id, allocation_token=Allocation_id)
-                if resp.status != "ok":
-                    print(f"Error removing dataset: {dataset_id}")
+            wipe = input("are you super sure? y/[n]: ") # let's ask first
+            if wipe == "y":
+                print("deleting all datasets...")
+                for data in dsets.datasets_list:
+                    dataset_id = data['id']
+                    resp = gsi_datasets_apis.controllers_dataset_controller_remove_dataset(\
+                            dataset_id=dataset_id, allocation_token=Allocation_id)
+                    if resp.status != "ok":
+                        print(f"Error removing dataset: {dataset_id}")
 
 
 #
