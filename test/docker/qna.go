@@ -14,7 +14,6 @@ package docker
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"time"
 
 	"github.com/docker/go-connections/nat"
@@ -26,13 +25,6 @@ const QnATransformers = "qna-transformers"
 
 func startQnATransformers(ctx context.Context, networkName, qnaImage string) (*DockerContainer, error) {
 	image := "semitechnologies/qna-transformers:distilbert-base-uncased-distilled-squad"
-	cmd := exec.Command("docker", "pull", image)
-	out, err := cmd.Output()
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
-	fmt.Println(string(out))
 	if len(qnaImage) > 0 {
 		image = qnaImage
 	}
