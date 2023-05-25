@@ -135,7 +135,7 @@ var (
 
 func TestBench(t *testing.T) {
 	var dims, gt_size uint = 96, 100
-	fmt.Println("Benchmark Test", data_name, data_size, query_size)
+	fmt.Println("Benchmark Test:", data_name, data_size, query_size, "start time:", time.Now().Format("2006-01-02 15:04:05"))
 	var data_size, query_size = uint(data_size), uint(query_size)
 	data_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name)
 	query_path := fmt.Sprintf("%s/deep-queries-%d.npy", datadir, query_size)
