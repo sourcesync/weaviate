@@ -161,8 +161,7 @@ if not os.path.exists( FINAL_FILE ) or DEBUG: # The conditions for creating the 
 
         # At this point, we have verified the converted file exists
         # or we converted to npy or we skipped it.  We can continue
-        # constructing the file npy file with all embeddings.
-        # load file
+        # constructing the final npy file with all embeddings.
         print("Loading converted file at", npy_fp)
         arr = np.load( npy_fp )
         print("Transposing...")
