@@ -234,6 +234,8 @@ if os.path.exists( FINAL_FILE ):
                 sys.exit(1)
 
     print("Verified.")
+    sys.exit(0)
 
 else:
     print("ERROR:  Could not final file at path", FINAL_FILE )
+    sys.exit(1)
