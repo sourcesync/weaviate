@@ -36,6 +36,25 @@ for filename in os.listdir(dir):
         np.save(npy_fp, npy)
         print(npy_fp)
         print("\n done!")
+
+        # memmap
+        # load file
+        arr = npy
+        shape = arr.shape
+
+        # a new file to store all
+        fp = "/mnt/nas1/atlas_data/benchmarking/atlas.npy"
+
+        # create memmap
+        fp_mmap = np.memmap(fp, dtype='float16', mode='w+', shape=shape)
+        print("created a new mmap")
+        # store arr to mmap
+        fp_mmap[:] = arr[:]
+        print("t/f? ", fp_mmap.filename == os.path.abspath(fp))
+
+        fp_mmap.flush()
+        newfp = np.memmap(fp, dtype='float16', mode='r', shape=shape)
+
     except:
         # now try as pickled object
         print("Torch load failed.  Trying to load as a pickled object...")
@@ -43,4 +62,3 @@ for filename in os.listdir(dir):
             obj = f.read()
             data = pickle.loads(obj, encoding='latin1')
             print( "Got data->", type(data) )
-
