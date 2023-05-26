@@ -131,7 +131,7 @@ if not os.path.exists( FINAL_FILE ) or DEBUG: # The conditions for creating the 
 
             # We try to treat is as a tensor embedding file 
             # otherwise its something else like original document text
-            # and we ignore it.
+            # and we can likely ignore it.
             try:
                 # Load tensor
                 print("Trying to load file as torch tensor...")
