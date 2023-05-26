@@ -38,7 +38,7 @@ else:
     VERIFY_ARRAY_DATA = [ ( "todo", "todo", "todo" ) ]
 
 ##################################
-#### Usefule Functions ###########
+#### Useful Functions ###########
 
 #
 # Functions
