@@ -9,7 +9,7 @@ import sys
 #### Configuration Stars Here ####
 
 # Debug mode
-DEBUG = True
+DEBUG = False
 
 # Directory of converted files
 NPY_DIR = "/mnt/nas1/atlas_data/benchmarking/npy"
@@ -33,7 +33,7 @@ if DEBUG:
     FINAL_DTYPE = "float32"
     VERIFY_ARRAY_DATA = [ ( "embeddings0.npy", 0, 0 ) ]
 else:
-    FINAL_SHAPE = ( "todo", 768 )
+    FINAL_SHAPE = ( 32138737 , 768 )
     FINAL_DTYPE = "float32"
     VERIFY_ARRAY_DATA = [ ( "todo", "todo", "todo" ) ]
 
