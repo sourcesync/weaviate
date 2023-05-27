@@ -19,12 +19,11 @@ import (
 const (
 	datadir = "/mnt/nas1/fvs_benchmark_datasets"
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
-	csvpath      = "/home/jacob/"
-	multi        = true
-	increment, _ = strconv.Atoi(os.Getenv("INCREMENT"))
-	k            = 10
-	dims         = 96
-	gt_size      = 100
+	csvpath = "/home/jacob/"
+	multi   = true
+	k       = 10
+	dims    = 96
+	gt_size = 100
 )
 
 func fileExists(fname string) bool {
@@ -171,6 +170,7 @@ var (
 	data_size, _  = strconv.Atoi(os.Getenv("DATASIZE"))
 	query_size, _ = strconv.Atoi(os.Getenv("QUERYSIZE"))
 	start_size, _ = strconv.Atoi(os.Getenv("START"))
+	increment, _  = strconv.Atoi(os.Getenv("INCREMENT"))
 )
 
 func TestBench(t *testing.T) {
@@ -229,13 +229,25 @@ func TestBench(t *testing.T) {
 	require.Nil(t, err)
 	ef := index.autoEfFromK(int(k))
 
+	t1 := time.Now()
 	for i, vec := range testVectors[:start_size] {
 		err := index.Add(uint64(i), vec)
 		require.Nil(t, err)
 	}
 
+	load_time := time.Since(t1).Seconds()
+	t2 := time.Now()
+	fmt.Println("running queries...")
+	avg_recall := run_queries(queryVectors, gt, index, k, ef)
+	search_time := time.Since(t2).Seconds()
+	fmt.Println("search time:", search_time, " seconds")
+	WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, avg_recall, t1, t2)
+
 	// loop for queries, break after 1 iteration if "multi" is false
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 4; i++ {
+		if !multi {
+			break
+		}
 		// read groundtruth from current data size
 		gt_path := fmt.Sprintf("%s/deep-%s-gt-%d.npy", datadir, data_name, query_size)
 		gt := ReadInt32(gt_path, []uint{query_size, gt_size})
@@ -243,18 +255,18 @@ func TestBench(t *testing.T) {
 
 		fmt.Println("loading vectors...")
 		t1 := time.Now()
-		for j, vec := range testVectors[increment*i : increment*(i+1)] {
+		for j, vec := range testVectors[start_size+increment*i : start_size+increment*(i+1)] {
 			err := index.Add(uint64(j), vec)
 			require.Nil(t, err)
 		}
 		fmt.Println(i)
 
-		load_time := time.Since(t1).Seconds()
+		load_time = time.Since(t1).Seconds()
 		fmt.Println("load time:", load_time, " seconds")
 
 		t2 := time.Now()
 		fmt.Println("running queries...")
-		avg_recall := run_queries(queryVectors, gt[increment*i:increment*i+1], index, k, ef)
+		avg_recall := run_queries(queryVectors, gt, index, k, ef)
 		search_time := time.Since(t2).Seconds()
 		fmt.Println("search time:", search_time, " seconds")
 		WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, avg_recall, t1, t2)
