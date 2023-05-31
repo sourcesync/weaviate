@@ -2,18 +2,21 @@ package hnsw
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/kshedden/gonpy"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate/adapters/repos/db/vector/hnsw/distancer"
 	ent "github.com/weaviate/weaviate/entities/vectorindex/hnsw"
+	"golang.org/x/exp/mmap"
 )
 
 const (
@@ -34,19 +37,39 @@ func fileExists(fname string) bool {
 	return !info.IsDir()
 }
 
-func WriteToCSV(data_name string, n uint, q uint, k int, ef int, loadTime float64, searchTime float64, avgRecall float32, t1 time.Time, t2 time.Time) {
+func WriteIndsCSV(size int, inds [][]uint64, i int) {
+	server, _ := os.Hostname()
+	fname := fmt.Sprintf("%s%s_%d_indices_%d.csv", csvpath, server, size, i)
+	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	writer := csv.NewWriter(file)
+	for i := range inds {
+		row := []string{}
+		for j := range inds[i] {
+			row = append(row, strconv.FormatUint(inds[i][j], 10))
+		}
+		err = writer.Write(row)
+		if err != nil {
+			panic(err)
+		}
+		writer.Flush()
+	}
+}
+
+func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64, searchTime float64, t1 time.Time, t2 time.Time) {
 	server, _ := os.Hostname()
 	fname := fmt.Sprintf("%s%s_%s.csv", csvpath, server, data_name)
-	if fileExists(fname) {
-		fmt.Println("file exists")
-	} else {
+	if !fileExists(fname) {
 		fmt.Println("creating file", fname)
 		file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			panic(err)
 		}
 		writer := csv.NewWriter(file)
-		row := []string{"size", "query_count", "topK", "ef", "load_time", "search_time", "avg_recall", "server", "t1", "t2"}
+		row := []string{"size", "query_count", "topK", "ef", "load_time", "search_time", "server", "t1", "t2"}
 		err = writer.Write(row)
 		if err != nil {
 			panic(err)
@@ -67,12 +90,10 @@ func WriteToCSV(data_name string, n uint, q uint, k int, ef int, loadTime float6
 		fmt.Sprintf("%d", ef),
 		fmt.Sprintf("%f", loadTime),
 		fmt.Sprintf("%f", searchTime),
-		fmt.Sprintf("%f", avgRecall),
 		server,
 		t1.Format("2006-01-02 15:04:05"),
 		t2.Format("2006-01-02 15:04:05"),
 	}
-	fmt.Println(row)
 	err = writer.Write(row)
 	if err != nil {
 		panic(err)
@@ -80,90 +101,67 @@ func WriteToCSV(data_name string, n uint, q uint, k int, ef int, loadTime float6
 	writer.Flush()
 }
 
-func ReadFloat32(path string, shape []uint) [][]float32 {
-	r, err := gonpy.NewFileReader(path)
-	if err != nil {
-		panic(err)
-	}
-	var foo []float32
-	foo, err = r.GetFloat32()
-	var j, k int = 0, 0
-	if err != nil {
-		panic(err)
-	}
-	data := make([][]float32, shape[0])
-	for i := range data {
-		data[i] = make([]float32, shape[1])
-	}
-	for i := range foo {
-		if i%int(shape[1]) == 0 && i != 0 {
-			j += 1
-			k = 0
+// Read a uint32 array from data stored in numpy format
+func Numpy_read_uint32_array(f *mmap.ReaderAt, arr [][]uint32, dim int64, index int64, count int64, offset int64) (int64, error) {
+	// Iterate rows
+	for j := 0; j < int(count); j++ {
+		// Read consecutive 4 byte array into uint32 array, up to dims
+		for i := 0; i < len(arr[j]); i++ {
+
+			// Declare 4-byte array
+			bt := []byte{0, 0, 0, 0}
+
+			// Compute offset for next uint32
+			r_offset := offset + (int64(j)+index)*dim*4 + int64(i)*4
+
+			_, err := f.ReadAt(bt, r_offset)
+			if err != nil {
+				return 0, errors.Wrapf(err, "error reading file at offset: %d, %v", r_offset, err)
+			}
+
+			arr[j][i] = binary.LittleEndian.Uint32(bt)
 		}
-		data[j][k] = foo[i]
-		k += 1
 	}
-	return data
+
+	return dim, nil
 }
 
-func ReadInt32(path string, shape []uint) [][]int32 {
-	r, err := gonpy.NewFileReader(path)
-	if err != nil {
-		panic(err)
-	}
-	var j, k int = 0, 0
-	var foo []int32
-	foo, err = r.GetInt32()
-	if err != nil {
-		panic(err)
-	}
-	data := make([][]int32, shape[0])
-	for i := range data {
-		data[i] = make([]int32, shape[1])
-	}
-	for i := range foo {
-		if i%int(shape[1]) == 0 && i != 0 {
-			j += 1
-			k = 0
+// Read a float32 array from data stored in numpy format
+func Numpy_read_float32_array(f *mmap.ReaderAt, arr [][]float32, dim int64, index int64, count int64, offset int64) (int64, error) {
+	// Iterate rows
+	for j := 0; j < int(count); j++ {
+		// Read consecutive 4 byte array into uint32 array, up to dims
+		for i := 0; i < len(arr[j]); i++ {
+
+			// Declare 4-byte array
+			bt := []byte{0, 0, 0, 0}
+
+			// Compute offset for next uint32
+			r_offset := offset + (int64(j)+index)*dim*4 + int64(i)*4
+
+			_, err := f.ReadAt(bt, r_offset)
+			if err != nil {
+				return 0, fmt.Errorf("error reading file at offset:%v, %v", r_offset, err)
+			}
+
+			bits := binary.LittleEndian.Uint32(bt)
+			arr[j][i] = math.Float32frombits(bits)
 		}
-		data[j][k] = foo[i]
-		k += 1
 	}
-	return data
+
+	return dim, nil
 }
 
-func run_queries(queryVectors [][]float32, gt [][]int32, index *hnsw, k int, ef int) float32 {
-	var recalls []float32
-	var ys, ns, total int = 0, 0, 0
+func run_queries(queryVectors [][]float32, index *hnsw, k int, ef int) [][]uint64 {
+	arr := make([][]uint64, len(queryVectors))
 	for i, vec := range queryVectors {
-		res, _, err := index.knnSearchByVector(vec, int(k), ef, nil)
+		inds, _, err := index.knnSearchByVector(vec, int(k), ef, nil)
+		arr[i] = inds
 		if err != nil {
 			panic(err)
 		}
-		var y, n int = 0, 0
-		total += len(res)
-
-		if i == 0 {
-			fmt.Println("length of res:", len(res), " res[0]:", res[0])
-		}
-		for j := range res {
-			if gt[i][j] == int32(res[j]) {
-				y += 1
-			} else {
-				n += 1
-			}
-		}
-		ys += y
-		ns += n
-		recalls = append(recalls, float32(y)/float32(len(res)))
 	}
-	var sum float32
-	for _, recall := range recalls {
-		sum += recall
-	}
-	avg_recall := sum / float32(len(recalls))
-	fmt.Println("ys:", ys, "  ns:", ns, "  avg recall:", avg_recall)
-	return avg_recall
+	return arr
 }
 
 var (
@@ -182,35 +180,42 @@ func TestBench(t *testing.T) {
 		data_name = fmt.Sprintf("%dM", data_size/1000000)
 	}
 
-	fmt.Println("Benchmark Test:", data_name, data_size, query_size, "start time:", time.Now().Format("2006-01-02 15:04:05"))
-
-	var data_size, query_size = uint(data_size), uint(query_size)
+	// create data readers
 	data_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name)
+	data_reader, ferr := mmap.Open(data_path)
+	assert.Nil(t, ferr)
 	query_path := fmt.Sprintf("%s/deep-queries-%d.npy", datadir, query_size)
-	gt_path := fmt.Sprintf("%s/deep-%s-gt-%d.npy", datadir, data_name, query_size)
-	paths := []string{data_path, query_path, gt_path}
-	for _, path := range paths { // check files exist
+	query_reader, ferr := mmap.Open(query_path)
+	assert.Nil(t, ferr)
+
+	// check files exist
+	paths := []string{data_path, query_path}
+	for _, path := range paths {
 		_, err := os.Stat(path)
-		if err != nil {
-			panic(err)
-		}
+		assert.Nil(t, err)
+	}
+
+	// initialize empty arrays
+	testVectors := make([][]float32, start_size)
+	for i := range testVectors {
+		testVectors[i] = make([]float32, dims)
+	}
+	queryVectors := make([][]float32, query_size)
+	for i := range queryVectors {
+		queryVectors[i] = make([]float32, dims)
 	}
 
 	fmt.Println("reading numpy files...")
-	testVectors := ReadFloat32(data_path, []uint{data_size, dims})
-	queryVectors := ReadFloat32(query_path, []uint{query_size, dims})
-	gt := ReadInt32(gt_path, []uint{query_size, gt_size})
-
-	// assertions for vector shape
-	assert.Equal(t, int(data_size), len(testVectors))
-	assert.Equal(t, int(query_size), len(queryVectors))
+	_, err := Numpy_read_float32_array(data_reader, testVectors, int64(dims), int64(0), int64(start_size), int64(128))
+	assert.Nil(t, err)
+	_, err = Numpy_read_float32_array(query_reader, queryVectors, int64(dims), int64(0), int64(query_size), int64(128))
+	assert.Nil(t, err)
 
 	// initialize hnsw index
 	makeCL := MakeNoopCommitLogger
 	vectorFunc := func(ctx context.Context, id uint64) ([]float32, error) {
-		return testVectors[int(id)], nil
+		return testVectors[id], nil
 	}
-	fmt.Println("creating hnsw index...")
 	index, err := New(Config{
 		RootPath:              "doesnt-matter-as-committlogger-is-mocked-out",
 		ID:                    "unittest",
@@ -229,47 +234,55 @@ func TestBench(t *testing.T) {
 	require.Nil(t, err)
 	ef := index.autoEfFromK(int(k))
 
-	t1 := time.Now()
-	for i, vec := range testVectors[:start_size] {
-		err := index.Add(uint64(i), vec)
-		require.Nil(t, err)
-	}
+	// assertions for vector shape
+	assert.Equal(t, int(start_size), len(testVectors))
+	assert.Equal(t, int(query_size), len(queryVectors))
 
-	load_time := time.Since(t1).Seconds()
-	t2 := time.Now()
-	fmt.Println("running queries...")
-	avg_recall := run_queries(queryVectors, gt, index, k, ef)
-	search_time := time.Since(t2).Seconds()
-	fmt.Println("search time:", search_time, " seconds")
-	WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, avg_recall, t1, t2)
+	fmt.Println("Benchmark Test:", data_name, data_size, query_size, "start time:", time.Now().Format("2006-01-02 15:04:05"))
+	var size, curr int = start_size, 0
 
 	// loop for queries, break after 1 iteration if "multi" is false
-	for i := 0; i < 4; i++ {
+	for size <= data_size {
+		fmt.Println("loading vectors", curr, ":", size, "to hnsw index...")
+		t1 := time.Now()
+		for i, vec := range testVectors[curr:size] {
+			err := index.Add(uint64(i+curr), vec)
+			require.Nil(t, err)
+		}
+
+		load_time := time.Since(t1).Seconds()
+		fmt.Println("running queries...")
+		for i := 0; i < 5; i++ {
+			t2 := time.Now()
+			inds := run_queries(queryVectors, index, k, ef)
+			search_time := time.Since(t2).Seconds()
+			fmt.Println("search time:", search_time, " seconds")
+			WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, t1, t2)
+			WriteIndsCSV(size, inds, i)
+		}
 		if !multi {
 			break
 		}
-		// read groundtruth from current data size
-		gt_path := fmt.Sprintf("%s/deep-%s-gt-%d.npy", datadir, data_name, query_size)
-		gt := ReadInt32(gt_path, []uint{query_size, gt_size})
-		assert.Equal(t, int(query_size), len(gt))
-
-		fmt.Println("loading vectors...")
-		t1 := time.Now()
-		for j, vec := range testVectors[start_size+increment*i : start_size+increment*(i+1)] {
-			err := index.Add(uint64(j), vec)
-			require.Nil(t, err)
+		if curr == 0 {
+			curr += size
+		} else {
+			curr += increment
 		}
-		fmt.Println(i)
+		size += increment
+		if size > data_size {
+			break
+		}
 
-		load_time = time.Since(t1).Seconds()
-		fmt.Println("load time:", load_time, " seconds")
+		// append new vectors to testVectors
+		tmp := make([][]float32, increment)
+		for i := range tmp {
+			tmp[i] = make([]float32, dims)
+		}
 
-		t2 := time.Now()
-		fmt.Println("running queries...")
-		avg_recall := run_queries(queryVectors, gt, index, k, ef)
-		search_time := time.Since(t2).Seconds()
-		fmt.Println("search time:", search_time, " seconds")
-		WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, avg_recall, t1, t2)
+		_, err = Numpy_read_float32_array(data_reader, tmp, dims, int64(curr), int64(size-curr), int64(128))
+		assert.Nil(t, err)
+		testVectors = append(testVectors, tmp...)
+		fmt.Println("data length: ", len(testVectors))
 	}
 	fmt.Println("Done.")
 }
