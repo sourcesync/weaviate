@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sbinet/npyio"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate/adapters/repos/db/vector/hnsw/distancer"
@@ -37,25 +38,19 @@ func fileExists(fname string) bool {
 	return !info.IsDir()
 }
 
-func WriteIndsCSV(size int, inds [][]uint64, i int) {
+func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	server, _ := os.Hostname()
-	fname := fmt.Sprintf("%s%s_%d_indices_%d.csv", csvpath, server, size, i)
-	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	fname := fmt.Sprintf("%s%s_%d_indices_%d.npy", csvpath, server, size, i)
+	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
-	writer := csv.NewWriter(file)
 	for i := range inds {
-		row := []string{}
-		for j := range inds[i] {
-			row = append(row, strconv.FormatUint(inds[i][j], 10))
-		}
-		err = writer.Write(row)
+		err = npyio.Write(file, inds[i])
 		if err != nil {
 			panic(err)
 		}
-		writer.Flush()
 	}
 }
 
@@ -64,7 +59,7 @@ func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64,
 	fname := fmt.Sprintf("%s%s_%s.csv", csvpath, server, data_name)
 	if !fileExists(fname) {
 		fmt.Println("creating file", fname)
-		file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 		if err != nil {
 			panic(err)
 		}
@@ -76,7 +71,7 @@ func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64,
 		}
 		writer.Flush()
 	}
-	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -258,7 +253,8 @@ func TestBench(t *testing.T) {
 			search_time := time.Since(t2).Seconds()
 			fmt.Println("search time:", search_time, " seconds")
 			WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, t1, t2)
-			WriteIndsCSV(size, inds, i)
+			WriteIndsNpy(size, inds, i)
+
 		}
 		if !multi {
 			break

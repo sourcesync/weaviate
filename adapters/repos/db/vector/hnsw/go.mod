@@ -6,9 +6,11 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.15.1
+	github.com/sbinet/npyio v0.7.0
 	github.com/sirupsen/logrus v1.9.1
 	github.com/stretchr/testify v1.8.2
 	github.com/weaviate/weaviate v1.19.3
+	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/sys v0.8.0
 )
 
@@ -19,6 +21,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/campoy/embedmd v1.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/go-openapi/analysis v0.21.2 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
@@ -41,7 +44,6 @@ require (
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/kshedden/gonpy v0.0.0-20210519231815-fa3c8dd8e59b // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/miekg/dns v1.1.26 // indirect
@@ -62,11 +64,10 @@ require (
 	github.com/willf/bloom v2.0.3+incompatible // indirect
 	go.mongodb.org/mongo-driver v1.11.6 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
-	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
-	gonum.org/v1/gonum v0.9.1 // indirect
+	gonum.org/v1/gonum v0.9.3 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
