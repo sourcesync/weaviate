@@ -21,10 +21,9 @@ import (
 )
 
 const (
-	datadir = "/mnt/nas1/fvs_benchmark_datasets"
+	datadir = "/mnt/nas1/George/Projects/billionscale/competition_datasets/deep1b/"
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
 	csvpath = "/home/jacob/"
-	multi   = true
 	k       = 10
 	dims    = 96
 	gt_size = 100
@@ -278,16 +277,17 @@ var (
 	query_size, _ = strconv.Atoi(os.Getenv("QUERYSIZE"))
 	start_size, _ = strconv.Atoi(os.Getenv("START"))
 	increment, _  = strconv.Atoi(os.Getenv("INCREMENT"))
+	multi, _      = strconv.ParseBool(os.Getenv("MULTI"))
 )
 
 func TestBench(t *testing.T) {
 
 	data_name := name_dataset(data_size)
 	// create data readers
-	data_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name)
+	data_path := fmt.Sprintf("%s/base.1B.fbin", datadir)
 	data_reader, ferr := mmap.Open(data_path)
 	assert.Nil(t, ferr)
-	query_path := fmt.Sprintf("%s/deep-queries-%d.npy", datadir, query_size)
+	query_path := fmt.Sprintf("/mnt/nas1/fvs_benchmark_datasets/deep-queries-%d.npy", query_size)
 	query_reader, ferr := mmap.Open(query_path)
 	assert.Nil(t, ferr)
 
@@ -309,7 +309,8 @@ func TestBench(t *testing.T) {
 	}
 
 	fmt.Println("reading numpy files...")
-	_, err := Numpy_read_float32_array(data_reader, testVectors, int64(dims), int64(0), int64(start_size), int64(128))
+	_, err := Numpy_read_float32_array(data_reader, testVectors, int64(dims), int64(0), int64(start_size), int64(8))
+	fmt.Println(testVectors[0], len(testVectors), len(testVectors[0]))
 	assert.Nil(t, err)
 	_, err = Numpy_read_float32_array(query_reader, queryVectors, int64(dims), int64(0), int64(query_size), int64(128))
 	assert.Nil(t, err)
@@ -382,7 +383,7 @@ func TestBench(t *testing.T) {
 			tmp[i] = make([]float32, dims)
 		}
 
-		_, err = Numpy_read_float32_array(data_reader, tmp, dims, int64(curr), int64(size-curr), int64(128))
+		_, err = Numpy_read_float32_array(data_reader, tmp, dims, int64(curr), int64(size-curr), int64(8))
 		assert.Nil(t, err)
 		testVectors = append(testVectors, tmp...)
 		fmt.Println("data length: ", len(testVectors))
