@@ -24,7 +24,7 @@ const (
 	datadir = "/mnt/nas1/fvs_benchmark_datasets"
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
 	csvpath = "/home/jacob/"
-	multi   = true
+	multi   = false
 	k       = 10
 	dims    = 96
 	gt_size = 100
@@ -40,7 +40,7 @@ func fileExists(fname string) bool {
 
 func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	server, _ := os.Hostname()
-	fname := fmt.Sprintf("%s%s_%d_indices_%d.npy", csvpath, server, size, i)
+	fname := fmt.Sprintf("%s%s_%d_indices_%dnew.npy", csvpath, server, size, i)
 	arr := make([][]uint32, len(inds))
 	for i := range inds {
 		arr[i] = make([]uint32, len(inds[i]))
@@ -48,11 +48,10 @@ func WriteIndsNpy(size int, inds [][]uint64, i int) {
 			arr[i][j] = uint32(inds[i][j])
 		}
 	}
-	err := Numpy_append_uint32_array(fname, arr, dims, int64(len(arr)))
+	err := Numpy_append_uint32_array(fname, arr, k, int64(len(arr)))
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64, searchTime float64, t1 time.Time, t2 time.Time) {
