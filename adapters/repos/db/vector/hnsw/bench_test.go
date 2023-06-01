@@ -24,7 +24,7 @@ const (
 	datadir = "/mnt/nas1/fvs_benchmark_datasets"
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
 	csvpath = "/home/jacob/"
-	multi   = false
+	multi   = true
 	k       = 10
 	dims    = 96
 	gt_size = 100
@@ -40,7 +40,8 @@ func fileExists(fname string) bool {
 
 func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	server, _ := os.Hostname()
-	fname := fmt.Sprintf("%s%s_%d_indices_%d.npy", csvpath, server, size, i)
+	data_name := name_dataset(size)
+	fname := fmt.Sprintf("%s%s_%s_indices_%d.npy", csvpath, server, data_name, i)
 	arr := make([][]uint32, len(inds))
 	for i := range inds {
 		arr[i] = make([]uint32, len(inds[i]))
@@ -56,7 +57,7 @@ func WriteIndsNpy(size int, inds [][]uint64, i int) {
 
 func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64, searchTime float64, t1 time.Time, t2 time.Time) {
 	server, _ := os.Hostname()
-	fname := fmt.Sprintf("%s%s_%s.csv", csvpath, server, data_name)
+	fname := fmt.Sprintf("%s%s_algodirect.csv", csvpath, server)
 	if !fileExists(fname) {
 		fmt.Println("creating file", fname)
 		file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
@@ -259,6 +260,19 @@ func run_queries(queryVectors [][]float32, index *hnsw, k int, ef int) [][]uint6
 	return arr
 }
 
+func name_dataset(data_size int) string {
+	tmp := len(fmt.Sprintf("%d", data_size))
+	var data_name string
+	if tmp < 7 { // if data size is in the thousands name is size/1000 + K
+		data_name = fmt.Sprintf("%dK", data_size/1000)
+	} else if tmp < 10 { // if data size is in millions name is size/1000000 + M
+		data_name = fmt.Sprintf("%dM", data_size/1000000)
+	} else {
+		data_name = fmt.Sprintf("%dB", data_size/1000000000)
+	}
+	return data_name
+}
+
 var (
 	data_size, _  = strconv.Atoi(os.Getenv("DATASIZE"))
 	query_size, _ = strconv.Atoi(os.Getenv("QUERYSIZE"))
@@ -267,14 +281,8 @@ var (
 )
 
 func TestBench(t *testing.T) {
-	tmp := len(fmt.Sprintf("%d", data_size))
-	var data_name string
-	if tmp < 7 { // if data size is in the thousands name is size/1000 + K
-		data_name = fmt.Sprintf("%dK", data_size/1000)
-	} else if tmp < 10 { // if data size is in millions name is size/1000000 + M
-		data_name = fmt.Sprintf("%dM", data_size/1000000)
-	}
 
+	data_name := name_dataset(data_size)
 	// create data readers
 	data_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name)
 	data_reader, ferr := mmap.Open(data_path)
@@ -352,7 +360,7 @@ func TestBench(t *testing.T) {
 			inds := run_queries(queryVectors, index, k, ef)
 			search_time := time.Since(t2).Seconds()
 			fmt.Println("search time:", search_time, " seconds")
-			WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, t1, t2)
+			WriteToCSV(data_name, size, query_size, k, ef, load_time, search_time, t1, t2)
 			WriteIndsNpy(size, inds, i)
 		}
 		if !multi {
