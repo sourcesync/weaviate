@@ -40,7 +40,7 @@ func fileExists(fname string) bool {
 
 func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	server, _ := os.Hostname()
-	fname := fmt.Sprintf("%s%s_%d_indices_%dnew.npy", csvpath, server, size, i)
+	fname := fmt.Sprintf("%s%s_%d_indices_%d.npy", csvpath, server, size, i)
 	arr := make([][]uint32, len(inds))
 	for i := range inds {
 		arr[i] = make([]uint32, len(inds[i]))
