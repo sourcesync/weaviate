@@ -35,7 +35,7 @@ if DEBUG:
 else:
     FINAL_SHAPE = ( 32138737 , 768 )
     FINAL_DTYPE = "float32"
-    VERIFY_ARRAY_DATA = [ ( "embeddings0.npy", 0, 0 ) ]
+    VERIFY_ARRAY_DATA = [ ( "embeddings0.npy", 0, 0 ), ("embeddings126.npy", -1, -1)]
 
 ##################################
 #### Useful Functions ###########
@@ -206,7 +206,7 @@ if os.path.exists( FINAL_FILE ):
             # get path to original embeddings file after npy conversion
             converted_file = os.path.join( NPY_DIR, verify[0] )
             # load it
-            arr = np.load( npy_fp )
+            arr = np.load( converted_file )
             arr = np.transpose(arr) # remember to transpose!
 
             # get the spot check element source from original embeddings
