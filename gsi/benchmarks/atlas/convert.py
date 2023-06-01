@@ -35,7 +35,7 @@ if DEBUG:
 else:
     FINAL_SHAPE = ( 32138737 , 768 )
     FINAL_DTYPE = "float32"
-    VERIFY_ARRAY_DATA = [ ( "todo", "todo", "todo" ) ]
+    VERIFY_ARRAY_DATA = [ ( "embeddings0.npy", 0, 0 ) ]
 
 ##################################
 #### Useful Functions ###########
@@ -167,7 +167,7 @@ if not os.path.exists( FINAL_FILE ) or DEBUG: # The conditions for creating the 
         print("Transposing...")
         arr = np.transpose(arr)
         shape = arr.shape
-        print("Shape=",shape,"dtype=",arr.dtype)
+        print("Shape=",shape, "dtype=",arr.dtype)
 
         print("Writing/appending to", FINAL_FILE)
         append_floatarray( FINAL_FILE, arr )

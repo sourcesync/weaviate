@@ -4,16 +4,17 @@ import numpy as np
 import pickle
 
 # load tensor
-dir = "/mnt/nas1/atlas_data/indices/atlas/wiki/xl"
-i = 0
+#dir = "/mnt/nas1/atlas_data/indices/atlas/wiki/xl"
+dir = "/mnt/nas1/atlas_data/benchmarking/npy_test"
 
 for filename in os.listdir(dir):
-    while i < 2:
+    # only test on embeddings0.npy
+    if "embeddings0" in filename:
         fp = os.path.join(dir, filename)
         print("filename: ", filename)
 
         try:
-            # load tensor
+            """# load tensor
             print("Trying to load as torch tensor...")
             tensor = torch.load(fp, map_location=torch.device('cpu'))
             print("done loading tensor")
@@ -28,32 +29,36 @@ for filename in os.listdir(dir):
             npy_fp = os.path.join(npy_dir, npy_name)
             np.save(npy_fp, npy)
             print(npy_fp)
-            print("\n done!")
+            print("\n done!")"""
 
             # memmap
             # load file
 
+            # load from embeddings.npy
+            npy = np.load(fp)
+
             print("Transposing...")
             arr = np.transpose(npy)
             shape = arr.shape
-            print("Shape= ",shape,"dtype= ",arr.dtype)
+            print("Shape= ",shape,"dtype= ", arr.dtype)
 
-            #arr = npy
-            #shape = arr.shape
+            # astype
+            arr1 = arr.astype(np.float32)
+            print("astype: ", arr1.dtype)
 
             # a new file to store all
-            fp = "/mnt/nas1/atlas_data/benchmarking/atlas_test_2.npy"
+            fp_map = "/mnt/nas1/atlas_data/benchmarking/atlas_test_0531.npy"
 
             # create memmap
-            fp_mmap = np.memmap(fp, dtype='float16', mode='w+', shape=shape)
+            fp_mmap = np.memmap(fp_map, dtype='float32', mode='w+', shape=shape)
             print("created a new mmap")
             # store arr to mmap
-            fp_mmap[:] = arr[:]
-            print("t/f? ", fp_mmap.filename == os.path.abspath(fp))
+            fp_mmap[:] = arr1[:]
+            print("t/f? ", fp_mmap.filename == os.path.abspath(fp_map))
 
             fp_mmap.flush()
-            newfp = np.memmap(fp, dtype='float16', mode='r', shape=shape)
- 
+            newfp = np.memmap(fp_map, dtype='float32', mode='r', shape=shape)
+
 
         except:
             # now try as pickled object
@@ -63,5 +68,3 @@ for filename in os.listdir(dir):
                 data = pickle.loads(obj, encoding='latin1')
                 print( "Got data->", type(data) )
 
-        print("i: ", i)
-        i += 1
