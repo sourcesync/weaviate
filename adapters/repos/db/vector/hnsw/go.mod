@@ -4,9 +4,9 @@ go 1.20
 
 require (
 	github.com/davecgh/go-spew v1.1.1
+	github.com/kshedden/gonpy v0.0.0-20210519231815-fa3c8dd8e59b
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.15.1
-	github.com/sbinet/npyio v0.7.0
 	github.com/sirupsen/logrus v1.9.1
 	github.com/stretchr/testify v1.8.2
 	github.com/weaviate/weaviate v1.19.3
@@ -21,8 +21,8 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
-	github.com/campoy/embedmd v1.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/go-openapi/analysis v0.21.2 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

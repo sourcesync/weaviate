@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
+	mmapgo "github.com/edsrzf/mmap-go"
 	"github.com/pkg/errors"
-	"github.com/sbinet/npyio"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/weaviate/weaviate/adapters/repos/db/vector/hnsw/distancer"
@@ -41,17 +41,18 @@ func fileExists(fname string) bool {
 func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	server, _ := os.Hostname()
 	fname := fmt.Sprintf("%s%s_%d_indices_%d.npy", csvpath, server, size, i)
-	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+	arr := make([][]uint32, len(inds))
+	for i := range inds {
+		arr[i] = make([]uint32, len(inds[i]))
+		for j := range inds[i] {
+			arr[i][j] = uint32(inds[i][j])
+		}
+	}
+	err := Numpy_append_uint32_array(fname, arr, dims, int64(len(arr)))
 	if err != nil {
 		panic(err)
 	}
-	defer file.Close()
-	for i := range inds {
-		err = npyio.Write(file, inds[i])
-		if err != nil {
-			panic(err)
-		}
-	}
+
 }
 
 func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64, searchTime float64, t1 time.Time, t2 time.Time) {
@@ -94,6 +95,106 @@ func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64,
 		panic(err)
 	}
 	writer.Flush()
+}
+
+// Write a uint32 array to a file in numpy format
+func Numpy_append_uint32_array(fname string, arr [][]uint32, dim int64, count int64) error {
+	preheader := []byte{0x93, 0x4e, 0x55, 0x4d, 0x50, 0x59, 0x01, 0x00, 0x76, 0x00}
+	fmt_header := "{'descr': '<i4', 'fortran_order': False, 'shape': (%d, %d), }"
+	empty := []byte{0x20}
+	fin := []byte{0x0a}
+
+	// Check if file exists
+	fexists := true
+	_, err := os.Stat(fname)
+	if os.IsNotExist(err) {
+		fexists = false
+	}
+
+	// Get file descriptor
+	var f *os.File = nil
+	if fexists {
+		// Open file
+		f, err = os.OpenFile(fname, os.O_RDWR, 0o755)
+		if err != nil {
+			return fmt.Errorf("error openingfile: %v", err)
+		}
+	} else {
+		// Create file
+		f, err = os.Create(fname)
+		if err != nil {
+			return errors.Wrap(err, "error creating file in Numpy_append_uint32_array")
+		}
+		// Create header area
+		err = f.Truncate(int64(128))
+		if err != nil {
+			return errors.Wrap(err, "error resizing file for header in Numpy_append_uint32_array")
+		}
+	}
+	defer f.Close()
+
+	// Get file size
+	fi, err := f.Stat()
+	if err != nil {
+		return errors.Wrap(err, "error get file stats in Numpy_append_uint32_array.")
+	}
+	file_size := int64(fi.Size())
+
+	// Get row count
+	data_size := file_size - 128
+	row_count := data_size / (dim * 4)
+	new_row_count := row_count + count
+
+	// Resize file
+	new_size := file_size + dim*4*count
+	err = f.Truncate(int64(new_size))
+	if err != nil {
+		return fmt.Errorf("error resizing file in Numpy_append_uint32_array: %v", err)
+	}
+
+	// Memory map the new file
+	mem, err := mmapgo.Map(f, mmapgo.RDWR, 0)
+	if err != nil {
+		return errors.Wrap(err, "error mmapgo.Map in Numpy_append_uint32_array")
+	}
+	defer mem.Unmap()
+
+	// Create the new header
+	header := fmt.Sprintf(fmt_header, new_row_count, dim)
+
+	// Write the numpy header info
+	idx := 0
+	for i := 0; i < len(preheader); i++ {
+		mem[idx] = preheader[i]
+		idx += 1
+	}
+	for i := 0; i < len(header); i++ {
+		mem[idx] = header[i]
+		idx += 1
+	}
+	for i := idx; i < 128; i++ {
+		mem[idx] = empty[0]
+		idx += 1
+	}
+	mem[127] = fin[0]
+
+	// append the arrays
+	idx = int(128 + data_size)
+	for j := 0; j < int(count); j++ {
+		for i := 0; i < len(arr[j]); i++ {
+			bt := []byte{0, 0, 0, 0}
+			binary.LittleEndian.PutUint32(bt, arr[j][i])
+			mem[idx] = bt[0]
+			mem[idx+1] = bt[1]
+			mem[idx+2] = bt[2]
+			mem[idx+3] = bt[3]
+			idx += 4
+		}
+	}
+
+	mem.Flush()
+
+	return nil
 }
 
 // Read a uint32 array from data stored in numpy format
@@ -254,7 +355,6 @@ func TestBench(t *testing.T) {
 			fmt.Println("search time:", search_time, " seconds")
 			WriteToCSV(data_name, data_size, query_size, k, ef, load_time, search_time, t1, t2)
 			WriteIndsNpy(size, inds, i)
-
 		}
 		if !multi {
 			break
