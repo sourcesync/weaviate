@@ -308,7 +308,7 @@ func TestBench(t *testing.T) {
 		queryVectors[i] = make([]float32, dims)
 	}
 
-	fmt.Println("reading numpy files...")
+	fmt.Println("reading numpy files...", time.Now().Format("15:04:05"))
 	_, err := Numpy_read_float32_array(data_reader, testVectors, int64(dims), int64(0), int64(start_size), int64(8))
 	fmt.Println(testVectors[0], len(testVectors), len(testVectors[0]))
 	assert.Nil(t, err)
