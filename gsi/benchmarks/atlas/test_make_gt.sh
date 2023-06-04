@@ -9,7 +9,7 @@ DATASET=/mnt/nas1/atlas_data/benchmarking/atlas.npy.test
 
 QUERIES=/mnt/nas1/atlas_data/benchmarking/query_vec.npy
 
-# TODO: Change to your desires output path
+# TODO: Change to your desired output path
 OUTPUT="/tmp/out.npy"
 
 #
