@@ -1,34 +1,32 @@
+#
+# Imports
+#
+
 import argparse
 import logging
 import time
 import resource
 import pdb
+import os
 
 import numpy
 import numpy as np
-
 import faiss
-
 from faiss.contrib.exhaustive_search import range_search_gpu
 
-##import benchmark.datasets
-#from benchmark.datasets import DATASETS
-#import datasets
-#datasets.BASEDIR = "/mnt/nas1/fvs_benchmark_datasets/bigann_competition_data"
+#
+# Config
+#
 
-"""
-for dataset in deep-1B bigann-1B ssnpp-1B text2image-1B msturing-1B msspacev-1B ; do
-    sbatch   --gres=gpu:4 --ntasks=1 --time=30:00:00 --cpus-per-task=40        \
-           --partition=learnlab --mem=250g --nodes=1  \
-           -J GT.100M.$dataset.d -o logs/GT.100M.$dataset.d.log \
-           --wrap "PYTHONPATH=. python dataset_preparation/make_groundtruth.py \
-            --dataset $dataset --split 10 0 --prepare \
-            --o /checkpoint/matthijs/billion-scale-ann-benchmarks/GT_100M/${dataset/1B/100M}
-        "
-done
+# Default to KNN style search
+SEARCH_TYPE = "knn"
 
-"""
+#
+# Globals
+#
 
+# Will contain the total records of the base dataset
+TOTAL_SIZE = 0
 
 class ResultHeap:
     """Accumulate query results from a sliced dataset. The final result will
@@ -64,13 +62,19 @@ class ResultHeap:
 def sanitize(x):
     return numpy.ascontiguousarray(x, dtype='float32')
 
-def get_dataset_iterator(bs=512, split=(1,0)):
-    filename = "/mnt/nas1/atlas_data/benchmarking/atlas.npy.test" #self.get_dataset_fn()
-    print("Get dataset iterator for", filename)
-    #x = xbin_mmap(filename, dtype=self.dtype, maxn=self.nb)
-    x = np.load(filename)
-    print(x.shape)
+def get_dataset_iterator(dfile, bs=512, split=(1,0)):
+    print("Getting dataset iterator for", dfile)
 
+    #TODO: you should consider an memory map version for large datasets
+    #x = xbin_mmap(filename, dtype=self.dtype, maxn=self.nb)
+    x = np.load(dfile)
+    print("Dataset shape", x.shape)
+    global TOTAL_SIZE
+    TOTAL_SIZE = x.shape[0]
+
+    # We generate batch size chunks of the base dataset
+    # and return as a python generator to avoid using too 
+    # much main memory.
     nb = x.shape[0]
     nsplit, rank = split
     i0, i1 = nb * rank // nsplit, nb * (rank + 1) // nsplit
@@ -79,20 +83,14 @@ def get_dataset_iterator(bs=512, split=(1,0)):
         j1 = min(j0 + bs, i1)
         yield sanitize(x[j0:j1])
 
-def knn_ground_truth(ds, k, bs, split):
+def knn_ground_truth(dfile, qfile, k, bs, split):
     """Computes the exact KNN search results for a dataset that possibly
     does not fit in RAM but for which we have an iterator that
     returns it block by block.
     """
-    print("loading queries")
-    #xq = ds.get_queries()
-    xq = np.load( "/mnt/nas1/fvs_benchmark_datasets/deep-queries.npy" )
-    print("knn_ground_truth: queries size", xq.shape)
-
-    #GW
-    #print("HACK truncating to 1000")
-    #xq = xq[0:1000,:]
-    #GW
+    print("loading queries...")
+    xq = np.load( qfile )
+    print("knn_ground_truth: queries shape", xq.shape)
 
     #if ds.distance() == "angular":
     #    faiss.normalize_L2(xq)
@@ -101,8 +99,6 @@ def knn_ground_truth(ds, k, bs, split):
 
     t0 = time.time()
     nq, d = xq.shape
-
-    ##print("DF distance", ds.distance())
 
     ##metric_type = (
     #    faiss.METRIC_L2 if ds.distance() == "euclidean" else
@@ -118,21 +114,20 @@ def knn_ground_truth(ds, k, bs, split):
         print('running on %d GPUs' % faiss.get_num_gpus())
         index = faiss.index_cpu_to_all_gpus(index)
 
-    # compute ground-truth by blocks, and add to heaps
+    # compute ground-truth by chunks, and add to heaps
     i0 = 0
-    #for xbi in ds.get_dataset_iterator(bs=bs, split=split):
-    for xbi in get_dataset_iterator(bs=bs, split=split):
+    for xbi in get_dataset_iterator(dfile, bs=bs, split=split):
         ni = xbi.shape[0]
+
         ##if ds.distance() == "angular":
         ##    faiss.normalize_L2(xbi)
-
         index.add(xbi)
         D, I = index.search(xq, k)
         I += i0
         rh.add_result(D, I)
         index.reset()
         i0 += ni
-        print(f"[{time.time() - t0:.2f} s] {i0} / {ds.nb} vectors", end="\r", flush=True)
+        print(f"[{time.time() - t0:.2f} s] {i0} / {TOTAL_SIZE} vectors", end="\r", flush=True)
 
     rh.finalize()
     print()
@@ -252,75 +247,60 @@ def range_result_write(nres, I, D, fname):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
 
+    #
+    # parse cmd line args
+    #
+    parser = argparse.ArgumentParser()
     def aa(*args, **kwargs):
         group.add_argument(*args, **kwargs)
 
     group = parser.add_argument_group('dataset options')
-    #gwaa('--dataset', choices=datasets.DATASETS.keys(), required=True)
-    #aa('--dataset', required=True)
-    aa('--prepare', default=False, action="store_true",
-        help="call prepare() to download the dataset before computing")
-    aa('--basedir', help="override basedir for dataset")
+    aa('--dataset', required=True)
+    aa('--queries', required=True)
     aa('--split', type=int, nargs=2, default=[1, 0],
         help="split that must be handled")
-
     group = parser.add_argument_group('computation options')
-    # determined from ds
-    # aa('--range_search', action="store_true", help="do range search instead of kNN search")
+    aa('--range_search', action="store_true", help="do range search instead of kNN search")
     aa('--k', default=100, type=int, help="number of nearest kNN neighbors to search")
     aa('--radius', default=96237, type=float, help="range search radius")
     aa('--bs', default=100_000, type=int, help="batch size for database iterator")
     aa("--maxRAM", default=100, type=int, help="set max RSS in GB (avoid OOM crash)")
-
     group = parser.add_argument_group('output options')
     aa('--o', default="", help="output file name")
-    #GW
     aa('--numpy',default=False,help="use numpy format")
-    #GW
     args = parser.parse_args()
 
-    print("args:", args)
-    print("numpy", args.numpy)
-
-    #if args.basedir:
-    #    print("setting datasets basedir to", args.basedir)
-    #    benchmark.datasets.BASEDIR
-    #    benchmark.datasets.BASEDIR = args.basedir
-
+    #
+    # check args
+    #
     if args.maxRAM > 0:
         print("setting max RSS to", args.maxRAM, "GiB")
         resource.setrlimit(
             resource.RLIMIT_DATA, (args.maxRAM * 1024 ** 3, resource.RLIM_INFINITY)
         )
+    ds = args.dataset
+    if not os.path.exists(ds):
+        raise Exception("Path to base dataset %s does not exists", ds)
+    qu = args.queries
+    if not os.path.exists(qu):
+        raise Exception("Path to queries dataset %s does not exists", qu)
 
-    #ds = datasets.DATASETS[args.dataset]()
-    ##print(ds)
-
-    #if args.prepare:
-    ##    print("downloading dataset...")
-    ##    ds.prepare()
-    #    print("dataset ready")
-
-    if False: # args.crop_nb != -1:
-        print("cropping dataset to", args.crop_nb)
-        ds.nb = args.crop_nb
-        print("new ds:", ds)
-
-
-    if True: #ds.search_type() == "knn":
-        D, I = knn_ground_truth(None, k=args.k, bs=args.bs, split=args.split)
-        print(f"writing index matrix of size {I.shape} to {args.o}")
+    #
+    # compute reults based on search type
+    #
+    if not args.range_search: # traditional knn search 
+        D, I = knn_ground_truth(ds, qu, k=args.k, bs=args.bs, split=args.split)
+        print(f"Writing index matrix of size {I.shape} to {args.o}")
         # write in the usbin format
         if args.numpy:
             print("Using numpy format for", I.shape)
             np.save(args.o,I)
+            print("Saved file at", args.o)
         else:
             usbin_write(I, D, args.o)
-    elif False: #ds.search_type() == "range":
+    else:
         nres, D, I = range_ground_truth(ds, radius=args.radius, bs=args.bs, split=args.split)
-        print(f"writing results {I.shape} to {args.o}")
+        print(f"Writing results {I.shape} to {args.o}")
         range_result_write(nres, I, D, args.o)
-
 
