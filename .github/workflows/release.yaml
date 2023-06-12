@@ -20,7 +20,7 @@ jobs:
         goarch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v3
-      - uses: wangyoucao577/go-release-action@3d0cbf9e00fbc5a1e88a81878cbc8ef496646cda
+      - uses: wangyoucao577/go-release-action@05eb7b1ec56b8050f50b17feeced3c4f9bec3c0e
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
