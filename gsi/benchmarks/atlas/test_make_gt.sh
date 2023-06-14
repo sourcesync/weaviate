@@ -5,7 +5,7 @@
 #
 
 # TODO: Change this to your base dataset
-DATASET=/mnt/nas1/atlas_data/benchmarking/base_atlas.npy
+DATASET=/mnt/nas1/atlas_data/benchmarking/sets/base_atlas.npy
 
 #DATASET=/mnt/nas1/atlas_data/benchmarking/sets/base_atlas.npy
 BASE_ATLAS_1M=/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_1M.npy
@@ -15,16 +15,16 @@ BASE_ATLAS_10M=/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_10M.npy
 BASE_ATLAS_20M=/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_20M.npy
 BASE_ATLAS_30M=/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_30M.npy
 
-QUERIES=/mnt/nas1/atlas_data/benchmarking/query_vec.npy
+QUERIES=/mnt/nas1/atlas_data/benchmarking/sets/query_vec.npy
 
 # TODO: Change to your desired output path
-OUTPUT=/mnt/nas1/atlas_data/benchmarking/sets/atlas_base_gt.npy
-OUTPUT_1M=/mnt/nas1/atlas_data/benchmarking/sets/atlas_base_1M_gt.npy
-OUTPUT_2M=/mnt/nas1/atlas_data/benchmarking/sets/atlas_base_2M_gt.npy
-OUTPUT_5M=/mnt/nas1/atlas_data/benchmarking/sets/atlas_base_5M_gt.npy
-OUTPUT_10M=/mnt/nas1/atlas_data/benchmarking/sets/atlas_base_10M_gt.npy
-OUTPUT_20M=/mnt/nas1/atlas_data/benchmarking/sets/atlas_base_20M_gt.npy
-OUTPUT_30M=/mnt/nas1/atlas_data/benchmarking/sets/atlas_base_30M_gt.npy
+OUTPUT=/mnt/nas1/atlas_data/benchmarking/sets_nor/atlas_base_gt_cos.npy
+OUTPUT_1M=/mnt/nas1/atlas_data/benchmarking/sets_nor/atlas_base_1M_gt_cos.npy
+OUTPUT_2M=/mnt/nas1/atlas_data/benchmarking/sets_nor/atlas_base_2M_gt_cos.npy
+OUTPUT_5M=/mnt/nas1/atlas_data/benchmarking/sets_nor/atlas_base_5M_gt_cos.npy
+OUTPUT_10M=/mnt/nas1/atlas_data/benchmarking/sets_nor/atlas_base_10M_gt_cos.npy
+OUTPUT_20M=/mnt/nas1/atlas_data/benchmarking/sets_nor/atlas_base_20M_gt_cos.npy
+OUTPUT_30M=/mnt/nas1/atlas_data/benchmarking/sets_nor/atlas_base_30M_gt_cos.npy
 
 #
 # Script starts here

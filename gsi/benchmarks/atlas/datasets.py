@@ -435,7 +435,8 @@ class SSNPPDataset(DatasetCompetitionFormat):
         return 96237
 
     def distance(self):
-        return "euclidean"
+        #return "euclidean"
+        return "cosine"
 
     def get_groundtruth(self, k=None):
         """ override the ground-truth function as this is the only range search dataset """
@@ -474,7 +475,8 @@ class BigANNDataset(DatasetCompetitionFormat):
 
 
     def distance(self):
-        return "euclidean"
+        #return "euclidean"
+        return "cosine"
 
 class Deep1BDataset(DatasetCompetitionFormat):
     def __init__(self, nb_M=1000):
@@ -520,7 +522,8 @@ class Deep1BDataset(DatasetCompetitionFormat):
         self.private_qs_large_url = "https://storage.yandexcloud.net/yr-secret-share/ann-datasets-5ac0659e27/DEEP/query.private.1M.fbin"
 
     def distance(self):
-        return "euclidean"
+        #return "euclidean"
+        return "cosine"
 
 
 
@@ -585,7 +588,8 @@ class MSTuringANNS(DatasetCompetitionFormat):
         self.private_gt_large_url = "https://comp21storage.blob.core.windows.net/publiccontainer/comp21/MSFT-TURING-ANNS/gt100-private99605-queries.bin"
 
     def distance(self):
-        return "euclidean"
+        #return "euclidean"
+        return "cosine"
 
 
 class MSSPACEV1B(DatasetCompetitionFormat):
@@ -611,7 +615,8 @@ class MSSPACEV1B(DatasetCompetitionFormat):
         self.private_gt_url = "https://comp21storage.blob.core.windows.net/publiccontainer/comp21/spacev1b/gt100_private_query_30k.bin"
 
     def distance(self):
-        return "euclidean"
+        #return "euclidean"
+        return "cosine"
 
 class RandomRangeDS(DatasetCompetitionFormat):
     def __init__(self, nb, nq, d):
@@ -651,7 +656,8 @@ class RandomRangeDS(DatasetCompetitionFormat):
 
         print("Computing groundtruth")
 
-        nbrs = NearestNeighbors(n_neighbors=100, metric="euclidean", algorithm='brute').fit(data)
+        #nbrs = NearestNeighbors(n_neighbors=100, metric="euclidean", algorithm='brute').fit(data)
+        nbrs = NearestNeighbors(n_neighbors=100, metric="cosine", algorithm='brute').fit(data)
         D, I = nbrs.kneighbors(queries)
 
         nres = np.count_nonzero((D < math.sqrt(self.default_count())) == True, axis=1)
@@ -683,7 +689,8 @@ class RandomRangeDS(DatasetCompetitionFormat):
         return 49
 
     def distance(self):
-        return "euclidean"
+        #return "euclidean"
+        return "cosine"
 
     def __str__(self):
         return f"RandomRange({self.nb})"
@@ -726,7 +733,9 @@ class RandomDS(DatasetCompetitionFormat):
 
         print("Computing groundtruth")
 
-        nbrs = NearestNeighbors(n_neighbors=100, metric="euclidean", algorithm='brute').fit(data)
+        #nbrs = NearestNeighbors(n_neighbors=100, metric="euclidean", algorithm='brute').fit(data)
+        nbrs = NearestNeighbors(n_neighbors=100, metric="cosine", algorithm='brute').fit(data)
+        
         D, I = nbrs.kneighbors(queries)
         with open(os.path.join(self.basedir, self.gt_fn), "wb") as f:
             np.array([self.nq, 100], dtype='uint32').tofile(f)
@@ -737,7 +746,8 @@ class RandomDS(DatasetCompetitionFormat):
         return "knn"
 
     def distance(self):
-        return "euclidean"
+        #return "euclidean"
+        return "cosine"
 
     def __str__(self):
         return f"Random({self.nb})"

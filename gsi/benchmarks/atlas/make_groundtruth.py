@@ -92,6 +92,16 @@ def knn_ground_truth(dfile, qfile, k, bs, split):
     xq = np.load( qfile )
     print("knn_ground_truth: queries shape", xq.shape)
 
+    print("normalizing query...")
+    xq = xq / np.linalg.norm(xq)
+    print("normalizing query shape: ", xq.shape)
+    print("checking query normalization... ")
+    if np.linalg.norm(xq) > 0.9:
+        print("query: ", np.linalg.norm(xq))
+    else:
+        print("query < 0.9: ", np.linalg.norm(xq))
+        exit()
+
     #if ds.distance() == "angular":
     #    faiss.normalize_L2(xq)
 
@@ -118,6 +128,17 @@ def knn_ground_truth(dfile, qfile, k, bs, split):
     i0 = 0
     for xbi in get_dataset_iterator(dfile, bs=bs, split=split):
         ni = xbi.shape[0]
+
+        print("normalizing base...")
+        xbi = xbi / np.linalg.norm(xbi)
+        print("normalizing base shape: ", xbi.shape)
+        print("checking base normalization... ")
+        if np.linalg.norm(xbi) > 0.9:
+            print("base: ", np.linalg.norm(xbi))
+        else:
+            print("base < 0.9: ", np.linalg.norm(xbi))
+            exit()
+
 
         ##if ds.distance() == "angular":
         ##    faiss.normalize_L2(xbi)

@@ -12,14 +12,14 @@ import numpy as np
 
 
 # File Path
-BASE_ATLAS = "/mnt/nas1/atlas_data/benchmarking/base_atlas.npy"
+BASE_ATLAS = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas.npy"
 
-BASE_ATLAS_1M = "/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_1M.npy"
-BASE_ATLAS_2M = "/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_2M.npy"
-BASE_ATLAS_5M = "/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_5M.npy"
-BASE_ATLAS_10M = "/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_10M.npy"
-BASE_ATLAS_20M = "/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_20M.npy"
-BASE_ATLAS_30M = "/mnt/nas1/atlas_data/benchmarking/sets/base_atlas_30M.npy"
+BASE_ATLAS_1M = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas_1M.npy"
+BASE_ATLAS_2M = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas_2M.npy"
+BASE_ATLAS_5M = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas_5M.npy"
+BASE_ATLAS_10M = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas_10M.npy"
+BASE_ATLAS_20M = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas_20M.npy"
+BASE_ATLAS_30M = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas_30M.npy"
 
 # load base atlas embeddings
 base = np.load(BASE_ATLAS, allow_pickle=True)
