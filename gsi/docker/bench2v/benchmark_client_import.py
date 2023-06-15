@@ -126,6 +126,8 @@ if args.d == "Deep1B":
     BENCH_CLASS_NAME = "BenchmarkDeep1B"
 elif args.d == "Atlas":
     BENCH_CLASS_NAME = "BenchmarkAtlas"
+elif args.d == "AtlasNorm":
+    BENCH_CLASS_NAME = "BenchmarkAtlasNorm"
 else:
     raise Exception("Invalid dataset for class name- "+args.d)
 

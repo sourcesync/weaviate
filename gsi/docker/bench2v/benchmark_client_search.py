@@ -101,6 +101,8 @@ if args.d == "Deep1B":
     BENCH_CLASS_NAME = "BenchmarkDeep1B"
 elif args.d == "Atlas":
     BENCH_CLASS_NAME = "BenchmarkAtlas"
+elif args.d == "AtlasNorm":
+    BENCH_CLASS_NAME = "BenchmarkAtlasNorm"
 else:
     raise Exception("Invalid dataset for class name- "+args.d)
 
@@ -196,6 +198,8 @@ if args.d == "Deep1B":
         gt_file = os.path.join( BENCH_DATASET_DIR, "deep-150M-gt-%d.npy" %  args.q )
 elif args.d == "Atlas":
     gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/sets_nor", "query_vec.npy")
+elif args.d == "AtlasNorm":
+    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm.npy")
  
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
