@@ -9,7 +9,7 @@ ORIG_BASE="base_atlas.npy"
 ORIG_QUERY="query_vec.npy"
 NORM_SUBSET="base_atlas_norm_%d.npy"
 NORM_QUERY="query_vec_norm.npy"
-NORM_GT="gt_from_norm_euclidean.npy"
+NORM_GT="gt_from_norm_cosine_reverse.npy"
 SUBSET_SZ=10000
 
 # load the original atlas base embeddings
@@ -76,13 +76,17 @@ print("saved normalized queries",fpath)
 
 # create ground truth
 print("Computing ground truth.")
-nbrs = NearestNeighbors(n_neighbors=100, metric="euclidean", algorithm='brute').fit(subset_norm)
+nbrs = NearestNeighbors(n_neighbors=100, metric="cosine", algorithm='brute').fit(subset_norm)
 D, I = nbrs.kneighbors(query_norm)
 print(D.shape,I.shape, D[0])
 
+# reverse for cosine debugging
+Dr = np.flip(D)
+Ir = np.flip(I)
+
 # export normalized query array
 fpath = os.path.join( NAS, NORM_GT )
-np.save(fpath, I )
+np.save(fpath, Ir )
 print("saved gt from norms",fpath)
 
 
