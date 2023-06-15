@@ -9,8 +9,8 @@ ORIG_BASE="base_atlas.npy"
 ORIG_QUERY="query_vec.npy"
 NORM_SUBSET="base_atlas_norm_%d.npy"
 NORM_QUERY="query_vec_norm.npy"
-NORM_GT="gt_from_norm_cosine_reverse.npy"
-SUBSET_SZ=10000
+NORM_GT="gt_from_norm_%d.npy"
+SUBSET_SZ=50000
 
 # load the original atlas base embeddings
 atlas = np.load( os.path.join(NAS,ORIG_BASE), mmap_mode="r")
@@ -81,13 +81,13 @@ D, I = nbrs.kneighbors(query_norm)
 print("cosine", D.shape,I.shape, D[0],I[0])
 
 # reverse for cosine debugging
-Dr = np.flip(D)
-Ir = np.flip(I)
-print("cosine reverse", Ir)
+#Dr = np.flip(D)
+#Ir = np.flip(I)
+#print("cosine reverse", Ir)
 
-# export normalized query array
-fpath = os.path.join( NAS, NORM_GT )
-np.save(fpath, Ir )
+# export ground truth array
+fpath = os.path.join( NAS, NORM_GT % SUBSET_SZ )
+np.save(fpath, I )
 print("saved gt from norms",fpath)
 
 # get GT via brute force with faiss
@@ -107,7 +107,7 @@ print("faiss index", I[0])
 # try FAISS ANN index using normalized version of subset of atlas base
 #
 print("Trying faiss ANN index...")
-ds = np.load( "/mnt/nas1/atlas_data/benchmarking/base_atlas_norm_10000.npy")
+ds = np.load( "/mnt/nas1/atlas_data/benchmarking/base_atlas_norm_%d.npy" % SUBSET_SZ)
 nlist = 50 #clusters
 quantizer = faiss.IndexFlatL2(ds.shape[1])
 index = faiss.IndexIVFFlat(quantizer, ds.shape[1], nlist)
@@ -117,10 +117,11 @@ index.nprobe = 10
 qs = np.load( "/mnt/nas1/atlas_data/benchmarking/query_vec_norm.npy")
 D, I = index.search(query_norm, 10) 
 print("faiss search result first query", I[0])
-gt = np.load( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm.npy")
+gt = np.load( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm_%d.npy" % SUBSET_SZ)
 print("ground truth first query", gt[0])
 # compute the intersection of query results and ground truth of first query
 intersection = np.intersect1d( I[0][0:10], gt[0][0:10] )
+print("intersection", intersection)
 print("recall", len(intersection)/10.0)
 
 
