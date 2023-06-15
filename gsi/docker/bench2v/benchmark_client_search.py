@@ -199,7 +199,7 @@ if args.d == "Deep1B":
 elif args.d == "Atlas":
     gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/sets_nor", "query_vec.npy")
 elif args.d == "AtlasNorm":
-    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm_euclidean.npy")
+    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm.npy")
  
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
@@ -297,7 +297,7 @@ def parse_result(result):
 def compute_recall(a, b):
     '''Computes the recall metric on query results.'''
 
-    #print(a, b)
+    print("recall", a[0:10], b[0:10])
     nq, rank = a.shape
     intersect = [ numpy.intersect1d(a[i, :rank], b[i, :rank]).size for i in range(nq) ]
     ninter = sum( intersect )
