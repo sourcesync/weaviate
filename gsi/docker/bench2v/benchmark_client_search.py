@@ -84,6 +84,7 @@ ALLOW_CACHEING      = None
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
+parser.add_argument("-d", required=True)
 parser.add_argument("-q", type=int, required=True)
 parser.add_argument("-k", type=int, required=True)
 parser.add_argument("--gemini", action="store_true")
@@ -94,6 +95,14 @@ args = parser.parse_args()
 
 VERBOSE = args.verbose
 SHORT_CIRCUIT = args.shortcircuit
+
+# dataset for class name
+if args.d == "Deep1B":
+    BENCH_CLASS_NAME = "BenchmarkDeep1B"
+elif args.d == "Atlas":
+    BENCH_CLASS_NAME = "BenchmarkAtlas"
+else:
+    raise Exception("Invalid dataset for class name- "+args.d)
 
 # Set the search dabasize size
 if args.n == "10K":
@@ -150,39 +159,44 @@ if not os.path.exists(RESULTS_DIR):
 #
 
 gt_file = None
-if TOTAL_ADDS == 10000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10K-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 1000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 2000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-2M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 5000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 10000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 20000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-20M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 30000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-30M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 40000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-40M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 45000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-45M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 50000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-50M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 60000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-60M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 70000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-70M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 80000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-80M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 90000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-90M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 100000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-100M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 150000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-150M-gt-%d.npy" %  args.q )
-    
+
+# dataset for class name
+if args.d == "Deep1B":
+    if TOTAL_ADDS == 10000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10K-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 1000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 2000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-2M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 5000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 10000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 20000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-20M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 30000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-30M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 40000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-40M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 45000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-45M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 50000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-50M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 60000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-60M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 70000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-70M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 80000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-80M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 90000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-90M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 100000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-100M-gt-%d.npy" %  args.q )
+    elif TOTAL_ADDS == 150000000:
+        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-150M-gt-%d.npy" %  args.q )
+elif args.d == "Atlas":
+    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/sets_nor", "query_vec.npy")
+ 
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
 print("Got ground truth file:", gt_dset.shape)
@@ -261,6 +275,7 @@ if not args.dontexport:
 
 def parse_result(result):
     '''Parse a search response extracting the info we need for benchmarking.'''
+    global BENCH_CLASS_NAME
 
     if 'errors' in result:
         print(result)
@@ -269,7 +284,7 @@ def parse_result(result):
         print(result)
         raise Exception("Got error response from search query")
 
-    items = result['data']['Get']['BenchmarkDeep1B']
+    items = result['data']['Get'][BENCH_CLASS_NAME]
     timing = int(items[0]['_additional']['lastUpdateTimeUnix'])
     inds = [ int(item['index']) for item in items ]
 
@@ -286,7 +301,8 @@ def compute_recall(a, b):
 
 def do_benchmark_query(idx):
     '''This performs a query from the query set and processes the results.'''
-   
+    global BENCH_CLASS_NAME
+ 
     # prepare and perform the weaviate query 
     nearText = {"concepts": [ "q-%d" % idx ]}
     result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(K_NEIGHBORS).do()

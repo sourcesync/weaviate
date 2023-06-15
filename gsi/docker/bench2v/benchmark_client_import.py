@@ -90,6 +90,7 @@ EXPORT_FNAME        = None
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
+parser.add_argument("-d", required=True)
 parser.add_argument("--startat", type=int, default=-1)
 parser.add_argument("--gemini", action="store_true")
 parser.add_argument("--bitsize", type=int, default=-1)
@@ -119,6 +120,14 @@ elif args.n == "100M":
     TOTAL_ADDS = 100000000
 else:
     TOTAL_ADDS = int(args.n)
+
+# dataset for class name
+if args.d == "Deep1B":
+    BENCH_CLASS_NAME = "BenchmarkDeep1B"
+elif args.d == "Atlas":
+    BENCH_CLASS_NAME = "BenchmarkAtlas"
+else:
+    raise Exception("Invalid dataset for class name- "+args.d)
 
 # Set vector index
 if args.gemini:
