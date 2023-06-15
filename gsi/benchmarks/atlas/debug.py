@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import os
 from sklearn.neighbors import NearestNeighbors
-
+import faiss
 
 NAS="/mnt/nas1/atlas_data/benchmarking/"
 ORIG_BASE="base_atlas.npy"
@@ -78,19 +78,50 @@ print("saved normalized queries",fpath)
 print("Computing ground truth.")
 nbrs = NearestNeighbors(n_neighbors=100, metric="cosine", algorithm='brute').fit(subset_norm)
 D, I = nbrs.kneighbors(query_norm)
-print(D.shape,I.shape, D[0])
+print("cosine", D.shape,I.shape, D[0],I[0])
 
 # reverse for cosine debugging
 Dr = np.flip(D)
 Ir = np.flip(I)
+print("cosine reverse", Ir)
 
 # export normalized query array
 fpath = os.path.join( NAS, NORM_GT )
 np.save(fpath, Ir )
 print("saved gt from norms",fpath)
 
+# get GT via brute force with faiss
+print("Getting brute force gt with faiss")
+Dref, Iref = faiss.knn(query_norm, subset_norm, 10)
+print("faiss", Iref[0])
 
+# try a faiss index
+print("Trying faiss L2 index...")
+index = faiss.IndexFlatL2(subset_norm.shape[1])
+index.add( subset_norm )
+print(index.ntotal)
+D, I = index.search(query_norm, 10) 
+print("faiss index", I[0])
 
+#
+# try FAISS ANN index using normalized version of subset of atlas base
+#
+print("Trying faiss ANN index...")
+ds = np.load( "/mnt/nas1/atlas_data/benchmarking/base_atlas_norm_10000.npy")
+nlist = 50 #clusters
+quantizer = faiss.IndexFlatL2(ds.shape[1])
+index = faiss.IndexIVFFlat(quantizer, ds.shape[1], nlist)
+index.train( ds )
+index.add( ds )
+index.nprobe = 10
+qs = np.load( "/mnt/nas1/atlas_data/benchmarking/query_vec_norm.npy")
+D, I = index.search(query_norm, 10) 
+print("faiss search result first query", I[0])
+gt = np.load( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm.npy")
+print("ground truth first query", gt[0])
+# compute the intersection of query results and ground truth of first query
+intersection = np.intersect1d( I[0][0:10], gt[0][0:10] )
+print("recall", len(intersection)/10.0)
 
 
 
