@@ -199,7 +199,7 @@ if args.d == "Deep1B":
 elif args.d == "Atlas":
     gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/sets_nor", "query_vec.npy")
 elif args.d == "AtlasNorm":
-    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm.npy")
+    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm_50000.npy")
  
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
