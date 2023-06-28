@@ -248,7 +248,8 @@ func (h *hnsw) insert(node *vertex, nodeVec []float32) error {
 	return nil
 }
 
-func (h *hnsw) insertBatch(nodeVecs [][]float32) error {
+func (h *hnsw) InsertBatch(nodeVecs [][]float32) error {
+	fmt.Println("is empty:", h.isEmpty())
 	h.deleteVsInsertLock.RLock()
 	defer h.deleteVsInsertLock.RUnlock()
 	for id, nodeVec := range nodeVecs {
@@ -269,14 +270,14 @@ func (h *hnsw) insertBatch(nodeVecs [][]float32) error {
 
 		node.markAsMaintenance()
 
-		h.RLock()
+		// h.RLock()
 		// initially use the "global" entrypoint which is guaranteed to be on the
 		// currently highest layer
 		entryPointID := h.entryPointID
 		// initially use the level of the entrypoint which is the highest level of
 		// the h-graph in the first iteration
 		currentMaximumLayer := h.currentMaximumLayer
-		h.RUnlock()
+		// h.RUnlock()
 
 		targetLevel := int(math.Floor(-math.Log(h.randFunc()) * h.levelNormalizer))
 
@@ -294,21 +295,21 @@ func (h *hnsw) insertBatch(nodeVecs [][]float32) error {
 			node.connections[i] = make([]uint64, 0, capacity)
 		}
 
-		if err := h.commitLog.AddNode(node); err != nil {
-			return err
-		}
+		// if err := h.commitLog.AddNode(node); err != nil {
+		// 	return err
+		// }
 
 		nodeId := node.id
 
 		// before = time.Now()
-		h.Lock()
+		// h.Lock()
 		// m.addBuildingLocking(before)
 		err := h.growIndexToAccomodateNode(node.id, h.logger)
 		if err != nil {
-			h.Unlock()
+			// h.Unlock()
 			return errors.Wrapf(err, "grow HNSW index to accommodate node %d", node.id)
 		}
-		h.Unlock()
+		// h.Unlock()
 
 		// // make sure this new vec is immediately present in the cache, so we don't
 		// // have to read it from disk again
@@ -320,9 +321,9 @@ func (h *hnsw) insertBatch(nodeVecs [][]float32) error {
 			h.cache.preload(node.id, nodeVec)
 		}
 
-		h.Lock()
+		// h.Lock()
 		h.nodes[nodeId] = node
-		h.Unlock()
+		// h.Unlock()
 
 		h.insertMetrics.prepareAndInsertNode(before)
 		before = time.Now()
@@ -348,7 +349,7 @@ func (h *hnsw) insertBatch(nodeVecs [][]float32) error {
 		// go h.insertHook(nodeId, targetLevel, neighborsAtLevel)
 		node.unmarkAsMaintenance()
 
-		h.Lock()
+		// h.Lock()
 		if targetLevel > h.currentMaximumLayer {
 			// before = time.Now()
 			// m.addBuildingLocking(before)
@@ -360,7 +361,10 @@ func (h *hnsw) insertBatch(nodeVecs [][]float32) error {
 			h.entryPointID = nodeId
 			h.currentMaximumLayer = targetLevel
 		}
-		h.Unlock()
+		if id%2 == 0 {
+			fmt.Printf("h.metrics: %v\n", h.metrics)
+		}
+		// h.Unlock()
 	}
 
 	return nil
