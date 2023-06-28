@@ -21,9 +21,9 @@ import (
 )
 
 const (
-	datadir = "/mnt/nas1/George/Projects/billionscale/competition_datasets/deep1b/"
+	datadir = "/mnt/nas1/fvs_benchmark_datasets" // CHANGE for new data
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
-	csvpath = "/home/jacob/"
+	csvpath = "/home/jacob/bench/batch1/"
 	k       = 10
 	dims    = 96
 	gt_size = 100
@@ -41,6 +41,7 @@ func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	server, _ := os.Hostname()
 	data_name := name_dataset(size)
 	fname := fmt.Sprintf("%s%s_%s_indices_%d.npy", csvpath, server, data_name, i)
+	fmt.Println("writing inds array, shape:", len(inds), len(inds[0]))
 	arr := make([][]uint32, len(inds))
 	for i := range inds {
 		arr[i] = make([]uint32, len(inds[i]))
@@ -284,10 +285,12 @@ func TestBench(t *testing.T) {
 
 	data_name := name_dataset(data_size)
 	// create data readers
-	data_path := fmt.Sprintf("%s/base.1B.fbin", datadir)
+	data_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name) // CHANGE for new data
+	fmt.Println(data_path)
 	data_reader, ferr := mmap.Open(data_path)
 	assert.Nil(t, ferr)
-	query_path := fmt.Sprintf("/mnt/nas1/fvs_benchmark_datasets/deep-queries-%d.npy", query_size)
+	query_path := fmt.Sprintf("%s/deep-queries-%d.npy", datadir, query_size) // CHANGE for new data
+	fmt.Println(query_path)
 	query_reader, ferr := mmap.Open(query_path)
 	assert.Nil(t, ferr)
 
@@ -309,8 +312,7 @@ func TestBench(t *testing.T) {
 	}
 
 	fmt.Println("reading numpy files...", time.Now().Format("15:04:05"))
-	_, err := Numpy_read_float32_array(data_reader, testVectors, int64(dims), int64(0), int64(start_size), int64(8))
-	fmt.Println(testVectors[0], len(testVectors), len(testVectors[0]))
+	_, err := Numpy_read_float32_array(data_reader, testVectors, int64(dims), int64(0), int64(start_size), int64(128))
 	assert.Nil(t, err)
 	_, err = Numpy_read_float32_array(query_reader, queryVectors, int64(dims), int64(0), int64(query_size), int64(128))
 	assert.Nil(t, err)
@@ -327,13 +329,15 @@ func TestBench(t *testing.T) {
 		DistanceProvider:      distancer.NewCosineDistanceProvider(),
 		VectorForIDThunk:      vectorFunc,
 	}, ent.UserConfig{
-		MaxConnections:   64,
-		EFConstruction:   128,
-		DynamicEFMin:     100,
-		DynamicEFMax:     500,
-		DynamicEFFactor:  8,
-		FlatSearchCutoff: 40000,
-		Distance:         "cos",
+		EF:                    -1,
+		MaxConnections:        64,
+		EFConstruction:        64,
+		DynamicEFMin:          100,
+		DynamicEFMax:          500,
+		DynamicEFFactor:       8,
+		FlatSearchCutoff:      40000,
+		VectorCacheMaxObjects: 0,
+		Distance:              "cosine",
 	})
 	require.Nil(t, err)
 	ef := index.autoEfFromK(int(k))
@@ -346,11 +350,13 @@ func TestBench(t *testing.T) {
 	var size, curr int = start_size, 0
 
 	// loop for queries, break after 1 iteration if "multi" is false
+	batch_size := 10000
 	for size <= data_size {
 		fmt.Println("loading vectors", curr, ":", size, "to hnsw index...")
 		t1 := time.Now()
-		for i, vec := range testVectors[curr:size] {
-			err := index.Add(uint64(i+curr), vec)
+		for i := 0; i < len(testVectors); i += batch_size {
+			fmt.Println("adding vecs:", i, "to", i+batch_size)
+			err := index.AddBatch(uint64(i), testVectors[i:i+batch_size])
 			require.Nil(t, err)
 		}
 
