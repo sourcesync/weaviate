@@ -23,7 +23,7 @@ import (
 const (
 	datadir = "/mnt/nas1/fvs_benchmark_datasets" // CHANGE for new data
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
-	csvpath = "/home/jacob/bench/batch1/"
+	csvpath = "/home/jacob/bench/batch2/"
 	k       = 10
 	dims    = 96
 	gt_size = 100
@@ -41,7 +41,6 @@ func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	server, _ := os.Hostname()
 	data_name := name_dataset(size)
 	fname := fmt.Sprintf("%s%s_%s_indices_%d.npy", csvpath, server, data_name, i)
-	fmt.Println("writing inds array, shape:", len(inds), len(inds[0]))
 	arr := make([][]uint32, len(inds))
 	for i := range inds {
 		arr[i] = make([]uint32, len(inds[i]))
