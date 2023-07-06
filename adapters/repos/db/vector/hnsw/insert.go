@@ -177,9 +177,9 @@ func (h *hnsw) insert(node *vertex, nodeVec []float32) error {
 		node.connections[i] = make([]uint64, 0, capacity)
 	}
 
-	if err := h.commitLog.AddNode(node); err != nil {
-		return err
-	}
+	// if err := h.commitLog.AddNode(node); err != nil {
+	// 	return err
+	// }
 
 	nodeId := node.id
 
@@ -231,7 +231,7 @@ func (h *hnsw) insert(node *vertex, nodeVec []float32) error {
 	// go h.insertHook(nodeId, targetLevel, neighborsAtLevel)
 	node.unmarkAsMaintenance()
 
-	h.Lock()
+	// h.Lock()
 	if targetLevel > h.currentMaximumLayer {
 		// before = time.Now()
 		// m.addBuildingLocking(before)
@@ -243,7 +243,7 @@ func (h *hnsw) insert(node *vertex, nodeVec []float32) error {
 		h.entryPointID = nodeId
 		h.currentMaximumLayer = targetLevel
 	}
-	h.Unlock()
+	// h.Unlock()
 
 	return nil
 }

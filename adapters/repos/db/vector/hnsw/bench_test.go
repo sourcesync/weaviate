@@ -6,8 +6,10 @@ import (
 	"encoding/csv"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,6 +29,7 @@ const (
 	k       = 10
 	dims    = 96
 	gt_size = 100
+	CPUs    = 8
 )
 
 func fileExists(fname string) bool {
@@ -247,8 +250,25 @@ func Numpy_read_float32_array(f *mmap.ReaderAt, arr [][]float32, dim int64, inde
 	return dim, nil
 }
 
+func speed_test(cpus int, queries ) error {
+	var times []time.Duration
+	m := &sync.Mutex{}
+	queues := make([][][]byte, cpus)
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < cpus
+
+	return nil
+}
+
 func run_queries(queryVectors [][]float32, index *hnsw, k int, ef int) [][]uint64 {
-	arr := make([][]uint64, len(queryVectors))
+	arr := make([][]uint64, len(queryVectors)) // initialize array for returned indices
+	queues := make([][][]byte, CPUs)
+	for i := 0; i < len(queryVectors); i++ {
+		query := byte(queryVectors[i])
+		worker := i % CPUs
+		queues[worker] = append(queues[worker], query)
+	}
+
 	for i, vec := range queryVectors {
 		inds, _, err := index.knnSearchByVector(vec, int(k), ef, nil)
 		arr[i] = inds
