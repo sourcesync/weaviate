@@ -55,4 +55,4 @@ rm -fr /var/lib/weaviate/*
 which dlv
 
 #cd .. && dlv debug cmd/weaviate-server/main.go --build-flags -modfile=gsi/go.mod -- --host=0.0.0.0 --port=8081 --scheme=http
-cd .. && dlv debug cmd/weaviate-server/main.go  -- --host=0.0.0.0 --port=8091 --scheme=http
+cd .. && pwd && dlv debug cmd/weaviate-server/main.go  -- --host=0.0.0.0 --port=8091 --scheme=http

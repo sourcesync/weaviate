@@ -113,9 +113,23 @@ func (m *Provider) UpdateVector(ctx context.Context, object *models.Object, clas
 
 	case gemini.UserConfig:
 
-		_, ok := class.VectorIndexConfig.(gemini.UserConfig)
+		geminiConfig, ok := class.VectorIndexConfig.(gemini.UserConfig)
 		if !ok {
 			return fmt.Errorf(errorVectorIndexGeminiType, class.VectorIndexConfig)
+		}
+		
+        if class.Vectorizer == config.VectorizerModuleNone {
+			if geminiConfig.Skip && len(object.Vector) > 0 {
+				logger.WithField("className", object.Class).
+					Warningf(warningSkipVectorProvided)
+			}
+			return nil
+		}
+
+		if geminiConfig.Skip {
+			logger.WithField("className", object.Class).
+				WithField("vectorizer", class.Vectorizer).
+				Warningf(warningSkipVectorGenerated, class.Vectorizer)
 		}
 
 	default:

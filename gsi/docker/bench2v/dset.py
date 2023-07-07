@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import traceback
 
 database_dset = None
 query_dset = None
@@ -10,23 +11,27 @@ def load():
 
     global database_dset, query_dset, gt_dset
 
-    database_file = os.getenv("DATABASE_FILE")
-    if not os.path.exists(database_file):
-        raise Exception("Cannot locate numpy file at %s" % database_file)
-    print("Loading %s in mmap_mode..." % database_file)
-    database_dset = np.load(database_file, mmap_mode='r')
+    try:
+        database_file = os.getenv("DATABASE_FILE")
+        if not os.path.exists(database_file):
+            raise Exception("Cannot locate numpy file at %s" % database_file)
+        print("Loading %s in mmap_mode..." % database_file)
+        database_dset = np.load(database_file, mmap_mode='r')
 
-    query_file = os.getenv("QUERY_FILE")
-    if not os.path.exists(query_file):
-        raise Exception("Cannot locate numpy file at %s" % query_file)
-    print("Loading %s in mmap_mode..." % query_file)
-    query_dset = np.load(query_file, mmap_mode='r')
+        query_file = os.getenv("QUERY_FILE")
+        if not os.path.exists(query_file):
+            raise Exception("Cannot locate numpy file at %s" % query_file)
+        print("Loading %s in mmap_mode..." % query_file)
+        query_dset = np.load(query_file, mmap_mode='r')
 
-    gt_file = os.getenv("GROUND_TRUTH_FILE")
-    if not os.path.exists(gt_file):
-        raise Exception("Cannot locate numpy file at %s" % gt_file)
-    print("Loading %s in mmap_mode..." % gt_file)
-    gt_dset = np.load(gt_file, mmap_mode='r')
+        gt_file = os.getenv("GROUND_TRUTH_FILE")
+        if not os.path.exists(gt_file):
+            raise Exception("Cannot locate numpy file at %s" % gt_file)
+        print("Loading %s in mmap_mode..." % gt_file)
+        gt_dset = np.load(gt_file, mmap_mode='r')
+    except:
+        traceback.print_exc()
+        raise Exception("Problem loading data...")
 
 def get(idx):
     '''Get the item at index "idx" in the database dataset'''

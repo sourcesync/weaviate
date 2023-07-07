@@ -81,6 +81,7 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 		"mdUnique":         DefaultMDUnique,
 		"convertToDataset": DefaultConvertToDataset,
 	}
+    fmt.Println("Fvs: Import_dataset: values", values)
 	jsonValue, jErr := json.Marshal(values)
 	if jErr != nil {
 		return "", jErr
