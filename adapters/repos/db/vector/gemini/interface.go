@@ -48,6 +48,12 @@ func (i *gemini) Add(id uint64, vector []float32) error {
 	return i.plugin.Add(id, vector)
 }
 
+func (i *gemini) BatchImport(npy_path string, dim int, num_vecs int) error {
+	// This file is a 'stub' for the module's implementation of the gemini indeex
+	return i.plugin.BatchImport(npy_path, dim, num_vecs)
+}
+
+
 func (i *gemini) Delete(id ...uint64) error {
 	// This file is a 'stub' for the module's implementation of the gemini indeex
 	// return i.plugin.Delete( id )
