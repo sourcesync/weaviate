@@ -41,7 +41,7 @@ func (h *hnsw) ValidateBeforeInsert(vector []float32) error {
 	return nil
 }
 
-func (h *hnsw) AddBatch(id uint64, vector [][]float32) error {
+func (h *hnsw) AddBatch(id uint64, vector [][]float32) (time.Duration, error) {
 	// if false {
 	// 	h.insertBatch(vector)
 	// }
@@ -57,6 +57,7 @@ func (h *hnsw) AddBatch(id uint64, vector [][]float32) error {
 	h.compressActionLock.RLock()
 	defer h.compressActionLock.RUnlock()
 
+	var load_time time.Duration
 	var err error
 	for i, vec := range vector {
 		i += int(id)
@@ -64,12 +65,14 @@ func (h *hnsw) AddBatch(id uint64, vector [][]float32) error {
 			id: uint64(i),
 		}
 
+		t1 := time.Now()
 		err = h.insert(node, vec)
 		if err != nil {
 			log.Fatal(err)
 		}
+		load_time += time.Since(t1)
 	}
-	return err
+	return load_time, err
 }
 
 func (h *hnsw) Add(id uint64, vector []float32) error {

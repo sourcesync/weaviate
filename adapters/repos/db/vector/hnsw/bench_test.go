@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
 	"testing"
@@ -25,11 +26,19 @@ import (
 const (
 	datadir = "/mnt/nas1/fvs_benchmark_datasets" // CHANGE for new data
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
-	csvpath = "/home/jacob/bench/batch2/"
 	k       = 10
 	dims    = 96
 	gt_size = 100
-	CPUs    = 8
+)
+
+var (
+	csvpath       = os.Getenv("CSVPATH")
+	data_size, _  = strconv.Atoi(os.Getenv("DATASIZE"))
+	query_size, _ = strconv.Atoi(os.Getenv("QUERYSIZE"))
+	start_size, _ = strconv.Atoi(os.Getenv("START"))
+	increment, _  = strconv.Atoi(os.Getenv("INCREMENT"))
+	multi, _      = strconv.ParseBool(os.Getenv("MULTI"))
+	cpus, _       = strconv.Atoi(os.Getenv("CPUS"))
 )
 
 func fileExists(fname string) bool {
@@ -57,7 +66,7 @@ func WriteIndsNpy(size int, inds [][]uint64, i int) {
 	}
 }
 
-func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64, searchTime float64, t1 time.Time, t2 time.Time) {
+func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64, wallTime float64, searchTime float64) {
 	server, _ := os.Hostname()
 	fname := fmt.Sprintf("%s%s_algodirect.csv", csvpath, server)
 	if !fileExists(fname) {
@@ -67,7 +76,7 @@ func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64,
 			panic(err)
 		}
 		writer := csv.NewWriter(file)
-		row := []string{"size", "query_count", "topK", "ef", "load_time", "search_time", "server", "t1", "t2"}
+		row := []string{"size", "query_count", "topK", "ef", "load_time", "wall_time", "search_time", "server", "stamp"}
 		err = writer.Write(row)
 		if err != nil {
 			panic(err)
@@ -87,10 +96,10 @@ func WriteToCSV(data_name string, n int, q int, k int, ef int, loadTime float64,
 		fmt.Sprintf("%d", k),
 		fmt.Sprintf("%d", ef),
 		fmt.Sprintf("%f", loadTime),
+		fmt.Sprintf("%f", wallTime),
 		fmt.Sprintf("%f", searchTime),
 		server,
-		t1.Format("2006-01-02 15:04:05"),
-		t2.Format("2006-01-02 15:04:05"),
+		time.Now().Format("2006-01-02 15:04:05"),
 	}
 	err = writer.Write(row)
 	if err != nil {
@@ -250,24 +259,102 @@ func Numpy_read_float32_array(f *mmap.ReaderAt, arr [][]float32, dim int64, inde
 	return dim, nil
 }
 
-func speed_test(cpus int, queries ) error {
+func speed_test(index *hnsw, k int, ef int, cpus int, queries [][]float32) Results {
 	var times []time.Duration
 	m := &sync.Mutex{}
-	queues := make([][][]byte, cpus)
+	queues := make([][][]float32, cpus)
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < cpus
+	for i := 0; i < len(queries); i++ {
+		query := queries[i]
+		worker := i % cpus
+		queues[worker] = append(queues[worker], query)
+	}
+	wg := &sync.WaitGroup{}
+	before := time.Now()
+	for _, queue := range queues {
+		wg.Add(1)
+		go func(queue [][]float32) {
+			defer wg.Done()
 
-	return nil
+			for _, query := range queue {
+				before := time.Now()
+				_, _, err := index.knnSearchByVector(query, k, ef, nil)
+				if err != nil {
+					panic(err)
+				}
+				took := time.Since(before)
+				m.Lock()
+				times = append(times, took)
+				m.Unlock()
+			}
+		}(queue)
+	}
+
+	wg.Wait()
+
+	return analyze(times, time.Since(before))
+}
+
+var targetPercentiles = []int{50, 90, 95, 98, 99}
+
+type Results struct {
+	Min               time.Duration
+	Max               time.Duration
+	Mean              time.Duration
+	Took              time.Duration
+	QueriesPerSecond  float64
+	Percentiles       []time.Duration
+	PercentilesLabels []int
+	Total             int
+	Successful        int
+	Failed            int
+	Parallelization   int
+}
+
+func analyze(times []time.Duration, total time.Duration) Results {
+	out := Results{Min: math.MaxInt64, PercentilesLabels: targetPercentiles}
+	var sum time.Duration
+
+	for _, time := range times {
+		if time < out.Min {
+			out.Min = time
+		}
+		if time > out.Max {
+			out.Max = time
+		}
+		out.Successful++
+		sum += time
+	}
+
+	out.Total = query_size
+	out.Failed = query_size - out.Successful
+	out.Parallelization = cpus
+	out.Mean = sum / time.Duration(len(times))
+	out.Took = total
+	out.QueriesPerSecond = float64(len(times)) / float64(float64(total)/float64(time.Second))
+
+	sort.Slice(times, func(a, b int) bool {
+		return times[a] < times[b]
+	})
+
+	percentilePos := func(percentile int) int {
+		return int(float64(len(times)*percentile)/100) + 1
+	}
+
+	out.Percentiles = make([]time.Duration, len(targetPercentiles))
+	for i, percentile := range targetPercentiles {
+		pos := percentilePos(percentile)
+		if pos >= len(times) {
+			pos = len(times) - 1
+		}
+		out.Percentiles[i] = times[pos]
+	}
+
+	return out
 }
 
 func run_queries(queryVectors [][]float32, index *hnsw, k int, ef int) [][]uint64 {
 	arr := make([][]uint64, len(queryVectors)) // initialize array for returned indices
-	queues := make([][][]byte, CPUs)
-	for i := 0; i < len(queryVectors); i++ {
-		query := byte(queryVectors[i])
-		worker := i % CPUs
-		queues[worker] = append(queues[worker], query)
-	}
 
 	for i, vec := range queryVectors {
 		inds, _, err := index.knnSearchByVector(vec, int(k), ef, nil)
@@ -291,14 +378,6 @@ func name_dataset(data_size int) string {
 	}
 	return data_name
 }
-
-var (
-	data_size, _  = strconv.Atoi(os.Getenv("DATASIZE"))
-	query_size, _ = strconv.Atoi(os.Getenv("QUERYSIZE"))
-	start_size, _ = strconv.Atoi(os.Getenv("START"))
-	increment, _  = strconv.Atoi(os.Getenv("INCREMENT"))
-	multi, _      = strconv.ParseBool(os.Getenv("MULTI"))
-)
 
 func TestBench(t *testing.T) {
 
@@ -359,7 +438,7 @@ func TestBench(t *testing.T) {
 		Distance:              "cosine",
 	})
 	require.Nil(t, err)
-	ef := index.autoEfFromK(int(k))
+	ef_array := []int{64, 128, 256, 512}
 
 	// assertions for vector shape
 	assert.Equal(t, int(start_size), len(testVectors))
@@ -373,22 +452,32 @@ func TestBench(t *testing.T) {
 	for size <= data_size {
 		fmt.Println("loading vectors", curr, ":", size, "to hnsw index...")
 		t1 := time.Now()
+		var load_time time.Duration
 		for i := 0; i < len(testVectors); i += batch_size {
-			fmt.Println("adding vecs:", i, "to", i+batch_size)
-			err := index.AddBatch(uint64(i), testVectors[i:i+batch_size])
+			fmt.Println("adding vecs:", i, ":", i+batch_size)
+			t2, err := index.AddBatch(uint64(i), testVectors[i:i+batch_size])
+			load_time += t2
 			require.Nil(t, err)
 		}
 
-		load_time := time.Since(t1).Seconds()
+		wall_time := time.Since(t1)
 		fmt.Println("running queries...")
-		for i := 0; i < 5; i++ {
+		for _, ef := range ef_array {
 			t2 := time.Now()
 			inds := run_queries(queryVectors, index, k, ef)
 			search_time := time.Since(t2).Seconds()
 			fmt.Println("search time:", search_time, " seconds")
-			WriteToCSV(data_name, size, query_size, k, ef, load_time, search_time, t1, t2)
-			WriteIndsNpy(size, inds, i)
+			WriteToCSV(data_name, size, query_size, k, ef, load_time.Seconds(), wall_time.Seconds(), search_time)
+			WriteIndsNpy(size, inds, ef)
 		}
+
+		fmt.Println("Starting speed test...")
+		for _, ef := range ef_array {
+			results := speed_test(index, k, ef, cpus, queryVectors)
+			fmt.Println(results)
+		}
+
+		// if multi-run benchmark, increment size and continue
 		if !multi {
 			break
 		}
@@ -412,6 +501,7 @@ func TestBench(t *testing.T) {
 		assert.Nil(t, err)
 		testVectors = append(testVectors, tmp...)
 		fmt.Println("data length: ", len(testVectors))
+
 	}
 	fmt.Println("Done.")
 }
