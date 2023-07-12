@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,12 +28,9 @@ const (
 )
 
 var (
+	dsets         = os.Getenv("DATASIZE")
 	csvpath       = os.Getenv("CSVPATH")
-	data_size, _  = strconv.Atoi(os.Getenv("DATASIZE"))
 	query_size, _ = strconv.Atoi(os.Getenv("QUERYSIZE"))
-	start_size, _ = strconv.Atoi(os.Getenv("START"))
-	increment, _  = strconv.Atoi(os.Getenv("INCREMENT"))
-	multi, _      = strconv.ParseBool(os.Getenv("MULTI"))
 )
 
 func fileExists(fname string) bool {
@@ -125,7 +123,15 @@ func name_dataset(data_size int) string {
 }
 
 func TestBench(t *testing.T) {
-
+	// get initial size from dsets string
+	dset_arr := strings.Split(dsets, " ")
+	var size_arr []int
+	for _, dset := range dset_arr {
+		size, _ := strconv.Atoi(dset)
+		size_arr = append(size_arr, size)
+	}
+	fmt.Println(len(size_arr))
+	data_size := size_arr[0]
 	data_name := name_dataset(data_size)
 	// create data readers
 	data_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name) // CHANGE for new data
@@ -145,7 +151,7 @@ func TestBench(t *testing.T) {
 	}
 
 	// initialize empty arrays
-	trainVectors := make([][]float32, start_size)
+	trainVectors := make([][]float32, data_size)
 	for i := range trainVectors {
 		trainVectors[i] = make([]float32, dims)
 	}
@@ -156,7 +162,7 @@ func TestBench(t *testing.T) {
 
 	// read data to arrays
 	fmt.Println("reading numpy files...", time.Now().Format("15:04:05"))
-	_, err := Numpy_read_float32_array(data_reader, trainVectors, int64(dims), int64(0), int64(start_size), int64(128))
+	_, err := Numpy_read_float32_array(data_reader, trainVectors, int64(dims), int64(0), int64(data_size), int64(128))
 	assert.Nil(t, err)
 	_, err = Numpy_read_float32_array(query_reader, queryVectors, int64(dims), int64(0), int64(query_size), int64(128))
 	assert.Nil(t, err)
@@ -187,26 +193,26 @@ func TestBench(t *testing.T) {
 	ef_array := []int{64, 128, 256, 512}
 
 	// assertions for vector shape
-	assert.Equal(t, int(start_size), len(trainVectors))
+	assert.Equal(t, int(data_size), len(trainVectors))
 	assert.Equal(t, int(query_size), len(queryVectors))
 
 	fmt.Println("Benchmark Test:", data_name, data_size, query_size, "start time:", time.Now().Format("2006-01-02 15:04:05"))
-	var size, curr int = start_size, 0
 
-	// loop for queries, break after 1 iteration if "multi" is false
-	batch_size := 10000
-	for size <= data_size {
+	// loop over datasets
+	batch_size, curr := 10000, 0
+	for j, size := range size_arr {
 		fmt.Println("loading vectors", curr, ":", size, "to hnsw index...")
 		t1 := time.Now()
-		var load_time time.Duration // initiali
-		for i := 0; i < len(trainVectors); i += batch_size {
+		var load_time time.Duration
+		for i := curr; i < size; i += batch_size {
 			fmt.Println("adding vecs:", i, ":", i+batch_size)
 			t2, err := index.AddBatch(uint64(i), trainVectors[i:i+batch_size])
 			load_time += t2 // append load time
 			require.Nil(t, err)
 		}
-
 		wall_time := time.Since(t1)
+
+		curr += size
 		fmt.Println("running queries...")
 		for _, ef := range ef_array {
 			for i := 0; i < 1000; i++ { // loop over queries
@@ -221,30 +227,25 @@ func TestBench(t *testing.T) {
 		}
 
 		// if multi-run benchmark, increment size and continue
-		if !multi {
+		if j == len(size_arr)-1 {
 			break
 		}
-		if curr == 0 {
-			curr += size
-		} else {
-			curr += increment
-		}
-		size += increment
-		if size > data_size {
-			break
-		}
-
 		// append new vectors to trainVectors
-		tmp := make([][]float32, increment)
+		new_size := size_arr[j+1]
+		data_name = name_dataset(new_size)
+		new_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name)
+		data_reader, ferr := mmap.Open(new_path)
+		if ferr != nil {
+			panic(ferr)
+		}
+		tmp := make([][]float32, new_size-curr)
 		for i := range tmp {
 			tmp[i] = make([]float32, dims)
 		}
-
-		_, err = Numpy_read_float32_array(data_reader, tmp, dims, int64(curr), int64(size-curr), int64(8))
+		_, err = Numpy_read_float32_array(data_reader, tmp, dims, int64(curr), int64(size-curr), int64(128))
 		assert.Nil(t, err)
 		trainVectors = append(trainVectors, tmp...)
 		fmt.Println("data length: ", len(trainVectors))
-
 	}
 	fmt.Println("Done.")
 }
