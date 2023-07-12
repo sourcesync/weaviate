@@ -212,10 +212,11 @@ func TestBench(t *testing.T) {
 			for i := 0; i < 1000; i++ { // loop over queries
 				t1 = time.Now()
 				inds, _, err := index.knnSearchByVector(queryVectors[i], k, ef, nil)
+				searchTime := time.Since(t1).Seconds()
 				if err != nil {
 					panic(err)
 				}
-				WriteToCSV(csvpath, data_name, size, ef, i, inds, float64(time.Since(t1).Milliseconds()), time.Now(), float64(load_time.Seconds()), float64(wall_time.Seconds()))
+				WriteToCSV(csvpath, data_name, size, ef, i, inds, searchTime, time.Now(), float64(load_time.Seconds()), float64(wall_time.Seconds()))
 			}
 		}
 
