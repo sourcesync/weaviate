@@ -107,6 +107,17 @@ DEEP150M_GT_1000 = "deep-150M-gt-1000.npy"
 DEEP150M_GT_100 = "deep-150M-gt-100.npy"
 DEEP150M_GT_10 = "deep-150M-gt-10.npy"
 
+# Deep500M filenames
+DEEP500M =  "deep-500M.npy"
+DEEP500M_GT_1000 = "deep-500M-gt-1000.npy"
+DEEP500M_GT_100 = "deep-500M-gt-100.npy"
+DEEP500M_GT_10 = "deep-500M-gt-10.npy"
+
+# Deep100M filenames
+DEEP1000M =  "deep-1000M.npy"
+DEEP1000M_GT_1000 = "deep-1000M-gt-1000.npy"
+DEEP1000M_GT_100 = "deep-1000M-gt-100.npy"
+DEEP1000M_GT_10 = "deep-1000M-gt-10.npy"
 
 # 
 # Configure modules
@@ -1680,5 +1691,99 @@ elif VERIFY:
         raise Exception("Bad size for %s" % fname, arr.shape)
     print("Verified.")
 
+
+# Create/verify deep-500M
+fname = os.path.join( FVS_DATA_DIR, DEEP500M )
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    print("Creating", fname, "...")
+    print("Downloading Competition Deep1B base, query, and gt...")
+    ds = datasets.DATASETS["deep-500M"]()
+    ds.prepare(skip_data=False, skip_non_data=True)
+
+    for dt in ds.get_dataset_iterator(bs=10000):
+        newsize = append_floatarray(fname, dt)
+        print("deep-500M, appended batch, newsize=", newsize)
+        if newsize[0]==500000000:
+            break
+    print("done")
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it (this may take a sec.)" % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=500000000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP500M of DEEP1B, gt set - 1000
+fname = os.path.join( FVS_DATA_DIR, DEEP500M_GT_1000)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-500M"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:1000,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=1000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# Create/verify deep-1000M/deep-1B
+fname = os.path.join( FVS_DATA_DIR, DEEP1000M )
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    print("Creating", fname, "...")
+    print("Downloading Competition Deep1B base, query, and gt...")
+    ds = datasets.DATASETS["deep-1B"]()
+    ds.prepare(skip_data=False, skip_non_data=True)
+
+    for dt in ds.get_dataset_iterator(bs=10000):
+        newsize = append_floatarray(fname, dt)
+        print("deep-1000M, appended batch, newsize=", newsize)
+        if newsize[0]==1000000000:
+            break
+    print("done")
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it (this may take a sec.)" % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=1000000000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
+
+# DEEP1000M/DEEP1B, gt set - 1000
+fname = os.path.join( FVS_DATA_DIR, DEEP1000M_GT_1000)
+print("Checking ", fname,"exists...")
+if not os.path.exists(fname):
+    ds = datasets.DATASETS["deep-1B"]()
+    ds.prepare(False)
+
+    I, D = ds.get_groundtruth()
+    print(I.shape)
+    I = I[:1000,:]
+    print(I.shape)
+
+    print("saving",fname)
+    numpy.save( fname, I )
+    print("done")
+
+elif VERIFY:
+    # Verify it
+    print("Found %s.  Verifying it..." % fname)
+    arr = numpy.load(fname)
+    if arr.shape[0]!=1000:
+        raise Exception("Bad size for %s" % fname, arr.shape)
+    print("Verified.")
 
 print("Done.")
