@@ -203,25 +203,47 @@ def run_benchmark(args):
         FocusDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id), 
         allocation_token=Allocation_id)
 
-    # Search
-    print("Batch search...")
-    ts_query_start = time.time()
-    response = gsi_search_apis.controllers_search_controller_search(
-                    SearchRequest(allocation_id=Allocation_id, dataset_id=dataset_id, 
-                        queries_file_path=queries_path, topk=args.neighbors), allocation_token=Allocation_id)
-    ts_query_end = time.time()
-    print("search result=", response.search)
-    inds = numpy.array(response.indices)
-    if args.save:
-        # Save results alongside the csv
-        path = os.path.dirname(args.output)
-        fname = os.path.join(path, "query_inds.npy")
-        numpy.save(fname, inds)
-        print("Saved query results indices to", fname)
-        dist = numpy.array(response.distance)
-        fname = os.path.join(path, "query_dists.npy")
-        numpy.save(fname, dist)
-        print("Saved query results distances to", fname)
+    if args.qbq:
+
+        # query-by-query search
+        print("Q-by-Q search...")
+
+        queries = np.load(queries_path)
+        for q in queries:
+
+            tmp_qpath = "/tmp/query1.npy"
+            f = open(tmp_qpath, "wb")
+            np.save( f, q )
+            f.close()
+
+            ts_query_start = time.time()
+            response = gsi_search_apis.controllers_search_controller_search(
+                            SearchRequest(allocation_id=Allocation_id, dataset_id=dataset_id, 
+                                queries_file_path=queries_path, topk=args.neighbors), allocation_token=Allocation_id)
+            ts_query_end = time.time()
+            print("q-by-q search result=", response.search)
+            inds = numpy.array(response.indices)
+
+    else:
+        # Batch Search
+        print("Batch search...")
+        ts_query_start = time.time()
+        response = gsi_search_apis.controllers_search_controller_search(
+                        SearchRequest(allocation_id=Allocation_id, dataset_id=dataset_id, 
+                            queries_file_path=queries_path, topk=args.neighbors), allocation_token=Allocation_id)
+        ts_query_end = time.time()
+        print("search result=", response.search)
+        inds = numpy.array(response.indices)
+        if args.save:
+            # Save results alongside the csv
+            path = os.path.dirname(args.output)
+            fname = os.path.join(path, "query_inds.npy")
+            numpy.save(fname, inds)
+            print("Saved query results indices to", fname)
+            dist = numpy.array(response.distance)
+            fname = os.path.join(path, "query_dists.npy")
+            numpy.save(fname, dist)
+            print("Saved query results distances to", fname)
 
     # Unload dataset
     print("Unloading dataset...")
@@ -288,6 +310,7 @@ def init_args():
     #parser.add_argument('-n','--tries', required=False, default=5)
     parser.add_argument('-u', '--unload', required=False, default=True, action='store_false')
     parser.add_argument('-w', '--wipe', required=False, default=False, action='store_true')
+    parser.add_argument('-z', '--qbq', required=False, default=False, action='store_true') # query-by-query instead of batch
     args = parser.parse_args()
 
     if not os.path.exists( args.dataset ):
@@ -318,7 +341,7 @@ def init_args():
 if __name__ == "__main__":
 
     args = init_args()
-    unload_datasets(args) # only runs if --unload flag not passed
+    unload_datasets(args) 
     run_benchmark(args)
 
     print("Done.")
