@@ -14,7 +14,7 @@ mkdir -p $DTDIR
 OUTPUT="$DTDIR/benchmarks-deep1M-q1000-clusters-$DT.csv"
 
 # Set a valid allocation id
-ALLOCATION_ID="fd283b38-3e4a-11eb-a205-7085c2c5e516" ##"0b391a1a-b916-11ed-afcb-0242ac1c0002" #"fd283b38-3e4a-11eb-a205-7085c2c5e516"
+ALLOCATION_ID="fd283b38-3e4a-11eb-a205-7085c2c5e516" #apu12="0b391a1a-b916-11ed-afcb-0242ac1c0002" #apu11="fd283b38-3e4a-11eb-a205-7085c2c5e516"
 
 # Path to dataset numpy file
 DATASET="/mnt/nas1/fvs_benchmark_datasets/deep-1M.npy"
@@ -44,6 +44,8 @@ set -e
 #
 python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 --qbq 2>&1 | tee "$DTDIR/1M_1000_768b_clusters_$DT_$(date +%s).txt"
 echo "Done. $OUTPUT"
+exit
+
 python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 --qbq 2>&1 | tee "$DTDIR/1M_1000_768b_clusters_$DT_$(date +%s).txt"
 python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 768 --qbq 2>&1 | tee "$DTDIR/1M_1000_768b_clusters_$DT_$(date +%s).txt"
 python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b 512 --qbq 2>&1 | tee "$DTDIR/1M_1000_512b_clusters_$DT_$(date +%s).txt"
