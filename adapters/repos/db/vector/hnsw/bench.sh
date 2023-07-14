@@ -2,8 +2,8 @@
 
 set -e
 
-export DATASIZE="1000000 2000000" #MUST BE STRING
+export DATASIZE="50000000" #MUST BE STRING
 export QUERYSIZE=1000
-export CSVPATH="/home/jacob/bench/"
+export CSVPATH="/home/jbenson/bench/"
 
 go test -run TestBench -v -timeout 0

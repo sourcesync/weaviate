@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	datadir = "/mnt/nas1/fvs_benchmark_datasets" // CHANGE for new data
+	datadir = "/ssddrive/fvs_benchmark_datasets" // CHANGE for new data
 	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
 	k       = 10
 	dims    = 96
