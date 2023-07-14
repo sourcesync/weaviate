@@ -2,6 +2,7 @@ results
 results/
 results/*
 .ipynb_checkpoints/
+*.pyc
 
 
 
