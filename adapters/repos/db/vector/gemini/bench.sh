@@ -29,13 +29,13 @@ export GEMINI_MIN_RECORDS_CHECK=true
 # Env vars for the benchmark/test program
 #
 export DSET="deep1b"
-export DATAPATH="/home/public/deep-500M.npy"
-export NUMRECS=500000000
+export DATAPATH="/home/public/deep-1000M.npy"
+export NUMRECS=1000000000
 export DIM=96
 export SEARCH="clusters"
 export QUERYPATH="/home/public/deep-queries.npy"
 export CSVPATH="/home/gwilliams/Projects/Weaviate/results/algo_direct/"
-export BITS=512
+export BITS=256
 
 # Run with Golang debugger DLV
 # DLV is a Golang debugger that will need to have installed locally
