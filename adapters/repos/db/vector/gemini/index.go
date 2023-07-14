@@ -198,6 +198,64 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 	return idx, nil
 }
 
+func (i *Gemini) BatchImport(npy_path string, dim int, num_vecs int) error {
+
+	// sychronize this function
+	i.idxLock.Lock()
+	defer i.idxLock.Unlock()
+
+	if i.verbose {
+		fmt.Println("Gemini BatchImport: Start")
+	}
+
+	if !i.first_add {
+        return fmt.Errorf("Expected empty index.")
+    }
+	if i.count!=0 {
+        return fmt.Errorf("Expected empty index.")
+    }
+
+    // Check if file exists
+    _, err := os.Stat(npy_path)
+    if os.IsNotExist(err) {
+        return fmt.Errorf("File for batch import does not exist %v", npy_path)
+    }
+
+    // Open file
+    f, err := os.OpenFile(npy_path, os.O_RDWR, 0o755)
+    if err != nil {
+        return fmt.Errorf("error openingfile: %v", err)
+    }
+    defer f.Close()
+
+    // Get file size
+    fi, err := f.Stat()
+    if err != nil {
+        return errors.Wrap(err, "error get file stats in BatchImport.")
+    }
+    file_size := int64(fi.Size())
+
+    // Infer row count from file size and dims
+    data_size := file_size - 128
+    row_count := int(data_size) / (dim * 4)
+	if i.verbose {
+		fmt.Println("Gemini BatchImport: Got row count", row_count)
+	}
+
+    if (row_count!=num_vecs) {
+        return fmt.Errorf("row count and num_vecs mismatch %d %d", row_count, num_vecs)
+    }
+
+    i.first_add = false
+    i.count = row_count
+    i.dim = dim // TODO: verify against the npy file
+    i.db_path = npy_path
+	i.stale = true // By setting to true, next "search" calls kicks off an async index training
+
+	return nil
+}
+
+
 func (i *Gemini) Add(id uint64, vector []float32) error {
 	// sychronize this function
 	i.idxLock.Lock()
@@ -209,7 +267,7 @@ func (i *Gemini) Add(id uint64, vector []float32) error {
 
 	if i.last_fvs_status != "" {
 		// TODO: This means that an async index build is in progress.
-		// TODO: In the future We should consider cacheiing the adds for a deferred
+		// TODO: In the future We should consider cache-ing the "adds" for a deferred
 		// TODO: index build which starts after the current one is complete.
 		// TODO: For now, we return an error with a suitable error string.
 
