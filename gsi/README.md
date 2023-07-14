@@ -100,6 +100,14 @@ To run an "algorithm direct" benchmark follow these steps.
 3. bench.sh: there are 5 environment variables you can modify in order to run different size benchmarks. DATASIZE is the total number of vectors that will be loaded to an hnsw index. If MULTI is true, the script will run a benchmark for every INCREMENT between START and DATASIZE.
 4. bench_test.go: change the datadir variable to where your data and query files are. Add the correct filenames to each under the TestBench function. If you are using .npy files, where the Numpy_read_float32_array function is used make sure the offset is set to 128, if you are using fbin files the offset should be 8.
 
+## APU Plugin only - Algorithm Direct
+
+To run an "algorithm direct" benchmark follow these steps.
+1. change directories to weaviate/adapters/repos/db/vector/gemini
+2. open up bench.sh and bench_test.go
+3. bench.sh: there are several environment variables you should modify in order to run different size benchmarks and different datasets.
+4. bench_test.go: you shouldn't need to change anything here, but it's good for you to review since bench.sh invokes bench_test.go.
+
 
 #  Roadmap
 
