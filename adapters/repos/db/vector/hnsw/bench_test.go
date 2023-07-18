@@ -205,7 +205,7 @@ func TestBench(t *testing.T) {
 		t1 := time.Now()
 		var load_time time.Duration
 		for i := curr; i < size; i += batch_size {
-			fmt.Println("adding vecs:", i, ":", i+batch_size)
+			fmt.Println("adding vecs:", i, ":", i+batch_size, " time:", time.Now().Format("2006-01-02 15:04:05"))
 			t2, err := index.AddBatch(uint64(i), trainVectors[i:i+batch_size])
 			load_time += t2 // append load time
 			require.Nil(t, err)
