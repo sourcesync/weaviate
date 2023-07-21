@@ -15,7 +15,7 @@ DEBUG = False
 NPY_DIR = "/mnt/nas1/laion400m/benchmarking/npy"
 
 # Atlas directory of original files
-ATLAS_DIR = "/mnt/nas1/laion400m/images/img_emb"
+LAION_DIR = "/mnt/nas1/laion400m/images/img_emb"
 
 # If True, try loading an atlas file as pickled object if pytorch load fails
 # else if False just skip this file
@@ -116,17 +116,17 @@ if not os.path.exists( FINAL_FILE ) or DEBUG: # The conditions for creating the 
     print("Creating npy file at path", FINAL_FILE )
 
     # Iterate all atlas files
-    for idx, filename in enumerate(os.listdir(ATLAS_DIR)):
+    for idx, filename in enumerate(os.listdir(LAION_DIR)):
 
-        print("Processing %s (%d of %d)..." % (filename, idx+1, len(os.listdir(ATLAS_DIR))) )
+        print("Processing %s (%d of %d)..." % (filename, idx+1, len(os.listdir(LAION_DIR))) )
 
-        # Deal with source file conversion to npy as needed
+        """# Deal with source file conversion to npy as needed
         npy_name = filename.replace('.', '')[:-2] + ".npy"
         npy_fp = os.path.join(NPY_DIR, npy_name)
         if os.path.exists(npy_fp):
             print("Already processed", filename)
         else: 
-            atlas_file = os.path.join(ATLAS_DIR, filename)
+            laion_file = os.path.join(LAION_DIR, filename)
             print("Converting filename", filename)
 
             # We try to treat is as a tensor embedding file 
@@ -134,13 +134,14 @@ if not os.path.exists( FINAL_FILE ) or DEBUG: # The conditions for creating the 
             # and we can likely ignore it.
             try:
                 # Load tensor
-                print("Trying to load file as torch tensor...")
-                tensor = torch.load( atlas_file, map_location=torch.device('cpu'))
-                print("Done loading as tensor.")
+                #print("Trying to load file as torch tensor...")
+                #tensor = torch.load( atlas_file, map_location=torch.device('cpu'))
+                #print("Done loading as tensor.")
 
                 # Convert to np array
-                npy = tensor.cpu().numpy()
-                print("Done converting to npy data...")
+                npy = np.load(laion_file, allow_pickle=True)
+                print("Done loading npy embedding...")
+                #print("Done converting to npy data...")
 
                 # Save to .npy
                 npy_name = filename.replace('.', '')[:-2] + ".npy"
@@ -157,15 +158,16 @@ if not os.path.exists( FINAL_FILE ) or DEBUG: # The conditions for creating the 
                         print( "Got data->", type(data) )
                 else:
                     print("Skipping this file since its likely not an embedding file", filename)
-                    continue
+                    continue"""
 
         # At this point, we have verified the converted file exists
         # or we converted to npy or we skipped it.  We can continue
         # constructing the final npy file with all embeddings.
+        npy_fp = os.path.join(LAION_DIR, filename)
         print("Loading converted file at", npy_fp)
         arr = np.load( npy_fp )
-        print("Transposing...")
-        arr = np.transpose(arr)
+        #print("Transposing...")
+        #arr = np.transpose(arr)
         shape = arr.shape
         print("Shape=",shape, "dtype=",arr.dtype)
 

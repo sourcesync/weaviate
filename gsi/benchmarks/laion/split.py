@@ -4,17 +4,17 @@ import random
 from tqdm import tqdm
 
 # CONFIG
-ATLAS_EMBEDDINGS = "/mnt/nas1/atlas_data/benchmarking/atlas.npy"
+LAION_EMBEDDINGS = "/mnt/nas1/laion400m/benchmarking/laion24M.npy"
 
-QUERY_INDS = "/mnt/nas1/atlas_data/benchmarking/sets_nor/query_ind.npy"
-QUERY_VECS = "/mnt/nas1/atlas_data/benchmarking/sets_nor/query_vec.npy"
-BASE_ATLAS = "/mnt/nas1/atlas_data/benchmarking/sets_nor/base_atlas.npy"
+QUERY_INDS = "/mnt/nas1/laion400m/benchmarking/sets_nor/query_ind.npy"
+QUERY_VECS = "/mnt/nas1/laion400m/benchmarking/sets_nor/query_vec.npy"
+BASE_LAION = "/mnt/nas1/laion400m/benchmarking/sets_nor/base_laion24M.npy"
 
 SIZE = 1000
 
 # load the final embeddings
-print("loading atlas embeddings...")
-arr = np.load(ATLAS_EMBEDDINGS, allow_pickle=True)
+print("loading laion 24M embeddings...")
+arr = np.load(LAION_EMBEDDINGS, allow_pickle=True)
 TOTAL_LENGTH = arr.shape[0]
 
 # generate 1000 random index
@@ -66,4 +66,4 @@ for i in tqdm(range(TOTAL_LENGTH)):
         arr_new.append(v)
 
 print("saving base embeddings now.. ")
-np.save(BASE_ATLAS, arr_new)
+np.save(BASE_LAION, arr_new)
