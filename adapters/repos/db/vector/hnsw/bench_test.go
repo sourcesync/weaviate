@@ -21,7 +21,6 @@ import (
 
 const (
 	datadir = "/ssddrive/fvs_benchmark_datasets" // CHANGE for new data
-	// csvpath = "/mnt/nas1/weaviate_benchmark_results/algo_direct/"
 	k       = 10
 	dims    = 96
 	gt_size = 100
@@ -131,10 +130,10 @@ func TestBench(t *testing.T) {
 		size_arr = append(size_arr, size)
 	}
 	fmt.Println(len(size_arr))
-	data_size := size_arr[0]
+	data_size := size_arr[len(size_arr)-1]
 	data_name := name_dataset(data_size)
 	// create data readers
-	data_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name) // CHANGE for new data
+	data_path := fmt.Sprintf("%s/deep-1000M.npy", datadir) // CHANGE for new data
 	fmt.Println(data_path)
 	data_reader, ferr := mmap.Open(data_path)
 	assert.Nil(t, ferr)
@@ -164,8 +163,10 @@ func TestBench(t *testing.T) {
 	fmt.Println("reading numpy files...", time.Now().Format("15:04:05"))
 	_, err := Numpy_read_float32_array(data_reader, trainVectors, int64(dims), int64(0), int64(data_size), int64(128))
 	assert.Nil(t, err)
+	data_reader.Close()
 	_, err = Numpy_read_float32_array(query_reader, queryVectors, int64(dims), int64(0), int64(query_size), int64(128))
 	assert.Nil(t, err)
+	query_reader.Close()
 
 	// initialize hnsw index
 	makeCL := MakeNoopCommitLogger
@@ -205,14 +206,15 @@ func TestBench(t *testing.T) {
 		t1 := time.Now()
 		var load_time time.Duration
 		for i := curr; i < size; i += batch_size {
-			fmt.Println("adding vecs:", i, ":", i+batch_size)
+			fmt.Println("adding vecs:", i, ":", i+batch_size, " time:", time.Now().Format("2006-01-02 15:04:05"))
 			t2, err := index.AddBatch(uint64(i), trainVectors[i:i+batch_size])
 			load_time += t2 // append load time
 			require.Nil(t, err)
 		}
 		wall_time := time.Since(t1)
 
-		curr += size
+		curr += size - curr
+		curr_name := name_dataset(size)
 		fmt.Println("running queries...")
 		for _, ef := range ef_array {
 			for i := 0; i < 1000; i++ { // loop over queries
@@ -222,7 +224,7 @@ func TestBench(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				WriteToCSV(csvpath, data_name, size, ef, i, inds, searchTime, time.Now(), float64(load_time.Seconds()), float64(wall_time.Seconds()))
+				WriteToCSV(csvpath, curr_name, size, ef, i, inds, searchTime, time.Now(), float64(load_time.Seconds()), float64(wall_time.Seconds()))
 			}
 		}
 
@@ -230,22 +232,6 @@ func TestBench(t *testing.T) {
 		if j == len(size_arr)-1 {
 			break
 		}
-		// append new vectors to trainVectors
-		new_size := size_arr[j+1]
-		data_name = name_dataset(new_size)
-		new_path := fmt.Sprintf("%s/deep-%s.npy", datadir, data_name)
-		data_reader, ferr := mmap.Open(new_path)
-		if ferr != nil {
-			panic(ferr)
-		}
-		tmp := make([][]float32, new_size-curr)
-		for i := range tmp {
-			tmp[i] = make([]float32, dims)
-		}
-		_, err = Numpy_read_float32_array(data_reader, tmp, dims, int64(curr), int64(size-curr), int64(128))
-		assert.Nil(t, err)
-		trainVectors = append(trainVectors, tmp...)
-		fmt.Println("data length: ", len(trainVectors))
 	}
 	fmt.Println("Done.")
 }
