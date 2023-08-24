@@ -108,7 +108,7 @@ func (n *neighborFinderConnector) doAtLevel(level int) error {
 
 	// set all outoing in one go
 	n.node.setConnectionsAtLevel(level, neighbors)
-	n.graph.commitLog.ReplaceLinksAtLevel(n.node.id, level, neighbors)
+	// n.graph.commitLog.ReplaceLinksAtLevel(n.node.id, level, neighbors)
 
 	for _, neighborID := range neighbors {
 		if err := n.connectNeighborAtLevel(neighborID, level); err != nil {
@@ -139,8 +139,8 @@ func (n *neighborFinderConnector) connectNeighborAtLevel(neighborID uint64,
 		return nil
 	}
 
-	neighbor.Lock()
-	defer neighbor.Unlock()
+	// neighbor.Lock()
+	// defer neighbor.Unlock()
 	if level > neighbor.level {
 		// upgrade neighbor level if the level is out of sync due to a delete re-assign
 		neighbor.upgradeToLevelNoLock(level)
@@ -152,9 +152,9 @@ func (n *neighborFinderConnector) connectNeighborAtLevel(neighborID uint64,
 		// we can simply append
 		// updatedConnections = append(currentConnections, n.node.id)
 		neighbor.appendConnectionAtLevelNoLock(level, n.node.id, maximumConnections)
-		if err := n.graph.commitLog.AddLinkAtLevel(neighbor.id, level, n.node.id); err != nil {
-			return err
-		}
+		// if err := n.graph.commitLog.AddLinkAtLevel(neighbor.id, level, n.node.id); err != nil {
+		// 	return err
+		// }
 	} else {
 		// we need to run the heurisitc
 
@@ -192,16 +192,16 @@ func (n *neighborFinderConnector) connectNeighborAtLevel(neighborID uint64,
 		}
 
 		neighbor.resetConnectionsAtLevelNoLock(level)
-		if err := n.graph.commitLog.ClearLinksAtLevel(neighbor.id, uint16(level)); err != nil {
-			return err
-		}
+		// if err := n.graph.commitLog.ClearLinksAtLevel(neighbor.id, uint16(level)); err != nil {
+		// 	return err
+		// }
 
 		for candidates.Len() > 0 {
 			id := candidates.Pop().ID
 			neighbor.appendConnectionAtLevelNoLock(level, id, maximumConnections)
-			if err := n.graph.commitLog.AddLinkAtLevel(neighbor.id, level, id); err != nil {
-				return err
-			}
+			// if err := n.graph.commitLog.AddLinkAtLevel(neighbor.id, level, id); err != nil {
+			// 	return err
+			// }
 		}
 	}
 
