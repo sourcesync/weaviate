@@ -75,7 +75,7 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 
 	// create the post json payload
 	values := map[string]interface{}{
-		"dsFilePath":       path,
+		"records":          path,
 		"searchType":       search_type,
 		"trainInd":         DefaultTrainInd,
 		"gridTrain":        DefaultGridTrain,
@@ -149,7 +149,7 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 
 func Train_status(host string, port uint, allocation_token string, dataset_id string, verbose bool) (string, error) {
 	// form the rest url
-	url := fmt.Sprintf("http://%s:%d/v1.0/dataset/train/status/%s", host, port, dataset_id)
+	url := fmt.Sprintf("http://%s:%d/v1.0/dataset/status/%s", host, port, dataset_id)
 	if verbose {
 		fmt.Println("Fvs: Train_status: url=", url)
 	}
@@ -293,7 +293,7 @@ func Load_dataset(host string, port uint, allocation_token string, dataset_id st
 
 func Import_queries(host string, port uint, allocation_token string, path string, verbose bool) (string, error) {
 	// form the rest url
-	url := fmt.Sprintf("http://%s:%d/v1.0/demo/query/import", host, port)
+	url := fmt.Sprintf("http://%s:%d/v1.0/utilities/query/import", host, port)
 	if verbose {
 		fmt.Println("Fvs: Import_queries: url=", url)
 	}
@@ -548,7 +548,7 @@ func Search(host string, port uint, allocation_token string, dataset_id string, 
 
 func Delete_queries(host string, port uint, allocation_token string, qid string, verbose bool) (string, error) {
 	// form the rest url
-	url := fmt.Sprintf("http://%s:%d/v1.0/demo/query/remove/%s", host, port, qid)
+	url := fmt.Sprintf("http://%s:%d/v1.0/utilities/query/remove/%s", host, port, qid)
 
 	// form a request object
 	request, err := http.NewRequest("DELETE", url, nil)
@@ -752,7 +752,6 @@ func List_loaded(host string, port uint, allocation_token string, verbose bool) 
 	if verbose {
 		fmt.Println("Fvs: List_loaded: url=", url)
 	}
-	fmt.Println("Hello jacob")
 	values := map[string]interface{}{}
 	jsonValue, _ := json.Marshal(values)
 	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
