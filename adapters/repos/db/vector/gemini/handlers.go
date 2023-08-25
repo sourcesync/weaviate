@@ -43,7 +43,7 @@ func handleImportDataset(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(juErr, "could not unmarshal request body")
 	}
 	server.bits = reqData["nbits"].(float64)
-	server.path = reqData["dsFilePath"].(string)
+	server.path = reqData["records"].(string)
 	types := [3]string{"flat", "cluster", "hnsw"}
 	searchType := reqData["searchType"]
 	valid := false

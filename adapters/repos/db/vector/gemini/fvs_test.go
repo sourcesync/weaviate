@@ -35,7 +35,7 @@ const (
 	// ALLOC   = "0b391a1a-b916-11ed-afcb-0242ac1c0002"
 	ALLOC   = "fvs-automation"
 	VERBOSE = true
-	FAKE    = false
+	FAKE    = true
 )
 
 var (
@@ -178,14 +178,14 @@ func TestFakeServer(t *testing.T) {
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/v1.0/dataset/import", handleImportDataset)
-	router.HandleFunc("/v1.0/dataset/train/status/{dataset_id}", handleTrainStatus)
+	router.HandleFunc("/v1.0/dataset/status/{dataset_id}", handleTrainStatus)
 	router.HandleFunc("/v1.0/dataset/load", handleLoadDataset)
-	router.HandleFunc("/v1.0/demo/query/import", handleImportQueries)
+	router.HandleFunc("/v1.0/utilities/query/import", handleImportQueries)
 	router.HandleFunc("/v1.0/dataset/focus", handleFocusDataset)
 	router.HandleFunc("/v1.0/dataset/search", handleSearch)
 	router.HandleFunc("/v1.0/dataset/unload", handleUnloadDataset)
 	router.HandleFunc("/v1.0/dataset/remove/{dataset_id}", handleDeleteDataset)
-	router.HandleFunc("/v1.0/demo/query/remove/{query_id}", handleDeleteQueries)
+	router.HandleFunc("/v1.0/utilities/query/remove/{query_id}", handleDeleteQueries)
 	router.HandleFunc("/v1.0/dataset/list", handleListDatasets)
 	router.HandleFunc("/v1.0/board/allocation/list", handleListLoaded)
 
