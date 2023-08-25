@@ -48,7 +48,8 @@ class_obj = {
             "name": "text",
         },
     ],
-    "vectorIndexType": "gemini"
+    "vectorIndexType": "gemini",
+    # "nbits": 128
 }
 
 print(f"Creating '{CLASS_NAME}' with gemini index...")
