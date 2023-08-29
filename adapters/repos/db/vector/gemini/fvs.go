@@ -71,7 +71,11 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 		fmt.Println("Error: could not find file at path=", path)
 		return "", err
 	}
-		"dsFilePath":       path,
+	fmt.Println("Warning: Configurable FVS parameters being passed:", bits, search_type)
+
+	// create the post json payload
+	values := map[string]interface{}{
+		"records":          path,
 		"searchType":       search_type,
 		"trainInd":         DefaultTrainInd,
 		"gridTrain":        DefaultGridTrain,
@@ -81,7 +85,6 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 		"mdUnique":         DefaultMDUnique,
 		"convertToDataset": DefaultConvertToDataset,
 	}
-    fmt.Println("Fvs: Import_dataset: values", values)
 	jsonValue, jErr := json.Marshal(values)
 	if jErr != nil {
 		return "", jErr
@@ -146,7 +149,7 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 
 func Train_status(host string, port uint, allocation_token string, dataset_id string, verbose bool) (string, error) {
 	// form the rest url
-	url := fmt.Sprintf("http://%s:%d/v1.0/dataset/train/status/%s", host, port, dataset_id)
+	url := fmt.Sprintf("http://%s:%d/v1.0/dataset/status/%s", host, port, dataset_id)
 	if verbose {
 		fmt.Println("Fvs: Train_status: url=", url)
 	}
@@ -275,6 +278,9 @@ func Load_dataset(host string, port uint, allocation_token string, dataset_id st
 	if verbose {
 		fmt.Println("Fvs: Load_dataset: json resp=", respData, rErr)
 	}
+	if fmt.Sprintf("%T", respData["status"]) != "string" {
+		return "error", fmt.Errorf("error: status: %g, title: %s", respData["status"], respData["title"])
+	}
 
 	status := respData["status"].(string)
 	if verbose {
@@ -287,7 +293,7 @@ func Load_dataset(host string, port uint, allocation_token string, dataset_id st
 
 func Import_queries(host string, port uint, allocation_token string, path string, verbose bool) (string, error) {
 	// form the rest url
-	url := fmt.Sprintf("http://%s:%d/v1.0/demo/query/import", host, port)
+	url := fmt.Sprintf("http://%s:%d/v1.0/utilities/query/import", host, port)
 	if verbose {
 		fmt.Println("Fvs: Import_queries: url=", url)
 	}
@@ -542,7 +548,7 @@ func Search(host string, port uint, allocation_token string, dataset_id string, 
 
 func Delete_queries(host string, port uint, allocation_token string, qid string, verbose bool) (string, error) {
 	// form the rest url
-	url := fmt.Sprintf("http://%s:%d/v1.0/demo/query/remove/%s", host, port, qid)
+	url := fmt.Sprintf("http://%s:%d/v1.0/utilities/query/remove/%s", host, port, qid)
 
 	// form a request object
 	request, err := http.NewRequest("DELETE", url, nil)
@@ -700,6 +706,144 @@ func Delete_dataset(host string, port uint, allocation_token string, dataset_id 
 	}
 
 	return status, nil
+}
+
+func List_datasets(host string, port uint, allocation_token string, verbose bool) (int, []map[string]interface{}, error) {
+	url := fmt.Sprintf("http://%s:%d/v1.0/dataset/list", host, port)
+	if verbose {
+		fmt.Println("Fvs: List_datasets: url=", url)
+	}
+	values := map[string]interface{}{}
+	jsonValue, _ := json.Marshal(values)
+	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fvs: Get dataset list could not create new http request.")
+	}
+
+	// add headers
+	// {'allocationToken': '0b391a1a-b916-11ed-afcb-0242ac1c0002', 'Accept': 'application/json', 'Content-Type': 'application/json', 'User-Agent': 'Swagger-Codegen/1.0.0/python'}
+	request.Header.Set("allocationToken", allocation_token)
+	request.Header.Set("Accept", "application/json")       //; charset=UTF-8")
+	request.Header.Set("Content-Type", "application/json") //; charset=UTF-8")
+	request.Header.Set("User-Agent", "weaviate_gemini_plugin")
+
+	client := &http.Client{}
+	response, dErr := client.Do(request)
+	if dErr != nil {
+		return 0, nil, errors.Wrap(dErr, "client.Do failed at List_datasets")
+	}
+	defer response.Body.Close()
+
+	respbody, _ := io.ReadAll(response.Body)
+	respData := map[string][]map[string]interface{}{}
+	rErr := json.Unmarshal(respbody, &respData)
+	if rErr != nil {
+		return 0, nil, rErr
+	}
+	if verbose {
+		fmt.Println("Fvs: List_datasets: total count:", len(respData["datasetsList"]))
+	}
+
+	return len(respData["datasetsList"]), respData["datasetsList"], nil
+}
+
+func List_loaded(host string, port uint, allocation_token string, verbose bool) (int, map[string]interface{}, error) {
+	url := fmt.Sprintf("http://%s:%d/v1.0/board/allocation/list", host, port)
+	if verbose {
+		fmt.Println("Fvs: List_loaded: url=", url)
+	}
+	values := map[string]interface{}{}
+	jsonValue, _ := json.Marshal(values)
+	request, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonValue))
+	if err != nil {
+		return 0, nil, errors.Wrap(err, "Fvs: Get loaded datasets could not create new http request.")
+	}
+
+	// add headers
+	// {'allocationToken': '0b391a1a-b916-11ed-afcb-0242ac1c0002', 'Accept': 'application/json', 'Content-Type': 'application/json', 'User-Agent': 'Swagger-Codegen/1.0.0/python'}
+	request.Header.Set("allocationToken", allocation_token)
+	request.Header.Set("Accept", "application/json")       //; charset=UTF-8")
+	request.Header.Set("Content-Type", "application/json") //; charset=UTF-8")
+	request.Header.Set("User-Agent", "weaviate_gemini_plugin")
+
+	client := &http.Client{}
+	response, dErr := client.Do(request)
+	if dErr != nil {
+		return 0, nil, errors.Wrap(dErr, "client.Do failed at List_loaded")
+	}
+	defer response.Body.Close()
+
+	respbody, _ := io.ReadAll(response.Body)
+	var respData interface{}
+	rErr := json.Unmarshal(respbody, &respData)
+	if rErr != nil {
+		return 0, nil, rErr
+	}
+	if verbose {
+		fmt.Println("Fvs: List_loaded: json resp=", respData, rErr)
+	}
+
+	loaded := respData.(map[string]interface{})["allocationsList"].(map[string]interface{})[allocation_token].(map[string]interface{})
+	count := len(loaded["loadedDatasets"].([]interface{}))
+	return count, loaded, nil
+}
+
+func Unload_loaded(host string, port uint, allocation_token string, ignore_focus bool, verbose bool) (string, error) {
+	count, loaded, err := List_loaded(host, port, allocation_token, verbose)
+	fmt.Println("loaded count:", count)
+	dsets := loaded["loadedDatasets"].([]interface{})
+	focused := loaded["datasetInFocus"].(map[string]interface{})["datasetId"]
+	if err != nil {
+		fmt.Println(err)
+	} else if count == 0 {
+		return "ok", nil
+	}
+	for _, v := range dsets {
+		dataset_id := v.(map[string]interface{})["datasetId"].(string)
+		if dataset_id != focused || ignore_focus {
+			status, err := Unload_dataset(host, port, allocation_token, dataset_id, verbose)
+			if err != nil {
+				return "", err
+			} else if status != "ok" {
+				return "", fmt.Errorf("status should be \"ok\", got %s", status)
+			}
+			if verbose {
+				fmt.Println("Fvs: Unloading dataset", dataset_id)
+			}
+		} else {
+			fmt.Println("ignoring focused dataset, please unfocus before unloading")
+		}
+	}
+	return "ok", nil
+}
+
+func Delete_all(host string, port uint, allocation_token string, verbose bool) error {
+	status, err := Unload_loaded(host, port, allocation_token, true, verbose)
+	if err != nil {
+		return err
+	} else if status != "ok" {
+		return fmt.Errorf("Fvs Unload_loaded status should be \"ok\", got %s", status)
+	}
+	count, dsets, err := List_datasets(host, port, allocation_token, verbose)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return nil
+	}
+	for k, v := range dsets {
+		dataset_id := v["id"].(string)
+		if verbose {
+			fmt.Println("Deleting dataset", k, ", id:", dataset_id)
+		}
+		status, err := Delete_dataset(host, port, allocation_token, dataset_id, verbose)
+		if err != nil {
+			return err
+		} else if status != "ok" {
+			return fmt.Errorf("Fvs Delete_dataset status should be \"ok\", got %s", status)
+		}
+	}
+	return nil
 }
 
 // Read a uint32 array from data stored in numpy format
