@@ -313,7 +313,6 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 				if i.min_records_check && i.count <= DefaultCentroidsRerank {
 					return nil, nil, fmt.Errorf("FVS requires a mininum of %d vectors in the dataset.", DefaultCentroidsRerank)
 				}
-				
                 if i.verbose {
 					fmt.Println("Gemini SearchByVector: Import parameters -> ", i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, i.nbits, i.search_type)
 				}

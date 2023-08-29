@@ -6,7 +6,7 @@ import random
 
 DATADIR = "/mnt/nas1/news20/"
 CLASS_NAME = "News"
-WEAVIATE_CONN = "http://localhost:8081"
+WEAVIATE_CONN = "http://localhost:8091"
 VERBOSE = True
 MAX_ADDS = 5000
 MAX_SEARCHES = 10
@@ -48,7 +48,8 @@ class_obj = {
             "name": "text",
         },
     ],
-    "vectorIndexType": "gemini"
+    "vectorIndexType": "gemini",
+    # "nbits": 128
 }
 
 print(f"Creating '{CLASS_NAME}' with gemini index...")

@@ -67,10 +67,10 @@ func Import_dataset(host string, port uint, allocation_token string, path string
 		fmt.Println("Fvs: Import_dataset: url=", url)
 	}
 
-	fmt.Println("Warning: Configurable FVS parameters being passed:", bits, search_type)
-
-	// create the post json payload
-	values := map[string]interface{}{
+	if _, err := os.Stat(path); err != nil {
+		fmt.Println("Error: could not find file at path=", path)
+		return "", err
+	}
 		"dsFilePath":       path,
 		"searchType":       search_type,
 		"trainInd":         DefaultTrainInd,

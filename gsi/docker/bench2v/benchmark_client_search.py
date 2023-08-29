@@ -84,7 +84,6 @@ ALLOW_CACHEING      = None
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", required=True)
-parser.add_argument("-d", required=True)
 parser.add_argument("-q", type=int, required=True)
 parser.add_argument("-k", type=int, required=True)
 parser.add_argument("--gemini", action="store_true")
