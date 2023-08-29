@@ -12,29 +12,11 @@ import argparse
 # external/installed packages
 #
 import numpy
+import numpy as np
 import pandas as pd
 import swagger_client
 from swagger_client.models import *
-
-#
-# constants
-#
-
-# the dataframe/csv columns
-Benchmark_Data_Columns = [ \
-        "allocationid", "datasetid", \
-        "dataset_path", "queries_path", \
-        "bits", "ts_start", \
-        "ts_train_start", "ts_train_end", \
-        "ts_query_start", "ts_query_end", \
-        "response", "recall" ]
-
-#
-# globals
-#
-
-# the dataframe will contain the benchmark results
-benchmark_data = None
+from swagger_client.rest import ApiException
 
 #
 # functions
@@ -86,18 +68,21 @@ def unload_datasets(args):
             if len(loaded.allocations_list[Allocation_id]["loadedDatasets"]) > 0:
                 # Unloading all datasets
                 print("Unloading all loaded datasets...")
-                loaded = loaded.allocations_list["0b391a1a-b916-11ed-afcb-0242ac1c0002"]["loadedDatasets"]
-                for data in loaded:
-                    dataset_id = data['datasetId']
-                    resp = gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
-                                UnloadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id), 
-                                allocation_token=Allocation_id)
-                    if resp.status != 'ok':
-                        print(f"error unloading dataset: {dataset_id}")
+                if True:
+                    loaded = loaded.allocations_list[Allocation_id]["loadedDatasets"]
+                    for data in loaded:
+                        dataset_id = data['datasetId']
+                        print("Unloading dataset_id=", dataset_id)
+                        resp = gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
+                                    UnloadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id), 
+                                    allocation_token=Allocation_id)
+                        if resp.status != 'ok':
+                            print(f"error unloading dataset: {dataset_id}")
 
-                # Getting current number of loaded datasets
-                curr = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
-                print(f"Unloaded datasets, current loaded dataset count: {len(curr.allocations_list[Allocation_id]['loadedDatasets'])}")
+                    # Getting current number of loaded datasets
+                    curr = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
+                    print(f"Unloaded datasets, current loaded dataset count: {len(curr.allocations_list[Allocation_id]['loadedDatasets'])}")
+                sys.exit(0)
 
         # Full wipe: delete all datasets
         if args.wipe == True:
@@ -120,8 +105,9 @@ def unload_datasets(args):
 def run_benchmark(args):
     '''Run a specific benchmark.'''
 
-    global benchmark_data
-
+    # Capture rows for dataframe
+    all_results = []
+    
     # Capture the human readable date time now
     ts_start = time.ctime()
 
@@ -148,10 +134,9 @@ def run_benchmark(args):
     config = swagger_client.configuration.Configuration()
     api_config = swagger_client.ApiClient(config)
     gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
-    gsi_dataset_apis = swagger_client.DatasetApi(api_config)
+    gsi_dataset_apis = swagger_client.DatasetsApi(api_config)
     gsi_search_apis = swagger_client.SearchApi(api_config)
     gsi_utilities_apis = swagger_client.UtilitiesApi(api_config)
-    gsi_demo_apis = swagger_client.DemoApi(api_config)
 
     # Configure the FVS api
     config.verify_ssl = False
@@ -167,29 +152,52 @@ def run_benchmark(args):
     print("Importing the dataset. Training with searchtype=clusters and nbit=%d ..." % args.bits)
     ts_train_start = time.time()
     response = gsi_datasets_apis.controllers_dataset_controller_import_dataset( \
-                    ImportDatasetRequest(ds_file_path=dataset_public_path, train_ind=True,  search_type="clusters", \
+                    ImportDatasetRequest(records=dataset_public_path, train_ind=True,  search_type="clusters", \
                             nbits=args.bits), allocation_token=Allocation_id)
     dataset_id = response.dataset_id
     print("...got dataset_id=", dataset_id)
 
     # Wait until training the dataset before loading it
     print("Waiting until training ends...")
-    train_status = None
-    while train_status != "completed":
-        train_status = gsi_dataset_apis.controllers_dataset_controller_get_train_status(\
-                dataset_id=dataset_id, allocation_token=Allocation_id).dataset_status
-        #print(train_status)
+
+    dataset_status = None
+    while dataset_status != "completed":
+
+        dataset_status = gsi_datasets_apis.controllers_dataset_controller_get_dataset_status(
+            dataset_id=dataset_id, allocation_token=Allocation_id).dataset_status
+
+        datasets = gsi_datasets_apis.controllers_dataset_controller_get_datasets_list(
+            allocation_token=Allocation_id).datasets_list
+
+        for dataset in datasets:
+            if dataset["id"] == dataset_id and dataset["datasetStatus"] == "error":
+                print("ERROR: got dataset error")
+                return
+
         time.sleep(1)
+        print("waiting...")
+
     ts_train_end = time.time()
     print("..training ended.")
 
-    # Load the queries
-    print("Loading the queries...")
-    response = gsi_demo_apis.controllers_demo_controller_import_queries(
-                        ImportQueriesRequest(queries_file_path=queries_public_path), 
-                        allocation_token=Allocation_id)
-    queries_id = response.added_query['id']
-    queries_path = response.added_query['queriesFilePath']
+    # Store train results
+    new_row = {
+        "type": "train",
+        "allocationid": Allocation_id, \
+        "datasetid": dataset_id, \
+        "dataset_path": args.dataset, \
+        "queries_path": "", \
+        "bits" : args.bits, \
+        "ts_start": ts_start, \
+        "ts_train_start": ts_train_start, \
+        "ts_train_end": ts_train_end, \
+        "ts_train_walltime": ts_train_end - ts_train_start, \
+        "ts_query_start": "", \
+        "ts_query_end": "", \
+        "ts_query_walltime": "",\
+        "response": "", \
+        "recall": "" }
+    all_results.append(new_row)
 
     # Load dataset
     print("Loading the dataset...")
@@ -206,25 +214,87 @@ def run_benchmark(args):
     if args.qbq:
 
         # query-by-query search
-        print("Q-by-Q search...")
+        print("Q-BY-Q Search...")
 
-        queries = np.load(queries_path)
-        for q in queries:
+        # Load queries
+        queries = np.load(queries_public_path)
 
-            tmp_qpath = "/tmp/query1.npy"
+        # Load ground truth
+        print("Loading ground truth...")
+        gt = numpy.load(args.groundtruth)
+        if gt.shape[1]<args.neighbors:
+            raise Exception("Invalid ground truth array shape->" + str(gt.shape))
+        if gt.shape[0] != queries.shape[0]:
+            raise Exception("Invalid ground truth array shape->" + str(gt.shape))
+        gt = gt[:, 0:args.neighbors] # we only care about the first 'neighbors'
+
+        for i, q in enumerate(queries):
+
+            # choose the i'th ground truth
+            g = np.reshape( gt[i,:], (1, gt[i,:].shape[0]) )
+
+            # extract query to a tmp file
+            base_name = os.path.basename( queries_public_path ).split(".")[0]
+            tmp_qpath = os.path.join( "/home/public", "%s__%d.npy" % (base_name, i) )
             f = open(tmp_qpath, "wb")
-            np.save( f, q )
+            qrs = np.reshape(q, (1, q.shape[0]) )
+            np.save( f, qrs )
+            #print("Saved", tmp_qpath, qrs.shape)
             f.close()
 
+            #print("Loading single query...")
+            response = gsi_utilities_apis.controllers_utilities_controller_import_queries(\
+                ImportQueriesRequest(queries_file_path=tmp_qpath),
+                allocation_token=Allocation_id)
+            queries_id = response.added_query["id"]
+            queries_path = response.added_query["queriesFilePath"]
+
+            # perform search - get walltime and inner response time
             ts_query_start = time.time()
             response = gsi_search_apis.controllers_search_controller_search(
                             SearchRequest(allocation_id=Allocation_id, dataset_id=dataset_id, 
                                 queries_file_path=queries_path, topk=args.neighbors), allocation_token=Allocation_id)
             ts_query_end = time.time()
-            print("q-by-q search result=", response.search)
             inds = numpy.array(response.indices)
 
+            # Compute recall...
+            recall, intersection = compute_recall( g, inds )
+            print("qbq search %d/%d, result=" % (i, queries.shape[0]), ts_query_end-ts_query_start, response.search, recall)
+
+            # Store and commit the results
+            new_row = {   
+                "type": "search",
+                "allocationid": Allocation_id, \
+                "datasetid": dataset_id, \
+                "dataset_path": "", \
+                "queries_path": queries_path, \
+                "bits" : "", \
+                "ts_start": ts_start, \
+                "ts_train_start": "", \
+                "ts_train_end": "", \
+                "ts_train_walltime": "", \
+                "ts_query_start": ts_query_start, \
+                "ts_query_end": ts_query_end, \
+                "ts_query_walltime": ts_query_end-ts_query_start,\
+                "response": response.search, \
+                "recall": recall }
+            all_results.append(new_row)
+
+            # Remove queries...
+            #print("Removing queries...")
+            gsi_utilities_apis.controllers_utilities_controller_remove_query(query_id=queries_id,
+                    allocation_token=Allocation_id)
+
     else:
+
+        # Load the entire query set
+        print("Loading the queries...")
+        response = gsi_utilities_apis.controllers_utilities_controller_import_queries(\
+            ImportQueriesRequest(queries_file_path=queries_public_path),
+            allocation_token=Allocation_id)
+        queries_id = response.added_query["id"]
+        queries_path = response.added_query["queriesFilePath"]
+
         # Batch Search
         print("Batch search...")
         ts_query_start = time.time()
@@ -245,57 +315,62 @@ def run_benchmark(args):
             numpy.save(fname, dist)
             print("Saved query results distances to", fname)
 
+        # Removing queries...
+        print("Removing queries...")
+        gsi_utilities_apis.controllers_utilities_controller_remove_query(query_id=queries_id,
+                allocation_token=Allocation_id)
+
+        # Load ground truth
+        print("Loading ground truth...")
+        gt = numpy.load(args.groundtruth)
+        if gt.shape[1]<args.neighbors:
+            raise Exception("Invalid ground truth array shape->" + str(gt.shape))
+        if gt.shape[0] != inds.shape[0]:
+            raise Exception("Invalid ground truth array shape->" + str(gt.shape))
+        gt = gt[:, 0:args.neighbors] # we only care about the first 'neighbors'
+
+        # Compute recall...
+        recall, intersection = compute_recall( gt, inds )
+
+        # Store and commit the results
+        new_row = {   
+            "type": "search",
+            "allocationid": Allocation_id, \
+            "datasetid": dataset_id, \
+            "dataset_path": "", \
+            "queries_path": queries_path, \
+            "bits" : "", \
+            "ts_start": ts_start, \
+            "ts_train_start": "", \
+            "ts_train_end": "", \
+            "ts_train_walltime": "", \
+            "ts_query_start": ts_query_start, \
+            "ts_query_end": ts_query_end, \
+            "ts_query_walltime": ts_query_end - ts_query_start, \
+            "response": response.search, \
+            "recall": recall }
+        all_results.append( new_row )
+
+    # Write the results
+    benchmark_df = pd.DataFrame( all_results )
+    benchmark_df.to_csv( args.output, index=False)
+    print("Committed benchmark result to %s" % args.output)
+
     # Unload dataset
     print("Unloading dataset...")
     gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
                     UnloadDatasetRequest(allocation_id=Allocation_id, dataset_id=dataset_id), 
                     allocation_token=Allocation_id)
 
-    # Removing queries...
-    print("Removing queries...")
-    gsi_demo_apis.controllers_demo_controller_remove_query(query_id=queries_id, 
-            allocation_token=Allocation_id)
-
     # Removing dataset...
     print("Removing dataset...")
     gsi_datasets_apis.controllers_dataset_controller_remove_dataset(dataset_id=dataset_id, 
             allocation_token=Allocation_id)
 
-    # Load ground truth
-    print("Loading ground truth...")
-    gt = numpy.load(args.groundtruth)
-    if gt.shape[1]<args.neighbors:
-        raise Exception("Invalid ground truth array shape->" + str(gt.shape))
-    if gt.shape[0] != inds.shape[0]:
-        raise Exception("Invalid ground truth array shape->" + str(gt.shape))
-    gt = gt[:, 0:args.neighbors] # we only care about the first 'neighbors'
-
-    # Compute recall...
-    recall, intersection = compute_recall( gt, inds )
-
-    # Store and commit the results
-    new_row = pd.DataFrame( [\
-            {   "allocationid": Allocation_id, \
-                "datasetid": dataset_id, \
-                "dataset_path": args.dataset, \
-                "queries_path": args.queries, \
-                "bits" : args.bits, \
-                "ts_start": ts_start, \
-                "ts_train_start": ts_train_start, \
-                "ts_train_end": ts_train_end, \
-                "ts_query_start": ts_query_start, \
-                "ts_query_end": ts_query_end, \
-                "response": response.search, \
-                "recall": recall}])
-    benchmark_data = pd.concat([ benchmark_data, new_row ])
-    benchmark_data.to_csv( args.output, index=False)
-    print("Committed benchmark result to %s." % args.output)
 
 def init_args():
     '''Initialize benchmark parameters.'''
     
-    global benchmark_data
-
     parser = argparse.ArgumentParser(
                     prog = sys.argv[0],
                     description = 'Gemini FVS Benchmark Script')
@@ -321,20 +396,6 @@ def init_args():
     
     if not os.path.exists( args.groundtruth ):
         raise Exception("The groundtruth path does not exist->", args.groundtruth)
-
-    if os.path.exists( args.output ):
-        print("Warning: Found file at ", args.output )
-        benchmark_data = pd.read_csv( args.output )
-
-        csv_columns = list(benchmark_data.columns).sort()
-        schema_columns = Benchmark_Data_Columns.sort()
-
-        if csv_columns != schema_columns:
-            raise Exception("Expected these columns->", schema_columns, \
-                    "but got these->", csv_columns)
-
-    else:
-        benchmark_data = pd.DataFrame(columns=Benchmark_Data_Columns)
 
     return args
 

@@ -28,78 +28,98 @@ class ImportDatasetRequest(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'ds_file_path': 'str',
-        'ds_file_type': 'str',
+        'records': 'OneOfImportDatasetRequestRecords',
+        'records_file_type': 'str',
+        'dataset_id': 'str',
         'storage_type': 'str',
         'search_type': 'str',
         'train_ind': 'bool',
-        'grid_train': 'bool',
+        'train_type': 'str',
         'nbits': 'int',
         'qbits': 'int',
         'target_accuracy': 'float',
-        'md_file_path': 'str',
+        'metadata_of_records': 'OneOfImportDatasetRequestMetadataOfRecords',
         'md_unique': 'bool',
         'convert_to_dataset': 'bool',
         'num_of_boards': 'int',
         'num_of_clusters': 'int',
-        'dataset_name': 'str'
+        'dataset_name': 'str',
+        'dataset_type': 'str',
+        'ef_construction': 'int',
+        'm_number_of_edges': 'int',
+        'distance_function': 'str',
+        'hnsw_use_ssd': 'bool'
     }
 
     attribute_map = {
-        'ds_file_path': 'dsFilePath',
-        'ds_file_type': 'dsFileType',
+        'records': 'records',
+        'records_file_type': 'recordsFileType',
+        'dataset_id': 'datasetId',
         'storage_type': 'storageType',
         'search_type': 'searchType',
         'train_ind': 'trainInd',
-        'grid_train': 'gridTrain',
+        'train_type': 'trainType',
         'nbits': 'nbits',
         'qbits': 'qbits',
         'target_accuracy': 'targetAccuracy',
-        'md_file_path': 'mdFilePath',
+        'metadata_of_records': 'metadataOfRecords',
         'md_unique': 'mdUnique',
         'convert_to_dataset': 'convertToDataset',
         'num_of_boards': 'numOfBoards',
         'num_of_clusters': 'numOfClusters',
-        'dataset_name': 'datasetName'
+        'dataset_name': 'datasetName',
+        'dataset_type': 'datasetType',
+        'ef_construction': 'efConstruction',
+        'm_number_of_edges': 'mNumberOfEdges',
+        'distance_function': 'distanceFunction',
+        'hnsw_use_ssd': 'hnswUseSSD'
     }
 
-    def __init__(self, ds_file_path=None, ds_file_type=None, storage_type=None, search_type='flat', train_ind=False, grid_train=False, nbits=768, qbits=768, target_accuracy=100, md_file_path=None, md_unique=False, convert_to_dataset=False, num_of_boards=None, num_of_clusters=None, dataset_name=None):  # noqa: E501
+    def __init__(self, records=None, records_file_type='npy', dataset_id=None, storage_type=None, search_type='flat', train_ind=False, train_type='Regular', nbits=768, qbits=768, target_accuracy=None, metadata_of_records=None, md_unique=False, convert_to_dataset=False, num_of_boards=None, num_of_clusters=None, dataset_name=None, dataset_type=None, ef_construction=100, m_number_of_edges=32, distance_function='cosine', hnsw_use_ssd=False):  # noqa: E501
         """ImportDatasetRequest - a model defined in Swagger"""  # noqa: E501
-        self._ds_file_path = None
-        self._ds_file_type = None
+        self._records = None
+        self._records_file_type = None
+        self._dataset_id = None
         self._storage_type = None
         self._search_type = None
         self._train_ind = None
-        self._grid_train = None
+        self._train_type = None
         self._nbits = None
         self._qbits = None
         self._target_accuracy = None
-        self._md_file_path = None
+        self._metadata_of_records = None
         self._md_unique = None
         self._convert_to_dataset = None
         self._num_of_boards = None
         self._num_of_clusters = None
         self._dataset_name = None
+        self._dataset_type = None
+        self._ef_construction = None
+        self._m_number_of_edges = None
+        self._distance_function = None
+        self._hnsw_use_ssd = None
         self.discriminator = None
-        self.ds_file_path = ds_file_path
-        if ds_file_type is not None:
-            self.ds_file_type = ds_file_type
+        self.records = records
+        if records_file_type is not None:
+            self.records_file_type = records_file_type
+        if dataset_id is not None:
+            self.dataset_id = dataset_id
         if storage_type is not None:
             self.storage_type = storage_type
         if search_type is not None:
             self.search_type = search_type
         if train_ind is not None:
             self.train_ind = train_ind
-        if grid_train is not None:
-            self.grid_train = grid_train
+        if train_type is not None:
+            self.train_type = train_type
         if nbits is not None:
             self.nbits = nbits
         if qbits is not None:
             self.qbits = qbits
         if target_accuracy is not None:
             self.target_accuracy = target_accuracy
-        if md_file_path is not None:
-            self.md_file_path = md_file_path
+        if metadata_of_records is not None:
+            self.metadata_of_records = metadata_of_records
         if md_unique is not None:
             self.md_unique = md_unique
         if convert_to_dataset is not None:
@@ -110,60 +130,91 @@ class ImportDatasetRequest(object):
             self.num_of_clusters = num_of_clusters
         if dataset_name is not None:
             self.dataset_name = dataset_name
+        if dataset_type is not None:
+            self.dataset_type = dataset_type
+        if ef_construction is not None:
+            self.ef_construction = ef_construction
+        if m_number_of_edges is not None:
+            self.m_number_of_edges = m_number_of_edges
+        if distance_function is not None:
+            self.distance_function = distance_function
+        if hnsw_use_ssd is not None:
+            self.hnsw_use_ssd = hnsw_use_ssd
 
     @property
-    def ds_file_path(self):
-        """Gets the ds_file_path of this ImportDatasetRequest.  # noqa: E501
+    def records(self):
+        """Gets the records of this ImportDatasetRequest.  # noqa: E501
 
-        Path to file representing the dataset records.<br> File format should be .npy  # noqa: E501
 
-        :return: The ds_file_path of this ImportDatasetRequest.  # noqa: E501
-        :rtype: str
+        :return: The records of this ImportDatasetRequest.  # noqa: E501
+        :rtype: OneOfImportDatasetRequestRecords
         """
-        return self._ds_file_path
+        return self._records
 
-    @ds_file_path.setter
-    def ds_file_path(self, ds_file_path):
-        """Sets the ds_file_path of this ImportDatasetRequest.
+    @records.setter
+    def records(self, records):
+        """Sets the records of this ImportDatasetRequest.
 
-        Path to file representing the dataset records.<br> File format should be .npy  # noqa: E501
 
-        :param ds_file_path: The ds_file_path of this ImportDatasetRequest.  # noqa: E501
-        :type: str
+        :param records: The records of this ImportDatasetRequest.  # noqa: E501
+        :type: OneOfImportDatasetRequestRecords
         """
-        if ds_file_path is None:
-            raise ValueError("Invalid value for `ds_file_path`, must not be `None`")  # noqa: E501
+        if records is None:
+            raise ValueError("Invalid value for `records`, must not be `None`")  # noqa: E501
 
-        self._ds_file_path = ds_file_path
+        self._records = records
 
     @property
-    def ds_file_type(self):
-        """Gets the ds_file_type of this ImportDatasetRequest.  # noqa: E501
+    def records_file_type(self):
+        """Gets the records_file_type of this ImportDatasetRequest.  # noqa: E501
 
-        indicates the type of the data in the file. if no value will be set, read file will based file extension  # noqa: E501
+        indicates the records file type  # noqa: E501
 
-        :return: The ds_file_type of this ImportDatasetRequest.  # noqa: E501
+        :return: The records_file_type of this ImportDatasetRequest.  # noqa: E501
         :rtype: str
         """
-        return self._ds_file_type
+        return self._records_file_type
 
-    @ds_file_type.setter
-    def ds_file_type(self, ds_file_type):
-        """Sets the ds_file_type of this ImportDatasetRequest.
+    @records_file_type.setter
+    def records_file_type(self, records_file_type):
+        """Sets the records_file_type of this ImportDatasetRequest.
 
-        indicates the type of the data in the file. if no value will be set, read file will based file extension  # noqa: E501
+        indicates the records file type  # noqa: E501
 
-        :param ds_file_type: The ds_file_type of this ImportDatasetRequest.  # noqa: E501
+        :param records_file_type: The records_file_type of this ImportDatasetRequest.  # noqa: E501
         :type: str
         """
-        allowed_values = ["fvecs", "h5", "npy"]  # noqa: E501
-        if ds_file_type not in allowed_values:
+        allowed_values = ["npy", "h5", "fvecs", "list"]  # noqa: E501
+        if records_file_type not in allowed_values:
             raise ValueError(
-                "Invalid value for `ds_file_type` ({0}), must be one of {1}"  # noqa: E501
-                .format(ds_file_type, allowed_values)
+                "Invalid value for `records_file_type` ({0}), must be one of {1}"  # noqa: E501
+                .format(records_file_type, allowed_values)
             )
 
-        self._ds_file_type = ds_file_type
+        self._records_file_type = records_file_type
+
+    @property
+    def dataset_id(self):
+        """Gets the dataset_id of this ImportDatasetRequest.  # noqa: E501
+
+        The UID represent a dataset get it from /dataset/create  # noqa: E501
+
+        :return: The dataset_id of this ImportDatasetRequest.  # noqa: E501
+        :rtype: str
+        """
+        return self._dataset_id
+
+    @dataset_id.setter
+    def dataset_id(self, dataset_id):
+        """Sets the dataset_id of this ImportDatasetRequest.
+
+        The UID represent a dataset get it from /dataset/create  # noqa: E501
+
+        :param dataset_id: The dataset_id of this ImportDatasetRequest.  # noqa: E501
+        :type: str
+        """
+
+        self._dataset_id = dataset_id
 
     @property
     def storage_type(self):
@@ -192,7 +243,7 @@ class ImportDatasetRequest(object):
     def search_type(self):
         """Gets the search_type of this ImportDatasetRequest.  # noqa: E501
 
-        Flag indicates if the dataset search type will be clustered or flat.  # noqa: E501
+        Flag indicates if the dataset search type will be clustered/flat/hnsw.  # noqa: E501
 
         :return: The search_type of this ImportDatasetRequest.  # noqa: E501
         :rtype: str
@@ -203,12 +254,12 @@ class ImportDatasetRequest(object):
     def search_type(self, search_type):
         """Sets the search_type of this ImportDatasetRequest.
 
-        Flag indicates if the dataset search type will be clustered or flat.  # noqa: E501
+        Flag indicates if the dataset search type will be clustered/flat/hnsw.  # noqa: E501
 
         :param search_type: The search_type of this ImportDatasetRequest.  # noqa: E501
         :type: str
         """
-        allowed_values = ["flat", "clusters"]  # noqa: E501
+        allowed_values = ["flat", "clusters", "hnsw"]  # noqa: E501
         if search_type not in allowed_values:
             raise ValueError(
                 "Invalid value for `search_type` ({0}), must be one of {1}"  # noqa: E501
@@ -241,27 +292,33 @@ class ImportDatasetRequest(object):
         self._train_ind = train_ind
 
     @property
-    def grid_train(self):
-        """Gets the grid_train of this ImportDatasetRequest.  # noqa: E501
+    def train_type(self):
+        """Gets the train_type of this ImportDatasetRequest.  # noqa: E501
 
-        Flag that indicates whether the train should be optimized. Grid train is taking longer time than default train.  # noqa: E501
+        Flag that indicates whether the train should be optimized. Grid/Optuna train is taking longer time than Regular train.  # noqa: E501
 
-        :return: The grid_train of this ImportDatasetRequest.  # noqa: E501
-        :rtype: bool
+        :return: The train_type of this ImportDatasetRequest.  # noqa: E501
+        :rtype: str
         """
-        return self._grid_train
+        return self._train_type
 
-    @grid_train.setter
-    def grid_train(self, grid_train):
-        """Sets the grid_train of this ImportDatasetRequest.
+    @train_type.setter
+    def train_type(self, train_type):
+        """Sets the train_type of this ImportDatasetRequest.
 
-        Flag that indicates whether the train should be optimized. Grid train is taking longer time than default train.  # noqa: E501
+        Flag that indicates whether the train should be optimized. Grid/Optuna train is taking longer time than Regular train.  # noqa: E501
 
-        :param grid_train: The grid_train of this ImportDatasetRequest.  # noqa: E501
-        :type: bool
+        :param train_type: The train_type of this ImportDatasetRequest.  # noqa: E501
+        :type: str
         """
+        allowed_values = ["Regular", "Grid", "Optuna"]  # noqa: E501
+        if train_type not in allowed_values:
+            raise ValueError(
+                "Invalid value for `train_type` ({0}), must be one of {1}"  # noqa: E501
+                .format(train_type, allowed_values)
+            )
 
-        self._grid_train = grid_train
+        self._train_type = train_type
 
     @property
     def nbits(self):
@@ -333,27 +390,25 @@ class ImportDatasetRequest(object):
         self._target_accuracy = target_accuracy
 
     @property
-    def md_file_path(self):
-        """Gets the md_file_path of this ImportDatasetRequest.  # noqa: E501
+    def metadata_of_records(self):
+        """Gets the metadata_of_records of this ImportDatasetRequest.  # noqa: E501
 
-        Path to a metadata file which will be associated with the dataset.  # noqa: E501
 
-        :return: The md_file_path of this ImportDatasetRequest.  # noqa: E501
-        :rtype: str
+        :return: The metadata_of_records of this ImportDatasetRequest.  # noqa: E501
+        :rtype: OneOfImportDatasetRequestMetadataOfRecords
         """
-        return self._md_file_path
+        return self._metadata_of_records
 
-    @md_file_path.setter
-    def md_file_path(self, md_file_path):
-        """Sets the md_file_path of this ImportDatasetRequest.
+    @metadata_of_records.setter
+    def metadata_of_records(self, metadata_of_records):
+        """Sets the metadata_of_records of this ImportDatasetRequest.
 
-        Path to a metadata file which will be associated with the dataset.  # noqa: E501
 
-        :param md_file_path: The md_file_path of this ImportDatasetRequest.  # noqa: E501
-        :type: str
+        :param metadata_of_records: The metadata_of_records of this ImportDatasetRequest.  # noqa: E501
+        :type: OneOfImportDatasetRequestMetadataOfRecords
         """
 
-        self._md_file_path = md_file_path
+        self._metadata_of_records = metadata_of_records
 
     @property
     def md_unique(self):
@@ -469,6 +524,133 @@ class ImportDatasetRequest(object):
         """
 
         self._dataset_name = dataset_name
+
+    @property
+    def dataset_type(self):
+        """Gets the dataset_type of this ImportDatasetRequest.  # noqa: E501
+
+        Dataset type given by user  # noqa: E501
+
+        :return: The dataset_type of this ImportDatasetRequest.  # noqa: E501
+        :rtype: str
+        """
+        return self._dataset_type
+
+    @dataset_type.setter
+    def dataset_type(self, dataset_type):
+        """Sets the dataset_type of this ImportDatasetRequest.
+
+        Dataset type given by user  # noqa: E501
+
+        :param dataset_type: The dataset_type of this ImportDatasetRequest.  # noqa: E501
+        :type: str
+        """
+        allowed_values = ["binary", "float32"]  # noqa: E501
+        if dataset_type not in allowed_values:
+            raise ValueError(
+                "Invalid value for `dataset_type` ({0}), must be one of {1}"  # noqa: E501
+                .format(dataset_type, allowed_values)
+            )
+
+        self._dataset_type = dataset_type
+
+    @property
+    def ef_construction(self):
+        """Gets the ef_construction of this ImportDatasetRequest.  # noqa: E501
+
+        controls the size of the candidate queue for edges when adding a node to the graph  # noqa: E501
+
+        :return: The ef_construction of this ImportDatasetRequest.  # noqa: E501
+        :rtype: int
+        """
+        return self._ef_construction
+
+    @ef_construction.setter
+    def ef_construction(self, ef_construction):
+        """Sets the ef_construction of this ImportDatasetRequest.
+
+        controls the size of the candidate queue for edges when adding a node to the graph  # noqa: E501
+
+        :param ef_construction: The ef_construction of this ImportDatasetRequest.  # noqa: E501
+        :type: int
+        """
+
+        self._ef_construction = ef_construction
+
+    @property
+    def m_number_of_edges(self):
+        """Gets the m_number_of_edges of this ImportDatasetRequest.  # noqa: E501
+
+        number of neighbors for each node in the HNSW graph  # noqa: E501
+
+        :return: The m_number_of_edges of this ImportDatasetRequest.  # noqa: E501
+        :rtype: int
+        """
+        return self._m_number_of_edges
+
+    @m_number_of_edges.setter
+    def m_number_of_edges(self, m_number_of_edges):
+        """Sets the m_number_of_edges of this ImportDatasetRequest.
+
+        number of neighbors for each node in the HNSW graph  # noqa: E501
+
+        :param m_number_of_edges: The m_number_of_edges of this ImportDatasetRequest.  # noqa: E501
+        :type: int
+        """
+
+        self._m_number_of_edges = m_number_of_edges
+
+    @property
+    def distance_function(self):
+        """Gets the distance_function of this ImportDatasetRequest.  # noqa: E501
+
+        controls the type of distance computation  # noqa: E501
+
+        :return: The distance_function of this ImportDatasetRequest.  # noqa: E501
+        :rtype: str
+        """
+        return self._distance_function
+
+    @distance_function.setter
+    def distance_function(self, distance_function):
+        """Sets the distance_function of this ImportDatasetRequest.
+
+        controls the type of distance computation  # noqa: E501
+
+        :param distance_function: The distance_function of this ImportDatasetRequest.  # noqa: E501
+        :type: str
+        """
+        allowed_values = ["cosine"]  # noqa: E501
+        if distance_function not in allowed_values:
+            raise ValueError(
+                "Invalid value for `distance_function` ({0}), must be one of {1}"  # noqa: E501
+                .format(distance_function, allowed_values)
+            )
+
+        self._distance_function = distance_function
+
+    @property
+    def hnsw_use_ssd(self):
+        """Gets the hnsw_use_ssd of this ImportDatasetRequest.  # noqa: E501
+
+        Only for HNSW - controls whether to use SSD or not  # noqa: E501
+
+        :return: The hnsw_use_ssd of this ImportDatasetRequest.  # noqa: E501
+        :rtype: bool
+        """
+        return self._hnsw_use_ssd
+
+    @hnsw_use_ssd.setter
+    def hnsw_use_ssd(self, hnsw_use_ssd):
+        """Sets the hnsw_use_ssd of this ImportDatasetRequest.
+
+        Only for HNSW - controls whether to use SSD or not  # noqa: E501
+
+        :param hnsw_use_ssd: The hnsw_use_ssd of this ImportDatasetRequest.  # noqa: E501
+        :type: bool
+        """
+
+        self._hnsw_use_ssd = hnsw_use_ssd
 
     def to_dict(self):
         """Returns the model properties as a dict"""
