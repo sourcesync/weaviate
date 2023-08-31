@@ -38,7 +38,6 @@ export GOPATH
 export PATH
 
 # Golang env vars
-<<<<<<< HEAD
 # LINUX
 export GOPATH="$HOME/go"
 export GOROOT=/usr/local/go
@@ -48,30 +47,12 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 #export GOPATH=$HOME/go
 #export GOROOT=/usr/local/opt/go/libexec
 #export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-=======
-#GOPATH="$HOME/go"
-#GOROOT=/usr/local/go
-#export PATH=$GOPATH:$GOROOT/bin:$PATH
-
-# MAC
-export GOPATH=$HOME/go
-export GOROOT=/usr/local/opt/go/libexec
-export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
-
-#MAC export GOPATH=$HOME/go
-#MAC export GOROOT=/usr/local/opt/go/libexec
-#MAC export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
->>>>>>> master
 
 # You can choose to start 'fresh' or not
-rm -fr /var/lib/weaviate/*
+rm -fr /var/lib/weaviate2/*
 
 # DLV is a Golang debugger that will need to have installed locally
 which dlv
 
 #cd .. && dlv debug cmd/weaviate-server/main.go --build-flags -modfile=gsi/go.mod -- --host=0.0.0.0 --port=8081 --scheme=http
-<<<<<<< HEAD
 cd .. && pwd && dlv debug cmd/weaviate-server/main.go  -- --host=0.0.0.0 --port=8091 --scheme=http
-=======
-cd .. && dlv debug cmd/weaviate-server/main.go  -- --host=0.0.0.0 --port=8091 --scheme=http
->>>>>>> master
