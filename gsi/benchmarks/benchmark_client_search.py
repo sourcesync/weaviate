@@ -105,41 +105,25 @@ elif args.d == "AtlasNorm":
 else:
     raise Exception("Invalid dataset for class name- "+args.d)
 
+def format_size(size):
+    if size < 1000000:      
+        return str(size)[:-3]+'K'
+    elif size < 1000000000:
+        return str(size)[:-6]+'M'
+    else:
+        return str(size)[:-9]+'B'
+
+def unformat_size(size):
+    if size[-1] == 'K':
+        return int(size[:-1]) * 1000
+    elif size[-1] == 'M':
+        return int(size[:-1]) * 1000000
+    else:
+        return int(size[:-1]) * 1000000000
+
+
 # Set the search dabasize size
-if args.n == "10K":
-    TOTAL_ADDS = 10000
-elif args.n == "1M":
-    TOTAL_ADDS = 1000000
-elif args.n == "2M":
-    TOTAL_ADDS = 2000000
-elif args.n == "5M":
-    TOTAL_ADDS = 5000000
-elif args.n == "10M":
-    TOTAL_ADDS = 10000000
-elif args.n == "20M":
-    TOTAL_ADDS = 20000000
-elif args.n == "30M":
-    TOTAL_ADDS = 30000000
-elif args.n == "40M":
-    TOTAL_ADDS = 40000000
-elif args.n == "45M":
-    TOTAL_ADDS = 45000000
-elif args.n == "50M":
-    TOTAL_ADDS = 50000000
-elif args.n == "60M":
-    TOTAL_ADDS = 60000000
-elif args.n == "70M":
-    TOTAL_ADDS = 70000000
-elif args.n == "80M":
-    TOTAL_ADDS = 80000000
-elif args.n == "90M":
-    TOTAL_ADDS = 90000000
-elif args.n == "100M":
-    TOTAL_ADDS = 100000000
-elif args.n == "150M":
-    TOTAL_ADDS = 150000000
-else:
-    TOTAL_ADDS = int(args.n)
+TOTAL_ADDS = unformat_size(args.n)
 
 # get the index
 if args.gemini:
@@ -163,38 +147,7 @@ gt_file = None
 
 # dataset for class name
 if args.d == "Deep1B":
-    if TOTAL_ADDS == 10000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10K-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 1000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 2000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-2M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 5000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 10000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 20000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-20M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 30000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-30M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 40000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-40M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 45000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-45M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 50000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-50M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 60000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-60M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 70000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-70M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 80000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-80M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 90000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-90M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 100000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-100M-gt-%d.npy" %  args.q )
-    elif TOTAL_ADDS == 150000000:
-        gt_file = os.path.join( BENCH_DATASET_DIR, "deep-150M-gt-%d.npy" %  args.q )
+    gt_file = os.path.join(BENCH_DATASET_DIR, f"deep-{args.n}-gt-{args.q}.npy")
 elif args.d == "Atlas":
     gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/sets_nor", "query_vec.npy")
 elif args.d == "AtlasNorm":
@@ -205,7 +158,7 @@ gt_dset = numpy.load(gt_file, mmap_mode='r')
 print("Got ground truth file:", gt_dset.shape)
 
 #
-# Schemaa checks
+# Schema checks
 #
 
 print("Connecting to Weaviate...")

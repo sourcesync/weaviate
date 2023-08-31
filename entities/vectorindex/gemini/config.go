@@ -13,9 +13,11 @@ package gemini
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/weaviate/weaviate/entities/schema"
+	"google.golang.org/protobuf/internal/encoding/json"
 )
 
 // A minimal number of gemini index config parameters are available here in UserConfig.
@@ -26,6 +28,7 @@ const (
 	DefaultCentroidsRerank   = 4000
 	DefaultHammingK          = 3200
 	DefaultNBits             = 768
+	DefaultFilePath          = ""
 )
 
 const (
@@ -40,6 +43,7 @@ type UserConfig struct {
 	CentroidsRerank   int    `json:"centroidsRerank"`
 	HammingK          int    `json:"hammingK"`
 	NBits             int    `json:"nBits"`
+	FilePath          string `json:"filePath"`
 }
 
 func (u UserConfig) IndexType() string {
@@ -53,6 +57,7 @@ func (c *UserConfig) SetDefaults() {
 	c.CentroidsRerank = DefaultCentroidsRerank
 	c.HammingK = DefaultHammingK
 	c.NBits = DefaultNBits
+	c.FilePath = DefaultFilePath
 }
 
 func ParseUserConfig(input interface{}) (schema.VectorIndexConfig, error) {
@@ -77,6 +82,16 @@ func ParseUserConfig(input interface{}) (schema.VectorIndexConfig, error) {
 		return nil, errors.Wrapf(err, "Could not parse user config 'searchType'.")
 	}
 	uc.SearchType = stval
+
+	// configure filePath
+	fpval := dct["filePath"]
+	fval, sterr := fpval.(string)
+	if !sterr {
+		return nil, errors.Wrapf(err, "Could not parse user config 'filePath'")
+	}
+	uc.FilePath = fval
+
+	fmt.Println("hello from config.go")
 
 	return uc, nil
 }
