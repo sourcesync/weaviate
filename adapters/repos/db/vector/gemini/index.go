@@ -74,10 +74,13 @@ type Gemini struct {
 
 	// trained search_type
 	search_type string
+
+	// file path for immediate data import
+	file_path string
 }
 
 // func New(centroidsHammingK int, centroidsRerank int, hammingK int, nbits int, searchType string) (*Gemini, error) {
-func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits int, searchType string) (*Gemini, error) {
+func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits int, searchType string, filePath string) (*Gemini, error) {
 	// TODO: Currently we aren't allowing some default overrides
 	if centroidsHammingK != int(DefaultCentroidsHammingK) {
 		return nil, fmt.Errorf("Currently you cannot override the Gemini's default centroids hamming k.")
@@ -194,8 +197,55 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 	if idx.verbose {
 		fmt.Println("Gemini index constructor db_path=", idx.db_path)
 	}
+	if filePath != "" {
+		fmt.Println("doing immediate file import")
+		err := idx.AddFile(filePath)
+		if err != nil {
+			fmt.Println(err, "better luck next time dumbass")
+		}
+	}
 
 	return idx, nil
+}
+
+func (i *Gemini) AddFile(path string) error {
+	i.idxLock.Lock()
+	defer i.idxLock.Unlock()
+	fmt.Println("HELLLLOOOOO JACOB")
+
+	if i.verbose {
+		fmt.Println("starting file upload, train, and load\npath: ", i.db_path)
+	}
+
+	// send import dataset request
+	dataset_id, err := Import_dataset(i.fvs_server, DefaultFVSPort, i.allocation_id, path, i.nbits, i.search_type, i.verbose)
+	if err != nil {
+		return err
+	}
+
+	// wait for train status
+	status, err := Train_status(i.fvs_server, DefaultFVSPort, i.allocation_id, dataset_id, i.verbose)
+	if i.verbose {
+		fmt.Println("train status: ", status)
+	}
+	if err != nil {
+		return err
+	}
+	for status == "training" || status == "loading" || status == "pending" {
+		status, err = Train_status(i.fvs_server, DefaultFVSPort, i.allocation_id, dataset_id, i.verbose)
+		if i.verbose {
+			fmt.Println("train status: ", status)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	if i.verbose {
+		fmt.Println("train status: ", status)
+	}
+	i.last_fvs_status = status
+
+	return nil
 }
 
 func (i *Gemini) Add(id uint64, vector []float32) error {
@@ -313,7 +363,7 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 				if i.min_records_check && i.count <= DefaultCentroidsRerank {
 					return nil, nil, fmt.Errorf("FVS requires a mininum of %d vectors in the dataset.", DefaultCentroidsRerank)
 				}
-                if i.verbose {
+				if i.verbose {
 					fmt.Println("Gemini SearchByVector: Import parameters -> ", i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, i.nbits, i.search_type)
 				}
 

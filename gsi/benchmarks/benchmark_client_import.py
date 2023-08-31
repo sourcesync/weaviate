@@ -66,7 +66,7 @@ PURGE_UNLOAD        = True  # Loaded datasets could affect performance timing
 PURGE_DELETE        = False # Unloaded datasets take up disk space but should not affect timing
 
 # We need the allocation id to purge datasets here
-ALLOCATION_ID       = 'fd283b38-3e4a-11eb-a205-7085c2c5e516'
+ALLOCATION_ID       = 'fvs-automation'
 
 #
 # Globals
@@ -101,25 +101,25 @@ args = parser.parse_args()
 # Determine if we are assuming an existing database
 START_AT = args.startat
 
-# Set number items to import
-if args.n == "10K":
-    TOTAL_ADDS = 10000
-elif args.n == "1M":
-    TOTAL_ADDS = 1000000
-elif args.n == "2M":
-    TOTAL_ADDS =2000000
-elif args.n == "5M":
-    TOTAL_ADDS =5000000
-elif args.n == "10M":
-    TOTAL_ADDS =10000000
-elif args.n == "20M":
-    TOTAL_ADDS = 20000000
-elif args.n == "50M":
-    TOTAL_ADDS = 50000000
-elif args.n == "100M":
-    TOTAL_ADDS = 100000000
-else:
-    TOTAL_ADDS = int(args.n)
+def format_size(size):
+    if size < 1000000:      
+        return str(size)[:-3]+'K'
+    elif size < 1000000000:
+        return str(size)[:-6]+'M'
+    else:
+        return str(size)[:-9]+'B'
+
+def unformat_size(size):
+    if size[-1] == 'K':
+        return int(size[:-1]) * 1000
+    elif size[-1] == 'M':
+        return int(size[:-1]) * 1000000
+    else:
+        return int(size[:-1]) * 1000000000
+
+
+# Set the search dabasize size
+TOTAL_ADDS = unformat_size(args.n)
 
 # dataset for class name
 if args.d == "Deep1B":
