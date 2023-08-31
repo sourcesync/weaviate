@@ -17,7 +17,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/weaviate/weaviate/entities/schema"
-	"google.golang.org/protobuf/internal/encoding/json"
+	// "google.golang.org/protobuf/internal/encoding/json"
 )
 
 // A minimal number of gemini index config parameters are available here in UserConfig.
