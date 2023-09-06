@@ -122,13 +122,13 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 		return nil, fmt.Errorf("Could not find GEMINI_ALLOCATION_ID env var.")
 	}
 	// check its a valid guid
-	_, err := uuid.Parse(allocation_id)
-	if err != nil {
-		if gemini_verbose {
-			fmt.Println("ERROR: allocation id is not a valid guid.")
-		}
-		return nil, errors.Wrapf(err, "Allocation id is not a valid guid.")
-	}
+	// _, err := uuid.Parse(allocation_id)
+	// if err != nil {
+	// 	if gemini_verbose {
+	// 		fmt.Println("ERROR: allocation id is not a valid guid.")
+	// 	}
+	// 	return nil, errors.Wrapf(err, "Allocation id is not a valid guid.")
+	// }
 
 	//
 	// a valid gemini_fvs_server setting is required from the environment
@@ -164,8 +164,8 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 	}
 	_, oerr := os.Stat(data_dir)
 	if os.IsNotExist(oerr) {
-		fmt.Printf("The GEMINI_DATA_DIRECTORY %s is not valid (%v)\n", data_dir, err)
-		return nil, errors.Wrapf(err, "The GEMINI_DATA_DIRECTORY %s is not valid", data_dir)
+		fmt.Printf("The GEMINI_DATA_DIRECTORY %s is not valid (%v)\n", data_dir, oerr)
+		return nil, errors.Wrapf(oerr, "The GEMINI_DATA_DIRECTORY %s is not valid", data_dir)
 	}
 
 	//
