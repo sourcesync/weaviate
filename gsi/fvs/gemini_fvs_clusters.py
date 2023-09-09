@@ -7,6 +7,7 @@ import shutil
 import os
 import socket
 import argparse
+import json
 
 #
 # external/installed packages
@@ -138,6 +139,11 @@ def run_benchmark(args):
     gsi_search_apis = swagger_client.SearchApi(api_config)
     gsi_utilities_apis = swagger_client.UtilitiesApi(api_config)
 
+    # Get FVS api version string
+    alive_obj = gsi_utilities_apis.controllers_utilities_controller_alive()
+    fvs_version = alive_obj.version
+    print("Got FVS API version=", fvs_version)
+
     # Configure the FVS api
     config.verify_ssl = False
     config.host = f'http://{server}:{port}/{version}'
@@ -171,6 +177,7 @@ def run_benchmark(args):
 
         for dataset in datasets:
             if dataset["id"] == dataset_id and dataset["datasetStatus"] == "error":
+                print(dataset)
                 print("ERROR: got dataset error")
                 return
 
@@ -183,6 +190,7 @@ def run_benchmark(args):
     # Store train results
     new_row = {
         "type": "train",
+        "fvs_version":fvs_version,
         "allocationid": Allocation_id, \
         "datasetid": dataset_id, \
         "dataset_path": args.dataset, \
@@ -264,6 +272,7 @@ def run_benchmark(args):
             # Store and commit the results
             new_row = {   
                 "type": "search",
+                "fvs_version":fvs_version,
                 "allocationid": Allocation_id, \
                 "datasetid": dataset_id, \
                 "dataset_path": "", \
@@ -335,6 +344,7 @@ def run_benchmark(args):
         # Store and commit the results
         new_row = {   
             "type": "search",
+            "fvs_version":fvs_version,
             "allocationid": Allocation_id, \
             "datasetid": dataset_id, \
             "dataset_path": "", \
