@@ -83,22 +83,23 @@ def unload_datasets(args):
                     # Getting current number of loaded datasets
                     curr = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
                     print(f"Unloaded datasets, current loaded dataset count: {len(curr.allocations_list[Allocation_id]['loadedDatasets'])}")
-                sys.exit(0)
+                #sys.exit(0)
 
         # Full wipe: delete all datasets
         if args.wipe == True:
-            wipe = input("are you super sure? y/[n]: ")
-            if wipe == "y":
-                print("removing all datasets...")
+            #wipe = input("are you super sure? y/[n]: ")
+            if True: #wipe == "y":
+                print("removing all datasets...",dsets)
                 for data in dsets.datasets_list:
                     dataset_id = data['id']
+                    print("Warning: removing dataset=",dataset_id)
                     resp = gsi_datasets_apis.controllers_dataset_controller_remove_dataset(\
                             dataset_id=dataset_id, allocation_token=Allocation_id)
                     if resp.status != "ok":
                         print(f"Error removing dataset: {dataset_id}")
 
-        else:
-            print("Currently no loaded datasets. Done.")
+#        else:
+##            print("Currently no loaded datasets. Done.")
     else: 
         print("Done")
 
@@ -313,7 +314,7 @@ def run_benchmark(args):
         ts_query_end = time.time()
         print("search result=", response.search)
         inds = numpy.array(response.indices)
-        if args.save:
+        if args.save and args.output:
             # Save results alongside the csv
             path = os.path.dirname(args.output)
             fname = os.path.join(path, "query_inds.npy")
@@ -363,8 +364,11 @@ def run_benchmark(args):
 
     # Write the results
     benchmark_df = pd.DataFrame( all_results )
-    benchmark_df.to_csv( args.output, index=False)
-    print("Committed benchmark result to %s" % args.output)
+    if args.output:
+        benchmark_df.to_csv( args.output, index=False)
+        print("Committed benchmark result to %s" % args.output)
+    else:
+        print("Warning: results output skipped.")
 
     # Unload dataset
     print("Unloading dataset...")
@@ -385,7 +389,7 @@ def init_args():
                     prog = sys.argv[0],
                     description = 'Gemini FVS Benchmark Script')
     parser.add_argument('-a','--allocation', required=True)
-    parser.add_argument('-o','--output', required=True)
+    parser.add_argument('-o','--output', required=False)
     parser.add_argument('-d','--dataset', required=True)
     parser.add_argument('-q','--queries', required=True)
     parser.add_argument('-g','--groundtruth', required=True)

@@ -49,8 +49,8 @@ function run_benchmark() {
     python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b "$BITS" --qbq 2>&1 | tee "$TEEOUTPUT"
 }
 
-run_benchmark 768
-run_benchmark 512
+#run_benchmark 768
+#run_benchmark 512
 run_benchmark 256
 run_benchmark 128
 run_benchmark 64
