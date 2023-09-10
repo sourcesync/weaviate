@@ -35,7 +35,7 @@ def unload_datasets(args):
     if args.unload:
         # Setup connection to local FVS api
         server = socket.gethostbyname(socket.gethostname())
-        port = "7761"
+        port = "7760"
         version = 'v1.0'
 
         # Create FVS api objects
@@ -64,6 +64,8 @@ def unload_datasets(args):
             # Print loaded dataset count
             print("Getting loaded datasets for allocation token: ", Allocation_id)
             loaded = gsi_boards_apis.controllers_boards_controller_get_allocations_list(Allocation_id)
+            print("alloc list=", loaded.allocations_list)
+
             print(f"Number of loaded datasets: {len(loaded.allocations_list[Allocation_id]['loadedDatasets'])}")
             # check loaded dataset count
             if len(loaded.allocations_list[Allocation_id]["loadedDatasets"]) > 0:
@@ -129,7 +131,7 @@ def run_benchmark(args):
 
     # Setup connection to local FVS api
     server = socket.gethostbyname(socket.gethostname())
-    port = "7761"
+    port = "7760"
     version = 'v1.0'
 
     # Create FVS api objects
@@ -403,20 +405,32 @@ def init_args():
     args = parser.parse_args()
 
     if not os.path.exists( args.dataset ):
-        raise Exception("The datset path does not exist->", args.dataset)
+        target_path = os.path.join( "/home/public", os.path.basename( args.dataset ) )
+        if os.path.exists(target_path):
+            print("Warning: %s does not exist, but found %s" % (args.dataset, target_path) )
+        else:
+            raise Exception("The datset path does not exist->", args.dataset)
 
     if not os.path.exists( args.queries ):
-        raise Exception("The queries path does not exist->", args.queries)
+        target_path = os.path.join( "/home/public", os.path.basename( args.queries ) )
+        if os.path.exists(target_path):
+            print("Warning: %s does not exist, but found %s" % (args.queries, target_path) )
+        else:
+            raise Exception("The queries path does not exist->", args.queries)
     
     if not os.path.exists( args.groundtruth ):
-        raise Exception("The groundtruth path does not exist->", args.groundtruth)
+        target_path = os.path.join( "/home/public", os.path.basename( args.groundtruth ) )
+        if os.path.exists(target_path):
+            print("Warning: %s does not exist, but found %s" % (args.groundtruth, target_path) )
+        else:
+            raise Exception("The groundtruth path does not exist->", args.groundtruth)
 
     return args
 
 if __name__ == "__main__":
 
     args = init_args()
-    unload_datasets(args) 
+    # unload_datasets(args) 
     run_benchmark(args)
 
     print("Done.")
