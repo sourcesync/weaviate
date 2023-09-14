@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	// goruntime "runtime"
 
@@ -270,7 +271,7 @@ func (i *Gemini) Add(id uint64, vector []float32) error {
 	dim := int(len(vector))
 
 	if i.verbose {
-		fmt.Println("Gemini Add: dimension=", dim)
+		// fmt.Println("Gemini Add: dimension=", dim)
 	}
 
 	if i.first_add {
@@ -396,6 +397,16 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 
 			if i.verbose {
 				fmt.Println("Gemini SearchByVector: After train status=", i.last_fvs_status)
+			}
+
+			// Wait until training is completed
+			for i.last_fvs_status == "pending" || i.last_fvs_status == "training" || i.last_fvs_status == "loading" {
+				if i.verbose {
+					fmt.Println("dataset currently", i.last_fvs_status, ", waiting...")
+				}
+				status, err = Train_status(i.fvs_server, DefaultFVSPort, i.allocation_id, i.dataset_id, i.verbose)
+				i.last_fvs_status = status
+				time.Sleep(3 * time.Second)
 			}
 
 			// At this point, we have an updated training status
