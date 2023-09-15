@@ -83,6 +83,7 @@ func ParseUserConfig(input interface{}) (schema.VectorIndexConfig, error) {
 	}
 	uc.SearchType = stval
 
+	fmt.Println("JACOB YOU STUPID IDIOT")
 	// configure filePath
 	fpval := dct["filePath"]
 	fval, sterr := fpval.(string)

@@ -32,7 +32,7 @@ from swagger_client.models import *
 WEAVIATE_CONN       = "http://localhost:8091"
 
 # Weaviate import batch size
-BATCH_SIZE          = 10
+BATCH_SIZE          = 1
 
 # Name of the custom class for this test program
 BENCH_CLASS_NAME    = "BenchmarkDeep1B"
@@ -57,6 +57,9 @@ GEMINI_TRAINING_BITS= -1
 
 # Gemini search type ( gets set via args )
 GEMINI_SEARCH_TYPE  = None
+
+# File path for import
+GEMINI_FILE_PATH = ""
 
 # Generally, we don't want to ever allow vector cache-ing in benchmarking
 ALLOW_CACHEING      = False
@@ -119,7 +122,8 @@ def unformat_size(size):
 
 
 # Set the search dabasize size
-TOTAL_ADDS = unformat_size(args.n)
+TOTAL_ADDS = int(args.n)
+print(TOTAL_ADDS)
 
 # dataset for class name
 if args.d == "Deep1B":
@@ -143,6 +147,8 @@ if args.gemini:
         raise Exception("valid --searchtype argument is required for gemini")    
     GEMINI_SEARCH_TYPE = args.searchtype 
     GEMINI_PARAMETERS['searchType'] = GEMINI_SEARCH_TYPE
+
+    GEMINI_PARAMETERS['filePath'] = GEMINI_FILE_PATH
 
     print("Gemini index paramters=", GEMINI_PARAMETERS)
 
