@@ -35,7 +35,7 @@ def unload_datasets(args):
     if args.unload:
         # Setup connection to local FVS api
         server = socket.gethostbyname(socket.gethostname())
-        port = "7761"
+        port = "7760"
         version = 'v1.0'
 
         # Create FVS api objects
@@ -129,7 +129,7 @@ def run_benchmark(args):
 
     # Setup connection to local FVS api
     server = socket.gethostbyname(socket.gethostname())
-    port = "7761"
+    port = "7760"
     version = 'v1.0'
 
     # Create FVS api objects
