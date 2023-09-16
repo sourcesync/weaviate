@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	// goruntime "runtime"
 
@@ -74,10 +75,13 @@ type Gemini struct {
 
 	// trained search_type
 	search_type string
+
+	// file path for immediate data import
+	file_path string
 }
 
 // func New(centroidsHammingK int, centroidsRerank int, hammingK int, nbits int, searchType string) (*Gemini, error) {
-func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits int, searchType string) (*Gemini, error) {
+func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits int, searchType string, filePath string) (*Gemini, error) {
 	// TODO: Currently we aren't allowing some default overrides
 	if centroidsHammingK != int(DefaultCentroidsHammingK) {
 		return nil, fmt.Errorf("Currently you cannot override the Gemini's default centroids hamming k.")
@@ -119,13 +123,13 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 		return nil, fmt.Errorf("Could not find GEMINI_ALLOCATION_ID env var.")
 	}
 	// check its a valid guid
-	_, err := uuid.Parse(allocation_id)
-	if err != nil {
-		if gemini_verbose {
-			fmt.Println("ERROR: allocation id is not a valid guid.")
-		}
-		return nil, errors.Wrapf(err, "Allocation id is not a valid guid.")
-	}
+	// _, err := uuid.Parse(allocation_id)
+	// if err != nil {
+	// 	if gemini_verbose {
+	// 		fmt.Println("ERROR: allocation id is not a valid guid.")
+	// 	}
+	// 	return nil, errors.Wrapf(err, "Allocation id is not a valid guid.")
+	// }
 
 	//
 	// a valid gemini_fvs_server setting is required from the environment
@@ -161,8 +165,8 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 	}
 	_, oerr := os.Stat(data_dir)
 	if os.IsNotExist(oerr) {
-		fmt.Printf("The GEMINI_DATA_DIRECTORY %s is not valid (%v)\n", data_dir, err)
-		return nil, errors.Wrapf(err, "The GEMINI_DATA_DIRECTORY %s is not valid", data_dir)
+		fmt.Printf("The GEMINI_DATA_DIRECTORY %s is not valid (%v)\n", data_dir, oerr)
+		return nil, errors.Wrapf(oerr, "The GEMINI_DATA_DIRECTORY %s is not valid", data_dir)
 	}
 
 	//
@@ -194,8 +198,55 @@ func NewGemini(centroidsHammingK int, centroidsRerank int, hammingK int, nBits i
 	if idx.verbose {
 		fmt.Println("Gemini index constructor db_path=", idx.db_path)
 	}
+	if filePath != "" {
+		fmt.Println("doing immediate file import")
+		err := idx.AddFile(filePath)
+		if err != nil {
+			fmt.Println(err, "better luck next time dumbass")
+		}
+	}
 
 	return idx, nil
+}
+
+func (i *Gemini) AddFile(path string) error {
+	i.idxLock.Lock()
+	defer i.idxLock.Unlock()
+	fmt.Println("HELLLLOOOOO JACOB")
+
+	if i.verbose {
+		fmt.Println("starting file upload, train, and load\npath: ", i.db_path)
+	}
+
+	// send import dataset request
+	dataset_id, err := Import_dataset(i.fvs_server, DefaultFVSPort, i.allocation_id, path, i.nbits, i.search_type, i.verbose)
+	if err != nil {
+		return err
+	}
+
+	// wait for train status
+	status, err := Train_status(i.fvs_server, DefaultFVSPort, i.allocation_id, dataset_id, i.verbose)
+	if i.verbose {
+		fmt.Println("train status: ", status)
+	}
+	if err != nil {
+		return err
+	}
+	for status == "training" || status == "loading" || status == "pending" {
+		status, err = Train_status(i.fvs_server, DefaultFVSPort, i.allocation_id, dataset_id, i.verbose)
+		if i.verbose {
+			fmt.Println("train status: ", status)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	if i.verbose {
+		fmt.Println("train status: ", status)
+	}
+	i.last_fvs_status = status
+
+	return nil
 }
 
 func (i *Gemini) Add(id uint64, vector []float32) error {
@@ -220,7 +271,7 @@ func (i *Gemini) Add(id uint64, vector []float32) error {
 	dim := int(len(vector))
 
 	if i.verbose {
-		fmt.Println("Gemini Add: dimension=", dim)
+		// fmt.Println("Gemini Add: dimension=", dim)
 	}
 
 	if i.first_add {
@@ -295,7 +346,7 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 		return nil, nil, errors.Errorf("No items in the gemini index.")
 	} else {
 
-		// TODO:  This bit of code is a gnarly and deserves a refactor into an FSM.
+		// TODO:  This bit of code is a bit gnarly and deserves a refactor into an FSM.
 		// TODO:  Basically, it will kick off an index asynchronous build at FVS and continues
 		// TODO:  to monitor its status, returning appropriate messages to the client along the way.
 		// TODO:  Finally, when the index is built it performs the actual search and returns
@@ -307,11 +358,14 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 				// Initiate the index build asynchronously
 
 				if i.verbose {
-					fmt.Println("Gemini SearchByVector: About to import dataset with dataset_id=", i.dataset_id)
+					fmt.Println("Gemini SearchByVector: About to import dataset...")
 				}
 
 				if i.min_records_check && i.count <= DefaultCentroidsRerank {
 					return nil, nil, fmt.Errorf("FVS requires a mininum of %d vectors in the dataset.", DefaultCentroidsRerank)
+				}
+				if i.verbose {
+					fmt.Println("Gemini SearchByVector: Import parameters -> ", i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, i.nbits, i.search_type)
 				}
 
 				dataset_id, err := Import_dataset(i.fvs_server, DefaultFVSPort, i.allocation_id, i.db_path, i.nbits, i.search_type, i.verbose)
@@ -343,6 +397,16 @@ func (i *Gemini) SearchByVector(vector []float32, k int) ([]uint64, []float32, e
 
 			if i.verbose {
 				fmt.Println("Gemini SearchByVector: After train status=", i.last_fvs_status)
+			}
+
+			// Wait until training is completed
+			for i.last_fvs_status == "pending" || i.last_fvs_status == "training" || i.last_fvs_status == "loading" {
+				if i.verbose {
+					fmt.Println("dataset currently", i.last_fvs_status, ", waiting...")
+				}
+				status, err = Train_status(i.fvs_server, DefaultFVSPort, i.allocation_id, i.dataset_id, i.verbose)
+				i.last_fvs_status = status
+				time.Sleep(3 * time.Second)
 			}
 
 			// At this point, we have an updated training status

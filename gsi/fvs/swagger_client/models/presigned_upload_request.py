@@ -29,23 +29,28 @@ class PresignedUploadRequest(object):
     """
     swagger_types = {
         'file_name': 'str',
-        'bucket': 'str'
+        'bucket': 'str',
+        'num_of_parts': 'int'
     }
 
     attribute_map = {
         'file_name': 'fileName',
-        'bucket': 'bucket'
+        'bucket': 'bucket',
+        'num_of_parts': 'numOfParts'
     }
 
-    def __init__(self, file_name=None, bucket=None):  # noqa: E501
+    def __init__(self, file_name=None, bucket=None, num_of_parts=None):  # noqa: E501
         """PresignedUploadRequest - a model defined in Swagger"""  # noqa: E501
         self._file_name = None
         self._bucket = None
+        self._num_of_parts = None
         self.discriminator = None
         if file_name is not None:
             self.file_name = file_name
         if bucket is not None:
             self.bucket = bucket
+        if num_of_parts is not None:
+            self.num_of_parts = num_of_parts
 
     @property
     def file_name(self):
@@ -92,6 +97,29 @@ class PresignedUploadRequest(object):
         """
 
         self._bucket = bucket
+
+    @property
+    def num_of_parts(self):
+        """Gets the num_of_parts of this PresignedUploadRequest.  # noqa: E501
+
+        num of parts which the file split.  # noqa: E501
+
+        :return: The num_of_parts of this PresignedUploadRequest.  # noqa: E501
+        :rtype: int
+        """
+        return self._num_of_parts
+
+    @num_of_parts.setter
+    def num_of_parts(self, num_of_parts):
+        """Sets the num_of_parts of this PresignedUploadRequest.
+
+        num of parts which the file split.  # noqa: E501
+
+        :param num_of_parts: The num_of_parts of this PresignedUploadRequest.  # noqa: E501
+        :type: int
+        """
+
+        self._num_of_parts = num_of_parts
 
     def to_dict(self):
         """Returns the model properties as a dict"""

@@ -96,7 +96,12 @@ class_obj = {
             "name": "category",
         },
     ],
-    "vectorIndexType": "gemini" # Here is where we tell Weaviate to use the gemini plugin
+    "vectorIndexType": "gemini", # Here is where we tell Weaviate to use the gemini plugin
+    "vectorIndexConfig": {
+        "nBits": 768,
+        "searchType": "clusters",
+        "filePath": "",
+    }
 }
 
 # Update the schema with this class

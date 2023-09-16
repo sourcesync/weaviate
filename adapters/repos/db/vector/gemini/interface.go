@@ -32,7 +32,7 @@ type gemini struct {
 func New(cfg Config, uc ent.UserConfig) (*gemini, error) {
 	// Initialize the module implementation of the gemini index
 	// plugin, err := geminiplugin.New(uc.CentroidsHammingK, uc.CentroidsRerank, uc.HammingK, uc.NBits, uc.SearchType)
-	plugin, err := NewGemini(uc.CentroidsHammingK, uc.CentroidsRerank, uc.HammingK, uc.NBits, uc.SearchType)
+	plugin, err := NewGemini(uc.CentroidsHammingK, uc.CentroidsRerank, uc.HammingK, uc.NBits, uc.SearchType, uc.FilePath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Gemini plugin constructor failed.")
 	}
@@ -41,6 +41,10 @@ func New(cfg Config, uc ent.UserConfig) (*gemini, error) {
 	idx := &gemini{}
 	idx.plugin = plugin
 	return idx, nil
+}
+
+func (i *gemini) AddFile(path string) error {
+	return i.plugin.AddFile(path)
 }
 
 func (i *gemini) Add(id uint64, vector []float32) error {

@@ -330,7 +330,7 @@ const VectorIndexTypeHNSW = "hnsw" // The default builtin index type
 // DefaultGossipBindPort uses the hashicorp/memberlist default
 // port value assigned with the use of DefaultLocalConfig
 // TODO - 7946 may conflict with Docker Swarm
-const DefaultGossipBindPort = 7946
+const DefaultGossipBindPort = 7949 // original 7946
 
 // TODO: This should be retrieved dynamically from all installed modules
 const VectorizerModuleText2VecContextionary = "text2vec-contextionary"

@@ -9,7 +9,7 @@ services:
 #     - /Users/gwilliams/Projects/GSI/Weaviate/data:/datasets
     restart: "no"
     environment:
-      VERBOSE: 1
+      VERBOSE: 0
       ENABLE_CUDA: 0
       DATABASE_FILE: "/datasets/deep-10K.npy"
       QUERY_FILE: "/datasets/deep-queries-1000.npy"

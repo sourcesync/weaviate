@@ -59,6 +59,7 @@ def unload_datasets(args):
         config = swagger_client.configuration.Configuration()
         api_config = swagger_client.ApiClient(config)
         gsi_boards_apis = swagger_client.BoardsApi(api_config)
+        #old gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
         gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
 
         # Configure the FVS api
@@ -86,7 +87,7 @@ def unload_datasets(args):
             if len(loaded.allocations_list[Allocation_id]["loadedDatasets"]) > 0:
                 # Unloading all datasets
                 print("Unloading all loaded datasets...")
-                loaded = loaded.allocations_list["0b391a1a-b916-11ed-afcb-0242ac1c0002"]["loadedDatasets"]
+                loaded = loaded.allocations_list[Allocation_id]["loadedDatasets"]
                 for data in loaded:
                     dataset_id = data['datasetId']
                     resp = gsi_datasets_apis.controllers_dataset_controller_unload_dataset(
@@ -147,8 +148,8 @@ def run_benchmark(args):
     # Create FVS api objects
     config = swagger_client.configuration.Configuration()
     api_config = swagger_client.ApiClient(config)
+    # old gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
     gsi_datasets_apis = swagger_client.DatasetsApi(api_config)
-    gsi_dataset_apis = swagger_client.DatasetApi(api_config)
     gsi_search_apis = swagger_client.SearchApi(api_config)
     gsi_utilities_apis = swagger_client.UtilitiesApi(api_config)
     gsi_demo_apis = swagger_client.DemoApi(api_config)
@@ -316,6 +317,9 @@ def init_args():
     return args
 
 if __name__ == "__main__":
+
+    print("THIS FILE NEEDS FIXING - ARE YOU SURE YOU DON'T WANT TO USE THE _clusters version?")
+    sys.exit(1)
 
     args = init_args()
     unload_datasets(args) # only runs if --unload flag not passed

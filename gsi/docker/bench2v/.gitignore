@@ -3,3 +3,7 @@
 results
 results/
 results/*
+__pycache__
+__pycache__/
+__pycache__/*
+swagger_client/api/__pycache__

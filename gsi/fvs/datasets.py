@@ -251,14 +251,17 @@ class DatasetCompetitionFormat(Dataset):
     two versions of the file.
     """
 
-    def prepare(self, skip_data=False):
+    def prepare(self, skip_data=False, skip_non_data=True):
         if not os.path.exists(self.basedir):
             os.makedirs(self.basedir)
 
-        if True:
+        if skip_non_data:
+            print("Skipping non data")
+        else:
             #print("Your problem could be here...")
             # start with the small ones...
             #print("public", self.qs_fn, self.gt_fn)
+            print("Downloading qs and gt...")
             for fn in [self.qs_fn, self.gt_fn]:
                 if fn is None:
                     continue
@@ -277,8 +280,6 @@ class DatasetCompetitionFormat(Dataset):
                 except:
                     print("Warning: Problem downloading->%s to %s" % (sourceurl, outfile) )
                     traceback.print_exc()
-        else:
-                print("Warning: Did NOT download public query at gt datasets.")
 
         # private qs url
         if self.private_qs_url:
@@ -297,8 +298,10 @@ class DatasetCompetitionFormat(Dataset):
                 download(self.private_gt_url, outfile)
 
         if skip_data:
+            print("Skipping data download...")
             return
 
+        print("Downloading data...")
         fn = self.ds_fn
         sourceurl = os.path.join(self.base_url, fn)
         outfile = os.path.join(self.basedir, fn)
@@ -477,7 +480,7 @@ class Deep1BDataset(DatasetCompetitionFormat):
     def __init__(self, nb_M=1000):
         self.nb_M = nb_M
         if (self.nb_M):
-            print("Warning: Requested size is not a multiple of 1M")
+            print("Warning: Requested size is not a multiple of 1M", self.nb_M)
         self.nb = int( 10**6 * nb_M )
         self.d = 96
         self.nq = 10000
@@ -487,8 +490,18 @@ class Deep1BDataset(DatasetCompetitionFormat):
         #print("D!B", self.qs_fn)
         self.gt_fn = (
             "https://storage.yandexcloud.net/yandex-research/ann-datasets/deep_new_groundtruth.public.10K.bin" if self.nb_M == 1000 else
+            subset_url + "GT_1B/deep-500M" if self.nb_M == 500 else
+            subset_url + "GT_1B/deep-250M" if self.nb_M == 250 else
+            subset_url + "GT_1B/deep-150M" if self.nb_M == 150 else
             subset_url + "GT_100M/deep-100M" if self.nb_M == 100 else
+            subset_url + "GT_100M/deep-90M" if self.nb_M == 90 else
+            subset_url + "GT_100M/deep-80M" if self.nb_M == 80 else
+            subset_url + "GT_100M/deep-70M" if self.nb_M == 70 else
+            subset_url + "GT_100M/deep-60M" if self.nb_M == 60 else
             subset_url + "GT_50M/deep-50M" if self.nb_M == 50 else
+            subset_url + "GT_100M/deep-45M" if self.nb_M == 45 else
+            subset_url + "GT_100M/deep-40M" if self.nb_M == 40 else
+            subset_url + "GT_100M/deep-30M" if self.nb_M == 30 else
             subset_url + "GT_20M/deep-20M" if self.nb_M == 20 else
             subset_url + "GT_10M/deep-10M" if self.nb_M == 10 else
             subset_url + "GT_10M/deep-5M" if self.nb_M == 5 else
@@ -740,8 +753,18 @@ DATASETS = {
     'bigann-10M': lambda : BigANNDataset(10),
 
     'deep-1B': lambda : Deep1BDataset(),
+    'deep-500M': lambda : Deep1BDataset(500),
+    'deep-250M': lambda : Deep1BDataset(250),
+    'deep-150M': lambda : Deep1BDataset(150),
     'deep-100M': lambda : Deep1BDataset(100),
+    'deep-90M': lambda : Deep1BDataset(90),
+    'deep-80M': lambda : Deep1BDataset(80),
+    'deep-70M': lambda : Deep1BDataset(70),
+    'deep-60M': lambda : Deep1BDataset(60),
     'deep-50M': lambda : Deep1BDataset(50),
+    'deep-45M': lambda : Deep1BDataset(45),
+    'deep-40M': lambda : Deep1BDataset(40),
+    'deep-30M': lambda : Deep1BDataset(30),
     'deep-20M': lambda : Deep1BDataset(20),
     'deep-10M': lambda : Deep1BDataset(10),
     'deep-5M': lambda : Deep1BDataset(5),

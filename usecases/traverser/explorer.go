@@ -406,7 +406,7 @@ func (e *Explorer) searchResultsToGetResponse(ctx context.Context,
 			// This used to be "=res.Updated" but now is "res.SearchTime"
 			// so its awful hack to surface the searchtime to
 			// Weaviate clients.
-			additionalProperties["lastUpdateTimeUnix"] = res.Updated
+			additionalProperties["lastUpdateTimeUnix"] = res.SearchTime
 		}
 
 		if len(additionalProperties) > 0 {

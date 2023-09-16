@@ -50,6 +50,9 @@ K_NEIGHBORS         = -1
 # dir for export
 RESULTS_DIR         = "results"
 
+# Only process first query (useful in verbose debugging) 
+SHORT_CIRCUIT       = False
+
 #
 # Globals
 #
@@ -84,24 +87,43 @@ parser.add_argument("-n", required=True)
 parser.add_argument("-q", type=int, required=True)
 parser.add_argument("-k", type=int, required=True)
 parser.add_argument("--gemini", action="store_true")
+parser.add_argument("--verbose", action="store_true")
+parser.add_argument("--shortcircuit", action="store_true")
 parser.add_argument("--dontexport",  default=False, action="store_true")
 args = parser.parse_args()
 
-# Set the search dabasize size
-if args.n == "10K":
-    TOTAL_ADDS = 10000
-elif args.n == "1M":
-    TOTAL_ADDS = 1000000
-elif args.n == "2M":
-    TOTAL_ADDS = 2000000
-elif args.n == "5M":
-    TOTAL_ADDS = 5000000
-elif args.n == "10M":
-    TOTAL_ADDS = 10000000
-elif args.n == "20M":
-    TOTAL_ADDS = 20000000
+VERBOSE = args.verbose
+SHORT_CIRCUIT = args.shortcircuit
+
+# dataset for class name
+if args.d == "Deep1B":
+    BENCH_CLASS_NAME = "BenchmarkDeep1B"
+elif args.d == "Atlas":
+    BENCH_CLASS_NAME = "BenchmarkAtlas"
+elif args.d == "AtlasNorm":
+    BENCH_CLASS_NAME = "BenchmarkAtlasNorm"
 else:
-    TOTAL_ADDS = int(args.n)
+    raise Exception("Invalid dataset for class name- "+args.d)
+
+def format_size(size):
+    if size < 1000000:      
+        return str(size)[:-3]+'K'
+    elif size < 1000000000:
+        return str(size)[:-6]+'M'
+    else:
+        return str(size)[:-9]+'B'
+
+def unformat_size(size):
+    if size[-1] == 'K':
+        return int(size[:-1]) * 1000
+    elif size[-1] == 'M':
+        return int(size[:-1]) * 1000000
+    else:
+        return int(size[:-1]) * 1000000000
+
+
+# Set the search dabasize size
+TOTAL_ADDS = unformat_size(args.n)
 
 # get the index
 if args.gemini:
@@ -122,25 +144,21 @@ if not os.path.exists(RESULTS_DIR):
 #
 
 gt_file = None
-if TOTAL_ADDS == 10000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10K-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 1000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-1M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 2000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-2M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 5000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-5M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 10000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-10M-gt-%d.npy" %  args.q )
-elif TOTAL_ADDS == 20000000:
-    gt_file = os.path.join( BENCH_DATASET_DIR, "deep-20M-gt-%d.npy" %  args.q )
-    
+
+# dataset for class name
+if args.d == "Deep1B":
+    gt_file = os.path.join(BENCH_DATASET_DIR, f"deep-{args.n}-gt-{args.q}.npy")
+elif args.d == "Atlas":
+    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/sets_nor", "query_vec.npy")
+elif args.d == "AtlasNorm":
+    gt_file = os.path.join( "/mnt/nas1/atlas_data/benchmarking/gt_from_norm_50000.npy")
+ 
 print("GTFILE=", gt_file)
 gt_dset = numpy.load(gt_file, mmap_mode='r')    
 print("Got ground truth file:", gt_dset.shape)
 
 #
-# Schemaa checks
+# Schema checks
 #
 
 print("Connecting to Weaviate...")
@@ -213,6 +231,7 @@ if not args.dontexport:
 
 def parse_result(result):
     '''Parse a search response extracting the info we need for benchmarking.'''
+    global BENCH_CLASS_NAME
 
     if 'errors' in result:
         print(result)
@@ -221,7 +240,7 @@ def parse_result(result):
         print(result)
         raise Exception("Got error response from search query")
 
-    items = result['data']['Get']['BenchmarkDeep1B']
+    items = result['data']['Get'][BENCH_CLASS_NAME]
     timing = int(items[0]['_additional']['lastUpdateTimeUnix'])
     inds = [ int(item['index']) for item in items ]
 
@@ -230,7 +249,7 @@ def parse_result(result):
 def compute_recall(a, b):
     '''Computes the recall metric on query results.'''
 
-    #print(a, b)
+    print("recall", a[0:10], b[0:10])
     nq, rank = a.shape
     intersect = [ numpy.intersect1d(a[i, :rank], b[i, :rank]).size for i in range(nq) ]
     ninter = sum( intersect )
@@ -238,11 +257,12 @@ def compute_recall(a, b):
 
 def do_benchmark_query(idx):
     '''This performs a query from the query set and processes the results.'''
-   
+    global BENCH_CLASS_NAME
+ 
     # prepare and perform the weaviate query 
     nearText = {"concepts": [ "q-%d" % idx ]}
     result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_additional(['lastUpdateTimeUnix']).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
-
+    #result = client.query.get( BENCH_CLASS_NAME, ["index"] ).with_near_text(nearText).with_limit(K_NEIGHBORS).do()
     # get the data from the results we want
     timing, inds = parse_result(result)
     if VERBOSE:
@@ -259,9 +279,9 @@ def do_benchmark_query(idx):
 
 
 # do one test first
-print("Testing one query...")
-timing, recall = do_benchmark_query(1)
-print("Verfied.")
+#print("Testing one query...")
+#timing, recall = do_benchmark_query(1)
+##print("Verfied.")
 
 # now do the entire query set
 print("Running %d queries..." % args.q)
@@ -273,6 +293,10 @@ for idx in range(args.q):
     # accumulate results
     STATS.append( { "qidx": idx, "recall": recall, "searchTime": timing, "host": HOSTNAME, \
                     "gt_file": gt_file, "dset_size": TOTAL_ADDS, "argsn": args.n , "vectorindex": VECTOR_INDEX } )
+
+    if SHORT_CIRCUIT:
+        print("Short circuiting query set.  Stopping now.")
+        break
 
 print("Done.")
 
