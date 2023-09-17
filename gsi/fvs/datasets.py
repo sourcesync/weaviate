@@ -489,7 +489,8 @@ class Deep1BDataset(DatasetCompetitionFormat):
         self.qs_fn = "query.public.10K.fbin"
         #print("D!B", self.qs_fn)
         self.gt_fn = (
-            "https://storage.yandexcloud.net/yandex-research/ann-datasets/deep_new_groundtruth.public.10K.bin" if self.nb_M == 1000 else
+#GW            "https://storage.yandexcloud.net/yandex-research/ann-datasets/deep_new_groundtruth.public.10K.bin" if self.nb_M == 1000 else
+            subset_url + "GT_1B/deep-1000M" if self.nb_M == 1000 else
             subset_url + "GT_1B/deep-500M" if self.nb_M == 500 else
             subset_url + "GT_1B/deep-250M" if self.nb_M == 250 else
             subset_url + "GT_1B/deep-150M" if self.nb_M == 150 else
