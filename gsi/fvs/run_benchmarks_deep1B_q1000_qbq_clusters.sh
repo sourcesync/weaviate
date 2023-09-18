@@ -43,7 +43,7 @@ set -e
 #
 function run_benchmark() {
     BITS=$1
-    BASE="benchmarks-deep500M-q1000-qbq-clusters-$BITS"
+    BASE="benchmarks-deep1000M-q1000-qbq-clusters-$BITS"
     OUTPUT="$DTDIR/$BASE-$DT.csv"
     TEEOUTPUT="$DTDIR/logs/$BASE-$DT.txt"
     python -u gemini_fvs_clusters.py -a "$ALLOCATION_ID" -d "$DATASET" -q "$QUERIES" -g "$GROUNDTRUTH"  -o "$OUTPUT" --b "$BITS" --qbq 2>&1 | tee "$TEEOUTPUT"
