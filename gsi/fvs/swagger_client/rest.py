@@ -17,6 +17,9 @@ import json
 import logging
 import re
 import ssl
+#GW
+import os
+#GW
 
 import certifi
 # python 2 and python 3 compatibility library
@@ -148,6 +151,11 @@ class RESTClientObject(object):
 
         if 'Content-Type' not in headers:
             headers['Content-Type'] = 'application/json'
+
+        #GW
+        if os.getenv("SWAGGER_VERBOSE"):
+            print("SWAGGER VERBOSE", "URL=",url, "METHOD=",method,"QUERY_PARAMS=", query_params, "BODY=", body, "HEADERS=",headers, "POST_PARAMS=", post_params)
+        #GW
 
         try:
             # For `POST`, `PUT`, `PATCH`, `OPTIONS`, `DELETE`
