@@ -114,17 +114,17 @@ def run_benchmark(args):
     ts_start = time.ctime()
 
     # Make sure dataset is under /home/public
-    dataset_public_path = os.path.join("/home/public", \
+    dataset_public_path = os.path.join("/home/public/fvs_vs_weaviate_benchmarks", \
             os.path.basename( args.dataset ) )
     if not os.path.exists(dataset_public_path):
-        print("Copy dataset to /home/public/ ...")
+        print("Copy dataset to /home/public/fvs_vs_weaviate_benchmarks ...")
         shutil.copyfile( args.dataset, dataset_public_path)    
 
     # Make sure queries is under /home/public
-    queries_public_path = os.path.join("/home/public", \
+    queries_public_path = os.path.join("/home/public/fvs_vs_weaviate_benchmarks", \
             os.path.basename( args.queries ) )
     if not os.path.exists(queries_public_path):
-        print("Copy queries to /home/public/ ...")
+        print("Copy queries to /home/public/fvs_vs_weaviate_benchmarks ...")
         shutil.copyfile( args.queries, queries_public_path)    
 
     # Setup connection to local FVS api
@@ -244,7 +244,7 @@ def run_benchmark(args):
 
             # extract query to a tmp file
             base_name = os.path.basename( queries_public_path ).split(".")[0]
-            tmp_qpath = os.path.join( "/home/public", "%s__%d.npy" % (base_name, i) )
+            tmp_qpath = os.path.join( "/home/public/fvs_vs_weaviate_benchmarks", "%s__%d.npy" % (base_name, i) )
             f = open(tmp_qpath, "wb")
             qrs = np.reshape(q, (1, q.shape[0]) )
             np.save( f, qrs )
